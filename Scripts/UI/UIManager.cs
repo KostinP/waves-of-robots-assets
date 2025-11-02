@@ -9,6 +9,18 @@ public class UIManager : MonoBehaviour
     private UIDocument _uiDocument;
     private VisualElement _root;
 
+    // UI Elements
+    private Slider _playerCountSlider;
+    private Label _playerCountValue;
+    private Slider _waveCountSlider;
+    private RadioButton _waveCountRadio;
+    private RadioButton _infinityRadio;
+    private RadioButton _radioOpen;
+    private RadioButton _radioClosed;
+    private VisualElement _charVacuum;
+    private VisualElement _charToaster;
+    private VisualElement _charGPT;
+
     private void Awake()
     {
         if (Instance == null)
@@ -50,14 +62,147 @@ public class UIManager : MonoBehaviour
         var btnStatistics = _root.Q<Button>("btnStatistics");
         var btnQuit = _root.Q<Button>("btnQuit");
 
+        // Находим элементы для слайдеров и радио-кнопок
+        _playerCountSlider = _root.Q<Slider>("playerCountSlider");
+        _playerCountValue = _root.Q<Label>("playerCountValue");
+        _waveCountSlider = _root.Q<Slider>("waveCountSlider");
+        _waveCountRadio = _root.Q<RadioButton>("waveCountRadio");
+        _infinityRadio = _root.Q<RadioButton>("infinityRadio");
+        _radioOpen = _root.Q<RadioButton>("radioOpen");
+        _radioClosed = _root.Q<RadioButton>("radioClosed");
+        
+        // Находим элементы выбора персонажа
+        _charVacuum = _root.Q<VisualElement>("charVacuum");
+        _charToaster = _root.Q<VisualElement>("charToaster");
+        _charGPT = _root.Q<VisualElement>("charGPT");
+
         // Добавляем обработчики
         if (btnSingle != null) btnSingle.clicked += OnSinglePlayer;
         if (btnCreateLobby != null) btnCreateLobby.clicked += OnCreateLobby;
         if (btnStatistics != null) btnStatistics.clicked += OnStatistics;
         if (btnQuit != null) btnQuit.clicked += OnQuit;
 
+        // Настраиваем слайдер количества игроков
+        if (_playerCountSlider != null && _playerCountValue != null)
+        {
+            _playerCountSlider.RegisterValueChangedCallback(OnPlayerCountChanged);
+            UpdatePlayerCountValue(_playerCountSlider.value);
+        }
+
+        // Настраиваем слайдер количества волн с шагом 50
+        if (_waveCountSlider != null)
+        {
+            _waveCountSlider.highValue = 50;
+            _waveCountSlider.lowValue = 10;
+            _waveCountSlider.value = 10;
+            
+            // Устанавливаем шаг 10
+            _waveCountSlider.RegisterValueChangedCallback(evt =>
+            {
+                // Округляем значение до ближайшего шага 10
+                float roundedValue = Mathf.Round(evt.newValue / 10f) * 10f;
+                if (Mathf.Abs(roundedValue - evt.newValue) > 0.1f)
+                {
+                    _waveCountSlider.value = roundedValue;
+                }
+            });
+        }
+
+        // Настраиваем радио-кнопки для волн
+        if (_waveCountRadio != null && _infinityRadio != null)
+        {
+            _waveCountRadio.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    _infinityRadio.value = false;
+                    if (_waveCountSlider != null)
+                        _waveCountSlider.SetEnabled(true);
+                }
+            });
+
+            _infinityRadio.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    _waveCountRadio.value = false;
+                    if (_waveCountSlider != null)
+                        _waveCountSlider.SetEnabled(false);
+                }
+            });
+
+            // По умолчанию выбираем волны
+            _waveCountRadio.value = true;
+            _infinityRadio.value = false;
+        }
+
+        // Настраиваем радио-кнопки типа лобби
+        if (_radioOpen != null && _radioClosed != null)
+        {
+            _radioOpen.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    _radioClosed.value = false;
+                }
+            });
+
+            _radioClosed.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    _radioOpen.value = false;
+                }
+            });
+
+            // По умолчанию выбираем открытое лобби
+            _radioOpen.value = true;
+            _radioClosed.value = false;
+        }
+
+        // Настраиваем выбор персонажа
+        SetupCharacterSelection();
+
         // Показываем главный экран
         ShowScreen("screen_main");
+    }
+
+    private void OnPlayerCountChanged(ChangeEvent<float> evt)
+    {
+        UpdatePlayerCountValue(evt.newValue);
+    }
+
+    private void UpdatePlayerCountValue(float value)
+    {
+        if (_playerCountValue != null)
+        {
+            _playerCountValue.text = Mathf.RoundToInt(value).ToString();
+        }
+    }
+
+    private void SetupCharacterSelection()
+    {
+        if (_charVacuum != null)
+            _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
+        
+        if (_charToaster != null)
+            _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
+        
+        if (_charGPT != null)
+            _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
+    }
+
+    private void SelectCharacter(VisualElement selectedCharacter)
+    {
+        // Убираем selected у всех персонажей
+        if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
+        if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
+        if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
+
+        // Добавляем selected выбранному персонажу
+        selectedCharacter.AddToClassList("selected");
+
+        Debug.Log($"Selected character: {selectedCharacter.name}");
     }
 
     // Методы для переключения экранов

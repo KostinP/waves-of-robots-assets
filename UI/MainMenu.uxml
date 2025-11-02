@@ -64,17 +64,17 @@
                         <ui:VisualElement class="panel-content">
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_name" class="section-label" />
-                                <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input" />
+                                <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input transparent-bg" />
                             </ui:VisualElement>
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_type" class="section-label" />
                                 <ui:VisualElement class="radio-group">
                                     <ui:VisualElement class="radio-item">
-                                        <ui:RadioButton name="radioOpen" label="#open" class="radio-button selected" value="true" />
+                                        <ui:RadioButton name="radioOpen" text="#open" value="true" />
                                     </ui:VisualElement>
                                     <ui:VisualElement class="radio-item">
-                                        <ui:RadioButton name="radioClosed" label="#closed" class="radio-button" value="false" />
-                                        <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input" />
+                                        <ui:RadioButton name="radioClosed" text="#closed" value="false" />
+                                        <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
@@ -107,12 +107,13 @@
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#wave_count" class="section-label" />
                                 <ui:VisualElement class="wave-slider-container">
-                                    <ui:RadioButton name="waveCountRadio" label="#wave_count" class="radio-button" value="true" />
+                                    <ui:RadioButton name="waveCountRadio" text="#wave_count" value="true" />
                                     <ui:Label text="10" class="slider-label" />
                                     <ui:Slider name="waveCountSlider" low-value="10" high-value="50" value="10" class="slider" />
                                     <ui:Label text="50" class="slider-label" />
+                                    <ui:Label name="waveCountValue" text="10" class="slider-value" />
                                     <ui:VisualElement class="infinity-checkbox">
-                                        <ui:RadioButton name="infinityRadio" label="#infinity" class="radio-button" value="false" />
+                                        <ui:RadioButton name="infinityRadio" text="#infinity" value="false" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>

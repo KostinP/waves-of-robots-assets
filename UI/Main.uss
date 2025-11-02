@@ -499,3 +499,45 @@
     font-size: 16px;
     color: white;
 }
+
+/* Прозрачный фон для текстовых полей */
+.transparent-bg {
+    background-color: transparent;
+}
+
+/* Стили для RadioButton */
+RadioButton {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+RadioButton .unity-radio-button__checkmark {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: transparent;
+}
+
+RadioButton:checked .unity-radio-button__checkmark {
+    background-color: #bb86fc;
+    border-color: #bb86fc;
+}
+
+RadioButton .unity-radio-button__text {
+    font-size: 14px;
+    color: white;
+}
+
+/* Улучшенные стили для текстовых полей с прозрачным фоном */
+.text-input.transparent-bg {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.password-input.transparent-bg {
+    background-color: transparent;
+    border-color: rgba(187, 134, 252, 0.4);
+}

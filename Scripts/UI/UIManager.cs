@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
     private Slider _playerCountSlider;
     private Label _playerCountValue;
     private Slider _waveCountSlider;
+    private Label _waveCountValue;
     private RadioButton _waveCountRadio;
     private RadioButton _infinityRadio;
     private RadioButton _radioOpen;
@@ -66,11 +67,12 @@ public class UIManager : MonoBehaviour
         _playerCountSlider = _root.Q<Slider>("playerCountSlider");
         _playerCountValue = _root.Q<Label>("playerCountValue");
         _waveCountSlider = _root.Q<Slider>("waveCountSlider");
+        _waveCountValue = _root.Q<Label>("waveCountValue");
         _waveCountRadio = _root.Q<RadioButton>("waveCountRadio");
         _infinityRadio = _root.Q<RadioButton>("infinityRadio");
         _radioOpen = _root.Q<RadioButton>("radioOpen");
         _radioClosed = _root.Q<RadioButton>("radioClosed");
-        
+
         // Находим элементы выбора персонажа
         _charVacuum = _root.Q<VisualElement>("charVacuum");
         _charToaster = _root.Q<VisualElement>("charToaster");
@@ -89,13 +91,13 @@ public class UIManager : MonoBehaviour
             UpdatePlayerCountValue(_playerCountSlider.value);
         }
 
-        // Настраиваем слайдер количества волн с шагом 50
-        if (_waveCountSlider != null)
+        // Настраиваем слайдер количества волн с шагом 10
+        if (_waveCountSlider != null && _waveCountValue != null)
         {
-            _waveCountSlider.highValue = 50;
             _waveCountSlider.lowValue = 10;
+            _waveCountSlider.highValue = 50;
             _waveCountSlider.value = 10;
-            
+
             // Устанавливаем шаг 10
             _waveCountSlider.RegisterValueChangedCallback(evt =>
             {
@@ -105,19 +107,45 @@ public class UIManager : MonoBehaviour
                 {
                     _waveCountSlider.value = roundedValue;
                 }
+                UpdateWaveCountValue(_waveCountSlider.value);
             });
+
+            UpdateWaveCountValue(_waveCountSlider.value);
         }
 
-        // Настраиваем радио-кнопки для волн
+        // Настраиваем радио-кнопки для волн (группа 1)
+        SetupWaveRadioButtons();
+
+        // Настраиваем радио-кнопки типа лобби (группа 2)
+        SetupLobbyRadioButtons();
+
+        // Настраиваем выбор персонажа
+        SetupCharacterSelection();
+
+        // Показываем главный экран
+        ShowScreen("screen_main");
+    }
+
+    private void SetupWaveRadioButtons()
+    {
         if (_waveCountRadio != null && _infinityRadio != null)
         {
+            // Сбрасываем все значения
+            _waveCountRadio.SetValueWithoutNotify(false);
+            _infinityRadio.SetValueWithoutNotify(false);
+
+            // Устанавливаем независимые обработчики для группы волн
             _waveCountRadio.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
-                    _infinityRadio.value = false;
-                    if (_waveCountSlider != null)
-                        _waveCountSlider.SetEnabled(true);
+                    _infinityRadio.SetValueWithoutNotify(false);
+                    _waveCountSlider.SetEnabled(true);
+                }
+                else if (!_infinityRadio.value)
+                {
+                    // Если ни одна не выбрана, принудительно выбираем волны
+                    _waveCountRadio.SetValueWithoutNotify(true);
                 }
             });
 
@@ -125,25 +153,42 @@ public class UIManager : MonoBehaviour
             {
                 if (evt.newValue)
                 {
-                    _waveCountRadio.value = false;
-                    if (_waveCountSlider != null)
-                        _waveCountSlider.SetEnabled(false);
+                    _waveCountRadio.SetValueWithoutNotify(false);
+                    _waveCountSlider.SetEnabled(false);
+                }
+                else if (!_waveCountRadio.value)
+                {
+                    // Если ни одна не выбрана, принудительно выбираем бесконечность
+                    _infinityRadio.SetValueWithoutNotify(true);
                 }
             });
 
             // По умолчанию выбираем волны
             _waveCountRadio.value = true;
             _infinityRadio.value = false;
+            _waveCountSlider.SetEnabled(true);
         }
+    }
 
-        // Настраиваем радио-кнопки типа лобби
+    private void SetupLobbyRadioButtons()
+    {
         if (_radioOpen != null && _radioClosed != null)
         {
+            // Сбрасываем все значения
+            _radioOpen.SetValueWithoutNotify(false);
+            _radioClosed.SetValueWithoutNotify(false);
+
+            // Устанавливаем независимые обработчики для группы лобби
             _radioOpen.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
-                    _radioClosed.value = false;
+                    _radioClosed.SetValueWithoutNotify(false);
+                }
+                else if (!_radioClosed.value)
+                {
+                    // Если ни одна не выбрана, принудительно выбираем открытое
+                    _radioOpen.SetValueWithoutNotify(true);
                 }
             });
 
@@ -151,7 +196,12 @@ public class UIManager : MonoBehaviour
             {
                 if (evt.newValue)
                 {
-                    _radioOpen.value = false;
+                    _radioOpen.SetValueWithoutNotify(false);
+                }
+                else if (!_radioOpen.value)
+                {
+                    // Если ни одна не выбрана, принудительно выбираем закрытое
+                    _radioClosed.SetValueWithoutNotify(true);
                 }
             });
 
@@ -159,12 +209,6 @@ public class UIManager : MonoBehaviour
             _radioOpen.value = true;
             _radioClosed.value = false;
         }
-
-        // Настраиваем выбор персонажа
-        SetupCharacterSelection();
-
-        // Показываем главный экран
-        ShowScreen("screen_main");
     }
 
     private void OnPlayerCountChanged(ChangeEvent<float> evt)
@@ -180,14 +224,22 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private void UpdateWaveCountValue(float value)
+    {
+        if (_waveCountValue != null)
+        {
+            _waveCountValue.text = Mathf.RoundToInt(value).ToString();
+        }
+    }
+
     private void SetupCharacterSelection()
     {
         if (_charVacuum != null)
             _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
-        
+
         if (_charToaster != null)
             _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
-        
+
         if (_charGPT != null)
             _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
     }
@@ -213,7 +265,7 @@ public class UIManager : MonoBehaviour
         {
             screen.style.display = screen.name == screenName ? DisplayStyle.Flex : DisplayStyle.None;
         }
-        
+
         Debug.Log($"Showing screen: {screenName}");
     }
 

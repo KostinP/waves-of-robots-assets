@@ -1,0 +1,148 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Main.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#Main" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="background" class="background" />
+        <ui:VisualElement name="layout" class="layout">
+            <ui:VisualElement name="screen_main" class="screen">
+                <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;); height: 200px; width: 130%;" />
+                <ui:Button name="btnSingle" text="#single_player" class="menu-button" />
+                <ui:Button name="btnCreateLobby" text="#create_lobby" class="menu-button" />
+                <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
+                <ui:Button name="btnQuit" text="#quit" class="menu-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="screen_lobby" class="screen hidden">
+                <ui:Label text="#network_game" class="network-title" />
+                <ui:VisualElement class="panels-container">
+                    <ui:VisualElement class="panel panel-browse">
+                        <ui:VisualElement class="panel-header">
+                            <ui:Label text="#join_lobby" class="panel-header-text" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="panel-content">
+                            <ui:VisualElement class="lobby-list-header">
+                                <ui:Label text="#lobby_name" class="lobby-list-header-text" style="width: 200px;" />
+                                <ui:Label text="#player_count" class="lobby-list-header-text" style="width: 80px; -unity-text-align: middle-center;" />
+                                <ui:Label text="#type" class="lobby-list-header-text" style="width: 120px; -unity-text-align: middle-center;" />
+                            </ui:VisualElement>
+                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll">
+                                <ui:VisualElement class="lobby-item">
+                                    <ui:Label text="Бешеные стринги" class="lobby-name" />
+                                    <ui:Label text="1/15 ⊖" class="lobby-players" />
+                                    <ui:Label text="Открытое" class="lobby-type" />
+                                    <ui:Button text="▶" class="lobby-join-btn" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="lobby-item">
+                                    <ui:Label text="Конченые ястребы" class="lobby-name" />
+                                    <ui:Label text="1/12 ⊖" class="lobby-players" />
+                                    <ui:Label text="Открытое" class="lobby-type" />
+                                    <ui:Button text="▶" class="lobby-join-btn" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="lobby-item">
+                                    <ui:Label text="Зеленые макароны" class="lobby-name" />
+                                    <ui:Label text="1/12 ⊖" class="lobby-players" />
+                                    <ui:Label text="Открытое" class="lobby-type" />
+                                    <ui:Button text="▶" class="lobby-join-btn" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="lobby-item">
+                                    <ui:Label text="Прикоски" class="lobby-name" />
+                                    <ui:Label text="1/4 ⊖" class="lobby-players" />
+                                    <ui:Label text="Ввести пароль" class="lobby-type" />
+                                    <ui:Button text="▶" class="lobby-join-btn" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="lobby-item">
+                                    <ui:Label text="Смерть в нищете" class="lobby-name" />
+                                    <ui:Label text="1/2 ⊖" class="lobby-players" />
+                                    <ui:Label text="Открытое" class="lobby-type" />
+                                    <ui:Button text="▶" class="lobby-join-btn" />
+                                </ui:VisualElement>
+                            </ui:ScrollView>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="panel panel-create">
+                        <ui:VisualElement class="panel-header">
+                            <ui:Label text="#create_lobby" class="panel-header-text" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="panel-content">
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#lobby_name" class="section-label" />
+                                <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#lobby_type" class="section-label" />
+                                <ui:VisualElement class="radio-group">
+                                    <ui:VisualElement class="radio-item">
+                                        <ui:VisualElement name="radioOpen" class="radio-button selected" />
+                                        <ui:Label text="#open" class="radio-label" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="radio-item">
+                                        <ui:VisualElement name="radioClosed" class="radio-button" />
+                                        <ui:Label text="#closed" class="radio-label" />
+                                        <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#player_count" class="section-label" />
+                                <ui:VisualElement class="slider-container">
+                                    <ui:Label text="1" class="slider-label" />
+                                    <ui:Slider name="playerCountSlider" low-value="1" high-value="9" value="5" class="slider" />
+                                    <ui:Label text="9" class="slider-label" />
+                                    <ui:Label name="playerCountValue" text="5" class="slider-value" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#difficulty" class="section-label" />
+                                <ui:VisualElement class="character-grid">
+                                    <ui:VisualElement name="charVacuum" class="character-card">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;robot-vacuum-cleaner&apos;);" />
+                                        <ui:Label text="#robot_vacuum" class="character-name" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="charToaster" class="character-card selected">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;combat-toaster&apos;);" />
+                                        <ui:Label text="#combat_toaster" class="character-name" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="charGPT" class="character-card">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;GPT-chat-coffee&apos;);" />
+                                        <ui:Label text="#gpt_coffee" class="character-name" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#wave_count" class="section-label" />
+                                <ui:VisualElement class="wave-slider-container">
+                                    <ui:Label text="10" class="slider-label" />
+                                    <ui:Slider name="waveCountSlider" low-value="10" high-value="50" value="10" class="slider" />
+                                    <ui:Label text="50" class="slider-label" />
+                                    <ui:VisualElement class="infinity-checkbox">
+                                        <ui:VisualElement name="infinityCheck" class="checkbox checked" />
+                                        <ui:Label text="#infinity" class="checkbox-label" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Button name="btnCreateLobby" text="#create" class="create-button" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="shortcuts-bar">
+                    <ui:VisualElement class="shortcut-item">
+                        <ui:VisualElement class="shortcut-key">
+                            <ui:Label text="Esc" class="shortcut-key-text" />
+                        </ui:VisualElement>
+                        <ui:Label text="#close" class="shortcut-action" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="shortcut-item">
+                        <ui:VisualElement class="shortcut-key">
+                            <ui:Label text="Z" class="shortcut-key-text" />
+                        </ui:VisualElement>
+                        <ui:Label text="#settings" class="shortcut-action" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="shortcut-item">
+                        <ui:VisualElement class="shortcut-key">
+                            <ui:Label text="X" class="shortcut-key-text" />
+                        </ui:VisualElement>
+                        <ui:Label text="#statistics" class="shortcut-action" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

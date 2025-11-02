@@ -1,0 +1,501 @@
+.root {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.background {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Fixed background image reference from robohand.png to bg.png */
+    background-image: resource("bg");
+    -unity-background-scale-mode: scale-and-crop;
+    opacity: 1;
+}
+
+.layout {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Updated logo container for better positioning */
+.logo-container {
+    margin-bottom: 60px;
+    align-items: center;
+}
+
+.logo {
+    width: 240px;
+    height: auto;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Updated title styling to match "waves of ROBOTS" design */
+.title {
+    font-size: 72px;
+    color: white;
+    margin-bottom: 80px;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+}
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Updated button styling to match reference design */
+.menu-button {
+    width: 380px;
+    height: 50px;
+    font-size: 22px;
+    color: white;
+    background-color: rgba(20, 20, 30, 0.7);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+}
+
+/* Enhanced hover state with purple border */
+.menu-button:hover {
+    background-color: rgba(40, 40, 50, 0.85);
+    border-color: rgba(200, 100, 255, 0.8);
+    border-width: 2px;
+}
+
+.menu-button.small {
+    width: 220px;
+    height: 44px;
+    font-size: 18px;
+}
+
+.input-field {
+    width: 320px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 20px;
+    -unity-text-align: middle-center;
+}
+
+.list {
+    width: 380px;
+    height: 200px;
+    background-color: rgba(20, 20, 30, 0.6);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+    margin-bottom: 16px;
+}
+
+.info {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 12px;
+    -unity-text-align: middle-center;
+}
+
+/* Network game screen title */
+.network-title {
+    font-size: 48px;
+    color: white;
+    -unity-font-style: bold;
+    margin-bottom: 40px;
+    position: absolute;
+    top: 0px;
+    left: 60px;
+}
+
+#screen_lobby {
+    width: 100%;
+    height: 100%;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 0;
+}
+
+/* Two-panel layout container */
+.panels-container {
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    gap: 40px;
+    width: 100%;
+    padding: 80px 60px 100px 60px; /* Уменьшаем отступы */
+    margin: 0;
+    min-height: 0; /* Важно для flex-контейнеров */
+}
+
+/* Делаем панели адаптивными по высоте */
+.panel {
+    background-color: rgba(20, 15, 25, 0.85);
+    border-width: 3px;
+    border-color: #bb86fc;
+    border-radius: 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; /* Минимальная высота */
+}
+
+/* Контент панелей должен занимать все доступное пространство */
+.panel-content {
+    padding: 0 20px 20px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Важно для flex-контейнеров */
+}
+
+/* Left panel - Browse lobbies */
+.panel-browse {
+    flex: 1.2;
+}
+
+/* Right panel - Create lobby */
+.panel-create {
+    flex: 1;
+}
+
+/* Panel header with angled corners */
+.panel-header {
+    background-color: #bb86fc;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.panel-header-text {
+    font-size: 20px;
+    color: white;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+/* Lobby list styles */
+.lobby-list-header {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 15px 10px 15px;
+    border-bottom-width: 1px;
+    border-color: rgba(187, 134, 252, 0.3);
+    margin-bottom: 10px;
+}
+
+.lobby-list-header-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    -unity-font-style: normal;
+}
+
+/* Исправляем высоту списка лобби */
+.lobby-list-scroll {
+    flex: 1;
+    min-height: 200px;
+}
+
+.lobby-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.lobby-item:hover {
+    background-color: rgba(40, 30, 50, 0.5);
+    border-color: rgba(187, 134, 252, 0.4);
+}
+
+.lobby-name {
+    font-size: 16px;
+    color: white;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.lobby-players {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    width: 80px;
+    -unity-text-align: middle-center;
+}
+
+.lobby-type {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    width: 120px;
+    -unity-text-align: middle-center;
+}
+
+.lobby-join-btn {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(187, 134, 252, 0.3);
+    border-radius: 16px;
+    border-width: 2px;
+    border-color: #bb86fc;
+}
+
+.lobby-join-btn:hover {
+    background-color: rgba(187, 134, 252, 0.6);
+}
+
+/* Create lobby form styles */
+.form-section {
+    margin-bottom: 20px;
+}
+
+.section-label {
+    font-size: 12px;
+    color: white;
+    background-color: #bb86fc;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    -unity-font-style: bold;
+    align-self: flex-start;
+}
+
+.text-input {
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    padding: 4px 12px;
+    font-size: 14px;
+}
+
+.text-input:focus {
+    border-color: #bb86fc;
+}
+
+.radio-group {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radio-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-button {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: transparent;
+}
+
+.radio-button.selected {
+    background-color: #bb86fc;
+    border-color: #bb86fc;
+}
+
+.radio-label {
+    font-size: 14px;
+    color: white;
+}
+
+.password-input {
+    height: 28px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-width: 1px;
+    border-color: rgba(187, 134, 252, 0.4);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 8px;
+    font-size: 12px;
+    margin-left: 20px;
+}
+
+/* Slider styles */
+.slider-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    width: 20px;
+}
+
+.slider {
+    flex-grow: 1;
+    height: 20px;
+}
+
+.slider-value {
+    font-size: 16px;
+    color: white;
+    -unity-font-style: bold;
+    width: 30px;
+    -unity-text-align: middle-center;
+}
+
+/* Character selection */
+.character-grid {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.character-card {
+    width: 120px;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+}
+
+.character-card:hover {
+    border-color: #bb86fc;
+    background-color: rgba(40, 30, 50, 0.5);
+}
+
+.character-card.selected {
+    border-color: #bb86fc;
+    border-width: 3px;
+    background-color: rgba(187, 134, 252, 0.2);
+}
+
+.character-image {
+    width: 60px;
+    height: 60px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.character-name {
+    font-size: 11px;
+    color: white;
+    -unity-text-align: middle-center;
+    margin-top: 4px;
+}
+
+/* Bot count with infinity checkbox */
+.wave-slider-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.infinity-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.4);
+    border-radius: 3px;
+    background-color: transparent;
+}
+
+.checkbox.checked {
+    background-color: #bb86fc;
+    border-color: #bb86fc;
+}
+
+.checkbox-label {
+    font-size: 13px;
+    color: white;
+}
+
+/* Create button */
+.create-button {
+    width: 100%;
+    height: 50px;
+    background-color: #bb86fc;
+    border-width: 0;
+    border-radius: 8px;
+    font-size: 20px;
+    color: white;
+    -unity-font-style: bold;
+    margin-top: 20px;
+}
+
+.create-button:hover {
+    background-color: #d4a5ff;
+}
+
+/* Bottom shortcuts bar */
+.shortcuts-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 60px;
+    right: 60px;
+    height: 60px;
+    background-color: rgba(20, 15, 25, 0.85);
+    border-width: 3px;
+    border-color: #bb86fc;
+    border-radius: 12px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 40px;
+}
+
+.shortcut-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.shortcut-key {
+    width: 40px;
+    height: 40px;
+    background-color: #bb86fc;
+    border-radius: 6px;
+    justify-content: center;
+    align-items: center;
+}
+
+.shortcut-key-text {
+    font-size: 18px;
+    color: white;
+    -unity-font-style: bold;
+}
+
+.shortcut-action {
+    font-size: 16px;
+    color: white;
+}

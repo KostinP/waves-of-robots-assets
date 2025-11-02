@@ -75,15 +75,16 @@
     border-width: 2px;
 }
 
+/* Специфичные стили для кнопок с фокусом */
+.menu-button.focused {
+    border-color: #ffff00 !important;
+    background-color: rgba(255, 255, 0, 0.1) !important;
+}
+
 .menu-button.small {
     width: 220px;
     height: 44px;
     font-size: 18px;
-}
-
-.input-field {
-    width: 320px;
-    margin-bottom: 8px;
 }
 
 .subtitle {
@@ -281,21 +282,6 @@
     align-self: flex-start;
 }
 
-.text-input {
-    height: 32px;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    color: white;
-    padding: 4px 12px;
-    font-size: 14px;
-}
-
-.text-input:focus {
-    border-color: #bb86fc;
-}
-
 .radio-group {
     flex-direction: column;
     gap: 8px;
@@ -324,18 +310,6 @@
 .radio-label {
     font-size: 14px;
     color: white;
-}
-
-.password-input {
-    height: 28px;
-    background-color: rgba(0, 0, 0, 0.3);
-    border-width: 1px;
-    border-color: rgba(187, 134, 252, 0.4);
-    border-radius: 4px;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 4px 8px;
-    font-size: 12px;
-    margin-left: 20px;
 }
 
 /* Slider styles */
@@ -500,13 +474,24 @@
     color: white;
 }
 
-/* Прозрачный фон для текстовых полей */
-.text-input.transparent-bg,
-.text-input.transparent-bg .unity-base-text-field__input,
-.password-input.transparent-bg,
-.password-input.transparent-bg .unity-base-text-field__input {
-    background-color: transparent !important;
+/* Желтое выделение для фокуса */
+.focused {
+    border-color: #ffff00 !important;
+    background-color: rgba(255, 255, 0, 0.1) !important;
 }
+
+/* Стили для RadioButton с фокусом */
+RadioButton.focused .unity-radio-button__checkmark {
+    border-color: #ffff00 !important;
+}
+
+/* Стили для слайдеров с фокусом */
+.slider.focused .unity-slider__tracker,
+.slider.focused .unity-slider__thumb {
+    border-color: #ffff00 !important;
+}
+
+
 
 /* Стили для RadioButton */
 RadioButton {
@@ -534,18 +519,87 @@ RadioButton .unity-radio-button__text {
     color: white;
 }
 
-/* Улучшенные стили для текстовых полей с прозрачным фоном */
-.text-input.transparent-bg {
-    background-color: transparent;
-    border-color: rgba(255, 255, 255, 0.3);
+.transparent-bg > .unity-text-input,
+.transparent-bg .unity-base-text-field__input {
+    background: transparent !important;
+    --unity-colors-input_text: #ffffff !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
 }
 
-.password-input.transparent-bg {
-    background-color: transparent;
-    border-color: rgba(187, 134, 252, 0.4);
+/* РАМКИ — ЧТОБЫ ПОЛЕ БЫЛО ВИДНО */
+#createLobbyName,
+#lobbyPassword {
+    border: 2px solid rgba(255,255,255,0.25) !important;
+    border-radius: 8px !important;
 }
 
-.focused {
-    border-color: #ffff00;
-    background-color: rgba(255, 255, 0, 0.1);
+/* ФОКУС — ЖЁЛТЫЙ */
+#createLobbyName.focused,
+#lobbyPassword.focused {
+    border-color: #ffff00 !important;
+    background-color: rgba(255,255,0,0.07) !important;
+}
+
+/* Обертка для пароля + кнопка-глаз */
+.password-wrapper {
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper > .password-input {
+    flex: 1;
+    padding-right: 40px; /* место под глаз */
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    border-width: 0;
+    background-image: resource("eye-closed");
+    -unity-background-scale-mode: scale-to-fit;
+    opacity: 0.7;
+}
+
+.password-toggle-btn:hover {
+    opacity: 1;
+}
+
+.password-toggle-btn.show-password {
+    background-image: resource("eye-open");
+}
+
+.password-toggle-btn.focused {
+    opacity: 1;
+    outline: 2px solid #ffff00;
+    outline-offset: 2px;
+}
+
+/* БОЛЬШОЙ ТЕКСТ ПАРОЛЯ */
+.password-input {
+    font-size: 16px !important;
+    height: 44px !important;
+}
+
+/* Видимый текст даже в режиме пароля */
+.password-input .unity-text-input {
+    -unity-text-overflow-position: middle;
+    letter-spacing: 2px;
+    color: white !important;
+}
+
+/* Когда пароль ВИДЕН — обычные буквы */
+.password-input.show-clear .unity-text-input {
+    letter-spacing: normal;
+}
+
+/* Плейсхолдер тоже большой */
+.password-input .unity-base-text-field__placeholder {
+    font-size: 14px !important;
+    color: rgba(255,255,255,0.6) !important;
 }

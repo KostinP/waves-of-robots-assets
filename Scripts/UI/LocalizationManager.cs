@@ -131,47 +131,51 @@ public class LocalizationManager : MonoBehaviour
 
     private void UpdateElementsWithPrefix(VisualElement root, string prefix)
     {
-        // Labels
+        // ── LABELS ─────────────────────────────────────
         root.Query<Label>().ForEach(label =>
         {
             if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
-            {
                 label.text = GetLocalizedText(label.text.Substring(prefix.Length));
-            }
         });
 
-        // Buttons
+        // ── BUTTONS ────────────────────────────────────
         root.Query<Button>().ForEach(button =>
         {
             if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
-            {
                 button.text = GetLocalizedText(button.text.Substring(prefix.Length));
-            }
         });
 
-        // TextFields
+        // ── TEXTFIELDS (label + placeholder) ───────────
         root.Query<TextField>().ForEach(textField =>
         {
+            // 1. Локализуем обычный label
             if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
-            {
                 textField.label = GetLocalizedText(textField.label.Substring(prefix.Length));
-            }
         });
 
-        // IntegerFields
+        // ── ОСОБАЯ ОБРАБОТКА ДЛЯ ПОЛЯ ПАРОЛЯ ───────────
+        TextField passwordField = root.Q<TextField>("lobbyPassword");
+        if (passwordField != null)
+        {
+            Label passwordPlaceholder = passwordField.Q<Label>(className: "unity-base-text-field__placeholder")
+                                      ?? passwordField.Q<Label>(className: "unity-text-field__placeholder");
+
+            if (passwordPlaceholder != null && passwordPlaceholder.text == "#enter_password")
+            {
+                passwordPlaceholder.text = GetLocalizedText("enter_password");
+            }
+        }
+
+        // ── INTEGERFIELD ───────────────────────────────
         root.Query<IntegerField>().ForEach(field =>
         {
             if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
-            {
                 field.label = GetLocalizedText(field.label.Substring(prefix.Length));
-            }
         });
 
-        // Рекурсивно обходим дочерние элементы
-        foreach (var child in root.Children())
-        {
+        // ── Рекурсия по детям ──────────────────────────
+        foreach (VisualElement child in root.Children())
             UpdateElementsWithPrefix(child, prefix);
-        }
     }
 
     public SystemLanguage GetCurrentLanguage()

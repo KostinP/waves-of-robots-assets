@@ -74,7 +74,10 @@
                                     </ui:VisualElement>
                                     <ui:VisualElement class="radio-item">
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
-                                        <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
+                                        <ui:VisualElement class="password-wrapper">
+                                            <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
+                                            <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" />
+                                        </ui:VisualElement>
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>

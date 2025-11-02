@@ -3,6 +3,7 @@ using UnityEngine.UIElements;
 using Unity.NetCode;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Collections.Generic;
 
 public class UIManager : MonoBehaviour
 {
@@ -22,11 +23,14 @@ public class UIManager : MonoBehaviour
     private InputAction _cancelAction;
     private InputAction _openSettingsAction;
     private InputAction _openStatisticsAction;
+    private InputAction _tabAction;
 
     // UI State
     private string _currentScreen = "screen_main";
-    private Button _currentlyFocusedButton;
+    private VisualElement _currentlyFocusedElement;
     private bool _isSettingFocus = false;
+    private bool _isTextFieldFocused = false;
+    private bool _isPasswordVisible = false;
 
     // UI Elements
     private Slider _playerCountSlider;
@@ -40,6 +44,54 @@ public class UIManager : MonoBehaviour
     private VisualElement _charVacuum;
     private VisualElement _charToaster;
     private VisualElement _charGPT;
+    
+    // Text Fields
+    private TextField _createLobbyName;
+    private TextField _lobbyPassword;
+    private Button _togglePasswordBtn;
+
+    private void DebugTextFieldState(TextField textField, string fieldName)
+    {
+        if (textField == null)
+        {
+            Debug.LogError($"{fieldName} is null!");
+            return;
+        }
+
+        Debug.Log($"=== {fieldName} State ===");
+        Debug.Log($"- Display: {textField.resolvedStyle.display}");
+        Debug.Log($"- Visibility: {textField.resolvedStyle.visibility}");
+        Debug.Log($"- Opacity: {textField.resolvedStyle.opacity}");
+        Debug.Log($"- Color: {textField.resolvedStyle.color}");
+        Debug.Log($"- BackgroundColor: {textField.resolvedStyle.backgroundColor}");
+        Debug.Log($"- Enabled: {textField.enabledSelf}");
+        Debug.Log($"- Focusable: {textField.focusable}");
+        Debug.Log($"- Value: '{textField.value}'");
+        
+        // Проверяем внутренний input элемент
+        var inputElement = textField.Q(className: "unity-base-text-field__input");
+        if (inputElement != null)
+        {
+            Debug.Log($"- Input Display: {inputElement.resolvedStyle.display}");
+            Debug.Log($"- Input Color: {inputElement.resolvedStyle.color}");
+            Debug.Log($"- Input Opacity: {inputElement.resolvedStyle.opacity}");
+            Debug.Log($"- Input Background: {inputElement.resolvedStyle.backgroundColor}");
+        }
+        else
+        {
+            Debug.LogError("- Input element not found!");
+        }
+
+        // Проверяем placeholder
+        var placeholder = textField.Q(className: "unity-base-text-field__placeholder");
+        if (placeholder != null)
+        {
+            Debug.Log($"- Placeholder Color: {placeholder.resolvedStyle.color}");
+            Debug.Log($"- Placeholder Opacity: {placeholder.resolvedStyle.opacity}");
+        }
+
+        Debug.Log($"=== End {fieldName} State ===\n");
+    }
 
     #region Lifecycle Methods
 
@@ -117,6 +169,7 @@ public class UIManager : MonoBehaviour
         _cancelAction = _uiActionMap.FindAction("Cancel");
         _openSettingsAction = _uiActionMap.FindAction("OpenSettings");
         _openStatisticsAction = _uiActionMap.FindAction("OpenStatistics");
+        _tabAction = _uiActionMap.FindAction("Tab");
 
         // Проверяем что основные действия найдены
         if (_navigateAction == null) Debug.LogError("Navigate action not found!");
@@ -126,6 +179,7 @@ public class UIManager : MonoBehaviour
         // Новые действия опциональны, но логируем если не найдены
         if (_openSettingsAction == null) Debug.LogWarning("OpenSettings action not found!");
         if (_openStatisticsAction == null) Debug.LogWarning("OpenStatistics action not found!");
+        if (_tabAction == null) Debug.LogWarning("Tab action not found!");
 
         SubscribeToInputEvents();
     }
@@ -141,6 +195,9 @@ public class UIManager : MonoBehaviour
 
         if (_submitAction != null)
             _submitAction.performed += OnSubmitPerformed;
+
+        if (_tabAction != null)
+            _tabAction.performed += OnTabPerformed;
 
         // Новые быстрые действия
         if (_openSettingsAction != null)
@@ -169,6 +226,7 @@ public class UIManager : MonoBehaviour
         if (_cancelAction != null) _cancelAction.performed -= OnCancelPerformed;
         if (_navigateAction != null) _navigateAction.performed -= OnNavigatePerformed;
         if (_submitAction != null) _submitAction.performed -= OnSubmitPerformed;
+        if (_tabAction != null) _tabAction.performed -= OnTabPerformed;
         if (_openSettingsAction != null) _openSettingsAction.performed -= OnOpenSettingsPerformed;
         if (_openStatisticsAction != null) _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
     }
@@ -179,13 +237,13 @@ public class UIManager : MonoBehaviour
 
     private void OnCancelPerformed(InputAction.CallbackContext context)
     {
-        if (!context.performed) return;
+        if (!context.performed || _isTextFieldFocused) return;
         HandleEscapeKey();
     }
 
     private void OnNavigatePerformed(InputAction.CallbackContext context)
     {
-        if (_isSettingFocus) return;
+        if (_isSettingFocus || _isTextFieldFocused) return;
 
         Vector2 direction = context.ReadValue<Vector2>();
         
@@ -199,13 +257,23 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private void OnTabPerformed(InputAction.CallbackContext context)
+    {
+        if (!context.performed || _isTextFieldFocused) return;
+        
+        NavigateUI(1); // Tab перемещает вперед
+    }
+
     private void OnSubmitPerformed(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
 
-        if (_currentlyFocusedButton != null && _currentlyFocusedButton.enabledSelf)
+        // Если текстовое поле в фокусе, не обрабатываем Submit
+        if (_isTextFieldFocused) return;
+
+        if (_currentlyFocusedElement is Button focusedButton && focusedButton.enabledSelf)
         {
-            string buttonName = _currentlyFocusedButton.name;
+            string buttonName = focusedButton.name;
             
             switch (buttonName)
             {
@@ -222,7 +290,7 @@ public class UIManager : MonoBehaviour
                     OnQuit();
                     break;
                 default:
-                    SimulateButtonClick(_currentlyFocusedButton);
+                    SimulateButtonClick(focusedButton);
                     break;
             }
         }
@@ -231,7 +299,7 @@ public class UIManager : MonoBehaviour
     // Новые обработчики для быстрых действий
     private void OnOpenSettingsPerformed(InputAction.CallbackContext context)
     {
-        if (!context.performed) return;
+        if (!context.performed || _isTextFieldFocused) return;
         
         Debug.Log("OpenSettings action triggered");
         // Здесь можно добавить открытие экрана настроек
@@ -240,7 +308,7 @@ public class UIManager : MonoBehaviour
 
     private void OnOpenStatisticsPerformed(InputAction.CallbackContext context)
     {
-        if (!context.performed) return;
+        if (!context.performed || _isTextFieldFocused) return;
         
         Debug.Log("OpenStatistics action triggered");
         OnStatistics(); // Используем существующий метод
@@ -280,22 +348,17 @@ public class UIManager : MonoBehaviour
 
     private void NavigateUI(int direction)
     {
-        var interactiveElements = _root.Query<Button>().Where(btn => 
-            btn.resolvedStyle.display == DisplayStyle.Flex && 
-            btn.enabledSelf &&
-            btn.visible &&
-            btn.focusable).ToList();
-
+        var interactiveElements = GetInteractiveElements();
         if (interactiveElements.Count == 0) return;
 
-        int currentIndex = _currentlyFocusedButton != null ? 
-            interactiveElements.IndexOf(_currentlyFocusedButton) : -1;
+        int currentIndex = _currentlyFocusedElement != null ? 
+            interactiveElements.IndexOf(_currentlyFocusedElement) : -1;
 
         int newIndex = currentIndex + direction;
         if (newIndex < 0) newIndex = interactiveElements.Count - 1;
         if (newIndex >= interactiveElements.Count) newIndex = 0;
 
-        SetFocusToButton(interactiveElements[newIndex]);
+        SetFocusToElement(interactiveElements[newIndex]);
     }
 
     private void NavigateHorizontal(int direction)
@@ -303,27 +366,71 @@ public class UIManager : MonoBehaviour
         // Логика для горизонтальной навигации
     }
 
-    private void SetFocusToButton(Button button)
+    private List<VisualElement> GetInteractiveElements()
     {
-        if (_isSettingFocus || button == null) return;
+        var elements = new List<VisualElement>();
+        
+        // Добавляем кнопки
+        elements.AddRange(_root.Query<Button>().Where(btn => 
+            btn.resolvedStyle.display == DisplayStyle.Flex && 
+            btn.enabledSelf &&
+            btn.visible &&
+            btn.focusable).ToList());
+        
+        // Добавляем текстовые поля
+        elements.AddRange(_root.Query<TextField>().Where(tf => 
+            tf.resolvedStyle.display == DisplayStyle.Flex && 
+            tf.enabledSelf &&
+            tf.visible &&
+            tf.focusable).ToList());
+        
+        // Добавляем радио-кнопки
+        elements.AddRange(_root.Query<RadioButton>().Where(rb => 
+            rb.resolvedStyle.display == DisplayStyle.Flex && 
+            rb.enabledSelf &&
+            rb.visible &&
+            rb.focusable).ToList());
+
+        return elements;
+    }
+
+    private void SetFocusToElement(VisualElement element)
+    {
+        if (_isSettingFocus || element == null) return;
 
         _isSettingFocus = true;
 
         try
         {
-            if (_currentlyFocusedButton != null && _currentlyFocusedButton != button)
+            if (_currentlyFocusedElement != null && _currentlyFocusedElement != element)
             {
-                _currentlyFocusedButton.Blur();
-                _currentlyFocusedButton.RemoveFromClassList("focused");
+                _currentlyFocusedElement.Blur();
+                _currentlyFocusedElement.RemoveFromClassList("focused");
+                
+                // Если был текстовый элемент, снимаем флаг
+                if (_currentlyFocusedElement is TextField)
+                {
+                    _isTextFieldFocused = false;
+                }
             }
 
-            _currentlyFocusedButton = button;
+            _currentlyFocusedElement = element;
             
-            if (!_currentlyFocusedButton.focusable)
-                _currentlyFocusedButton.focusable = true;
+            if (!_currentlyFocusedElement.focusable)
+                _currentlyFocusedElement.focusable = true;
                 
-            _currentlyFocusedButton.Focus();
-            _currentlyFocusedButton.AddToClassList("focused");
+            _currentlyFocusedElement.Focus();
+            _currentlyFocusedElement.AddToClassList("focused");
+            
+            // Устанавливаем флаг если элемент - текстовое поле
+            if (_currentlyFocusedElement is TextField textField)
+            {
+                _isTextFieldFocused = true;
+                // Убедимся что текст видимый
+                textField.Q<TextElement>().style.color = Color.white;
+            }
+            
+            Debug.Log($"Focused on: {element.name} (Type: {element.GetType().Name})");
         }
         finally
         {
@@ -353,12 +460,24 @@ public class UIManager : MonoBehaviour
         _radioOpen = _root.Q<RadioButton>("radioOpen");
         _radioClosed = _root.Q<RadioButton>("radioClosed");
 
+        // Находим текстовые поля
+        _createLobbyName = _root.Q<TextField>("createLobbyName");
+        _lobbyPassword = _root.Q<TextField>("lobbyPassword");
+        // Находим кнопку переключения
+        _togglePasswordBtn = _root.Q<Button>("togglePasswordVisibility");
+        if (_togglePasswordBtn != null)
+        {
+            _togglePasswordBtn.clicked += TogglePasswordVisibility;
+            UpdatePasswordEyeIcon();
+        }
+
         // Находим элементы выбора персонажа
         _charVacuum = _root.Q<VisualElement>("charVacuum");
         _charToaster = _root.Q<VisualElement>("charToaster");
         _charGPT = _root.Q<VisualElement>("charGPT");
 
         SetupButtonCallbacks();
+        SetupTextFields();
         SetupSliders();
         SetupWaveRadioButtons();
         SetupLobbyRadioButtons();
@@ -368,14 +487,112 @@ public class UIManager : MonoBehaviour
         StartCoroutine(SetInitialFocus());
     }
 
+    private void TogglePasswordVisibility()
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        _lobbyPassword.isPasswordField = !_isPasswordVisible;
+        UpdatePasswordEyeIcon();
+
+        // Возвращаем фокус на поле
+        if (_lobbyPassword.focusController.focusedElement == _lobbyPassword)
+        {
+            _lobbyPassword.Focus();
+        }
+    }
+
+    private void UpdatePasswordEyeIcon()
+    {
+        if (_togglePasswordBtn == null) return;
+
+        if (_isPasswordVisible)
+        {
+            _togglePasswordBtn.RemoveFromClassList("show-password");
+            _togglePasswordBtn.AddToClassList("show-password");
+        }
+        else
+        {
+            _togglePasswordBtn.RemoveFromClassList("show-password");
+        }
+    }
+
+    private void SetupTextFields()
+    {
+        if (_createLobbyName != null)
+        {
+            _createLobbyName.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_createLobbyName, true));
+            _createLobbyName.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_createLobbyName, false));
+
+            DebugTextFieldState(_createLobbyName, "lobbyName");
+            
+            _createLobbyName.style.color = new StyleColor(Color.white);
+            _createLobbyName.style.opacity = 1f;
+            
+            var textInput = _createLobbyName.Q(className: "unity-base-text-field__input");
+            if (textInput != null)
+            {
+                textInput.style.color = new StyleColor(Color.white);
+                textInput.style.opacity = 1f;
+                textInput.style.backgroundColor = new StyleColor(Color.clear);
+            }
+            
+            // _createLobbyName.value = "Сосиски в тесте";
+        }
+
+        if (_lobbyPassword != null)
+        {
+            _lobbyPassword.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_lobbyPassword, true));
+            _lobbyPassword.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_lobbyPassword, false));
+            
+            DebugTextFieldState(_lobbyPassword, "lobbyPassword");
+            
+            _lobbyPassword.style.color = new StyleColor(Color.white);
+            _lobbyPassword.style.opacity = 1f;
+            
+            var textInput = _lobbyPassword.Q(className: "unity-base-text-field__input");
+            if (textInput != null)
+            {
+                textInput.style.color = new StyleColor(Color.white);
+                textInput.style.opacity = 1f;
+                textInput.style.backgroundColor = new StyleColor(Color.clear);
+            }
+            
+            // _lobbyPassword.value = "testpass";
+        }
+    }
+
+    private void OnTextFieldFocus(TextField textField, bool focused)
+    {
+        _isTextFieldFocused = focused;
+        
+        if (focused)
+        {
+            _currentlyFocusedElement = textField;
+            
+            // Убедимся что текст видимый при фокусе
+            var textElement = textField.Q<TextElement>();
+            if (textElement != null)
+            {
+                textElement.style.color = Color.white;
+            }
+        }
+        else
+        {
+            // При потере фокуса возвращаем навигацию
+            if (_currentlyFocusedElement == textField)
+            {
+                _currentlyFocusedElement = null;
+            }
+        }
+    }
+
     private IEnumerator SetInitialFocus()
     {
         yield return null;
         
-        var firstButton = _root.Q<Button>();
-        if (firstButton != null && firstButton.enabledSelf && firstButton.visible)
+        var interactiveElements = GetInteractiveElements();
+        if (interactiveElements.Count > 0)
         {
-            SetFocusToButton(firstButton);
+            SetFocusToElement(interactiveElements[0]);
         }
     }
 
@@ -474,6 +691,7 @@ public class UIManager : MonoBehaviour
                 if (evt.newValue)
                 {
                     _radioClosed.SetValueWithoutNotify(false);
+                    _lobbyPassword.parent.style.display = DisplayStyle.None;
                 }
                 else if (!_radioClosed.value)
                 {
@@ -486,6 +704,7 @@ public class UIManager : MonoBehaviour
                 if (evt.newValue)
                 {
                     _radioOpen.SetValueWithoutNotify(false);
+                    _lobbyPassword.parent.style.display = DisplayStyle.Flex;
                 }
                 else if (!_radioOpen.value)
                 {
@@ -495,6 +714,7 @@ public class UIManager : MonoBehaviour
 
             _radioOpen.value = true;
             _radioClosed.value = false;
+            _lobbyPassword.parent.style.display = _radioOpen.value ? DisplayStyle.None : DisplayStyle.Flex;
         }
     }
 
@@ -548,7 +768,8 @@ public class UIManager : MonoBehaviour
         }
 
         _currentScreen = screenName;
-        _currentlyFocusedButton = null;
+        _currentlyFocusedElement = null;
+        _isTextFieldFocused = false;
         StartCoroutine(SetInitialFocus());
         Debug.Log($"Showing screen: {screenName}");
     }

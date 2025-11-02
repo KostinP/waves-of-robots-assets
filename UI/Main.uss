@@ -541,3 +541,8 @@ RadioButton .unity-radio-button__text {
     background-color: transparent;
     border-color: rgba(187, 134, 252, 0.4);
 }
+
+.focused {
+    border-color: #ffff00;
+    background-color: rgba(255, 255, 0, 0.1);
+}

@@ -20,11 +20,13 @@ public class UIManager : MonoBehaviour
     private InputAction _navigateAction;
     private InputAction _submitAction;
     private InputAction _cancelAction;
+    private InputAction _openSettingsAction;
+    private InputAction _openStatisticsAction;
 
     // UI State
     private string _currentScreen = "screen_main";
     private Button _currentlyFocusedButton;
-    private bool _isSettingFocus = false; // Флаг для предотвращения рекурсии
+    private bool _isSettingFocus = false;
 
     // UI Elements
     private Slider _playerCountSlider;
@@ -62,7 +64,6 @@ public class UIManager : MonoBehaviour
                 return;
             }
 
-            // Принудительно показываем UI
             _root.style.display = DisplayStyle.Flex;
 
             InitializeUI();
@@ -102,7 +103,6 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        // Получаем карту действий для UI
         _uiActionMap = inputActions.FindActionMap("UI");
         
         if (_uiActionMap == null)
@@ -111,40 +111,49 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        // Находим конкретные действия
+        // Находим все действия
         _navigateAction = _uiActionMap.FindAction("Navigate");
         _submitAction = _uiActionMap.FindAction("Submit");
         _cancelAction = _uiActionMap.FindAction("Cancel");
+        _openSettingsAction = _uiActionMap.FindAction("OpenSettings");
+        _openStatisticsAction = _uiActionMap.FindAction("OpenStatistics");
 
-        // Проверяем что все действия найдены
+        // Проверяем что основные действия найдены
         if (_navigateAction == null) Debug.LogError("Navigate action not found!");
         if (_submitAction == null) Debug.LogError("Submit action not found!");
         if (_cancelAction == null) Debug.LogError("Cancel action not found!");
 
-        // Подписываемся на события
+        // Новые действия опциональны, но логируем если не найдены
+        if (_openSettingsAction == null) Debug.LogWarning("OpenSettings action not found!");
+        if (_openStatisticsAction == null) Debug.LogWarning("OpenStatistics action not found!");
+
         SubscribeToInputEvents();
     }
 
     private void SubscribeToInputEvents()
     {
-        // Обработка Cancel (Escape)
+        // Основные действия UI
         if (_cancelAction != null)
             _cancelAction.performed += OnCancelPerformed;
 
-        // Обработка навигации (клавиши/геймпад)
         if (_navigateAction != null)
             _navigateAction.performed += OnNavigatePerformed;
 
-        // Обработка подтверждения (Enter/кнопка геймпада)
         if (_submitAction != null)
             _submitAction.performed += OnSubmitPerformed;
+
+        // Новые быстрые действия
+        if (_openSettingsAction != null)
+            _openSettingsAction.performed += OnOpenSettingsPerformed;
+
+        if (_openStatisticsAction != null)
+            _openStatisticsAction.performed += OnOpenStatisticsPerformed;
     }
 
     private void EnableInputSystem()
     {
         if (inputActions == null) return;
 
-        // Отключаем все карты действий и включаем только UI
         inputActions.Disable();
         _uiActionMap?.Enable();
     }
@@ -160,6 +169,8 @@ public class UIManager : MonoBehaviour
         if (_cancelAction != null) _cancelAction.performed -= OnCancelPerformed;
         if (_navigateAction != null) _navigateAction.performed -= OnNavigatePerformed;
         if (_submitAction != null) _submitAction.performed -= OnSubmitPerformed;
+        if (_openSettingsAction != null) _openSettingsAction.performed -= OnOpenSettingsPerformed;
+        if (_openStatisticsAction != null) _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
     }
 
     #endregion
@@ -174,19 +185,16 @@ public class UIManager : MonoBehaviour
 
     private void OnNavigatePerformed(InputAction.CallbackContext context)
     {
-        if (_isSettingFocus) return; // Игнорируем навигацию во время установки фокуса
+        if (_isSettingFocus) return;
 
-        // Навигация по UI с помощью клавиатуры/геймпада
         Vector2 direction = context.ReadValue<Vector2>();
         
         if (Mathf.Abs(direction.y) > 0.1f)
         {
-            // Навигация вверх/вниз
             NavigateUI(Mathf.RoundToInt(-direction.y));
         }
         else if (Mathf.Abs(direction.x) > 0.1f)
         {
-            // Навигация влево/вправо (для радио-кнопок и других горизонтальных элементов)
             NavigateHorizontal(Mathf.RoundToInt(direction.x));
         }
     }
@@ -195,10 +203,8 @@ public class UIManager : MonoBehaviour
     {
         if (!context.performed) return;
 
-        // Активируем текущую выбранную кнопку
         if (_currentlyFocusedButton != null && _currentlyFocusedButton.enabledSelf)
         {
-            // Определяем какая кнопка сейчас в фокусе и вызываем соответствующий метод
             string buttonName = _currentlyFocusedButton.name;
             
             switch (buttonName)
@@ -216,16 +222,32 @@ public class UIManager : MonoBehaviour
                     OnQuit();
                     break;
                 default:
-                    // Для неизвестных кнопок просто симулируем клик через событие
                     SimulateButtonClick(_currentlyFocusedButton);
                     break;
             }
         }
     }
 
+    // Новые обработчики для быстрых действий
+    private void OnOpenSettingsPerformed(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+        
+        Debug.Log("OpenSettings action triggered");
+        // Здесь можно добавить открытие экрана настроек
+        // ShowScreen("screen_settings");
+    }
+
+    private void OnOpenStatisticsPerformed(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+        
+        Debug.Log("OpenStatistics action triggered");
+        OnStatistics(); // Используем существующий метод
+    }
+
     private void SimulateButtonClick(Button button)
     {
-        // Создаем и отправляем событие клика
         using (var clickEvent = NavigationSubmitEvent.GetPooled())
         {
             clickEvent.target = button;
@@ -238,18 +260,15 @@ public class UIManager : MonoBehaviour
         switch (_currentScreen)
         {
             case "screen_lobby":
-                // Возвращаемся в главное меню из лобби
                 ReturnToMainMenu();
                 Debug.Log("Returned to main menu from lobby");
                 break;
             
             case "screen_main":
-                // В главном меню - выходим из игры
                 StartCoroutine(QuitWithConfirmation());
                 break;
             
             default:
-                // Для других экранов - возвращаемся в главное меню
                 ReturnToMainMenu();
                 break;
         }
@@ -261,7 +280,6 @@ public class UIManager : MonoBehaviour
 
     private void NavigateUI(int direction)
     {
-        // Получаем все интерактивные элементы на текущем экране
         var interactiveElements = _root.Query<Button>().Where(btn => 
             btn.resolvedStyle.display == DisplayStyle.Flex && 
             btn.enabledSelf &&
@@ -270,23 +288,19 @@ public class UIManager : MonoBehaviour
 
         if (interactiveElements.Count == 0) return;
 
-        // Находим текущий индекс
         int currentIndex = _currentlyFocusedButton != null ? 
             interactiveElements.IndexOf(_currentlyFocusedButton) : -1;
 
-        // Вычисляем новый индекс
         int newIndex = currentIndex + direction;
         if (newIndex < 0) newIndex = interactiveElements.Count - 1;
         if (newIndex >= interactiveElements.Count) newIndex = 0;
 
-        // Обновляем фокус
         SetFocusToButton(interactiveElements[newIndex]);
     }
 
     private void NavigateHorizontal(int direction)
     {
-        // Можно добавить логику для горизонтальной навигации
-        // между радио-кнопками или другими элементами
+        // Логика для горизонтальной навигации
     }
 
     private void SetFocusToButton(Button button)
@@ -297,17 +311,14 @@ public class UIManager : MonoBehaviour
 
         try
         {
-            // Убираем фокус с предыдущей кнопки
             if (_currentlyFocusedButton != null && _currentlyFocusedButton != button)
             {
                 _currentlyFocusedButton.Blur();
                 _currentlyFocusedButton.RemoveFromClassList("focused");
             }
 
-            // Устанавливаем фокус на новую кнопку
             _currentlyFocusedButton = button;
             
-            // Убедимся что кнопка может получать фокус
             if (!_currentlyFocusedButton.focusable)
                 _currentlyFocusedButton.focusable = true;
                 
@@ -347,29 +358,18 @@ public class UIManager : MonoBehaviour
         _charToaster = _root.Q<VisualElement>("charToaster");
         _charGPT = _root.Q<VisualElement>("charGPT");
 
-        // Добавляем обработчики кнопок
         SetupButtonCallbacks();
-
-        // Настраиваем слайдеры
         SetupSliders();
-
-        // Настраиваем радио-кнопки
         SetupWaveRadioButtons();
         SetupLobbyRadioButtons();
-
-        // Настраиваем выбор персонажа
         SetupCharacterSelection();
 
-        // Показываем главный экран
         ShowScreen("screen_main");
-
-        // Устанавливаем начальный фокус
         StartCoroutine(SetInitialFocus());
     }
 
     private IEnumerator SetInitialFocus()
     {
-        // Ждем один кадр чтобы UI полностью инициализировался
         yield return null;
         
         var firstButton = _root.Q<Button>();
@@ -386,34 +386,20 @@ public class UIManager : MonoBehaviour
         var btnStatistics = _root.Q<Button>("btnStatistics");
         var btnQuit = _root.Q<Button>("btnQuit");
 
-        if (btnSingle != null) 
-        {
-            btnSingle.clicked += OnSinglePlayer;
-        }
-        if (btnCreateLobby != null) 
-        {
-            btnCreateLobby.clicked += OnCreateLobby;
-        }
-        if (btnStatistics != null) 
-        {
-            btnStatistics.clicked += OnStatistics;
-        }
-        if (btnQuit != null) 
-        {
-            btnQuit.clicked += OnQuit;
-        }
+        if (btnSingle != null) btnSingle.clicked += OnSinglePlayer;
+        if (btnCreateLobby != null) btnCreateLobby.clicked += OnCreateLobby;
+        if (btnStatistics != null) btnStatistics.clicked += OnStatistics;
+        if (btnQuit != null) btnQuit.clicked += OnQuit;
     }
 
     private void SetupSliders()
     {
-        // Настраиваем слайдер количества игроков
         if (_playerCountSlider != null && _playerCountValue != null)
         {
             _playerCountSlider.RegisterValueChangedCallback(OnPlayerCountChanged);
             UpdatePlayerCountValue(_playerCountSlider.value);
         }
 
-        // Настраиваем слайдер количества волн с шагом 10
         if (_waveCountSlider != null && _waveCountValue != null)
         {
             _waveCountSlider.lowValue = 10;
@@ -422,7 +408,6 @@ public class UIManager : MonoBehaviour
 
             _waveCountSlider.RegisterValueChangedCallback(evt =>
             {
-                // Округляем значение до ближайшего шага 10
                 float roundedValue = Mathf.Round(evt.newValue / 10f) * 10f;
                 if (Mathf.Abs(roundedValue - evt.newValue) > 0.1f)
                 {
@@ -439,11 +424,9 @@ public class UIManager : MonoBehaviour
     {
         if (_waveCountRadio != null && _infinityRadio != null)
         {
-            // Сбрасываем все значения
             _waveCountRadio.SetValueWithoutNotify(false);
             _infinityRadio.SetValueWithoutNotify(false);
 
-            // Устанавливаем независимые обработчики для группы волн
             _waveCountRadio.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
@@ -454,7 +437,6 @@ public class UIManager : MonoBehaviour
                 }
                 else if (!_infinityRadio.value)
                 {
-                    // Если ни одна не выбрана, принудительно выбираем волны
                     _waveCountRadio.SetValueWithoutNotify(true);
                 }
             });
@@ -469,12 +451,10 @@ public class UIManager : MonoBehaviour
                 }
                 else if (!_waveCountRadio.value)
                 {
-                    // Если ни одна не выбрана, принудительно выбираем бесконечность
                     _infinityRadio.SetValueWithoutNotify(true);
                 }
             });
 
-            // По умолчанию выбираем волны
             _waveCountRadio.value = true;
             _infinityRadio.value = false;
             if (_waveCountSlider != null)
@@ -486,11 +466,9 @@ public class UIManager : MonoBehaviour
     {
         if (_radioOpen != null && _radioClosed != null)
         {
-            // Сбрасываем все значения
             _radioOpen.SetValueWithoutNotify(false);
             _radioClosed.SetValueWithoutNotify(false);
 
-            // Устанавливаем независимые обработчики для группы лобби
             _radioOpen.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
@@ -499,7 +477,6 @@ public class UIManager : MonoBehaviour
                 }
                 else if (!_radioClosed.value)
                 {
-                    // Если ни одна не выбрана, принудительно выбираем открытое
                     _radioOpen.SetValueWithoutNotify(true);
                 }
             });
@@ -512,12 +489,10 @@ public class UIManager : MonoBehaviour
                 }
                 else if (!_radioOpen.value)
                 {
-                    // Если ни одна не выбрана, принудительно выбираем закрытое
                     _radioClosed.SetValueWithoutNotify(true);
                 }
             });
 
-            // По умолчанию выбираем открытое лобби
             _radioOpen.value = true;
             _radioClosed.value = false;
         }
@@ -527,24 +502,19 @@ public class UIManager : MonoBehaviour
     {
         if (_charVacuum != null)
             _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
-
         if (_charToaster != null)
             _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
-
         if (_charGPT != null)
             _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
     }
 
     private void SelectCharacter(VisualElement selectedCharacter)
     {
-        // Убираем selected у всех персонажей
         if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
         if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
         if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
 
-        // Добавляем selected выбранному персонажу
         selectedCharacter.AddToClassList("selected");
-
         Debug.Log($"Selected character: {selectedCharacter.name}");
     }
 
@@ -578,13 +548,8 @@ public class UIManager : MonoBehaviour
         }
 
         _currentScreen = screenName;
-        
-        // Сбрасываем фокус при смене экрана
         _currentlyFocusedButton = null;
-        
-        // Устанавливаем фокус на первую кнопку нового экрана
         StartCoroutine(SetInitialFocus());
-        
         Debug.Log($"Showing screen: {screenName}");
     }
 
@@ -595,7 +560,6 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator QuitWithConfirmation()
     {
-        // Можно добавить диалог подтверждения
         Debug.Log("Quitting application...");
         yield return new WaitForSeconds(0.1f);
         
@@ -612,7 +576,6 @@ public class UIManager : MonoBehaviour
     private void OnSinglePlayer()
     {
         Debug.Log("Starting single player...");
-        // Переключаемся на Player Action Map для игрового процесса
         SwitchToPlayerInput();
         ShowScreen("screen_main");
     }
@@ -627,6 +590,7 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log("Opening statistics...");
         // Здесь можно добавить логику для статистики
+        // ShowScreen("screen_statistics");
     }
 
     private void OnQuit()
@@ -642,7 +606,6 @@ public class UIManager : MonoBehaviour
     {
         if (inputActions == null) return;
 
-        // Отключаем UI Input и включаем Player Input
         _uiActionMap?.Disable();
         var playerActionMap = inputActions.FindActionMap("Player");
         playerActionMap?.Enable();
@@ -653,7 +616,6 @@ public class UIManager : MonoBehaviour
     {
         if (inputActions == null) return;
 
-        // Отключаем Player Input и включаем UI Input
         var playerActionMap = inputActions.FindActionMap("Player");
         playerActionMap?.Disable();
         _uiActionMap?.Enable();

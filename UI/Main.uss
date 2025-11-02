@@ -501,8 +501,11 @@
 }
 
 /* Прозрачный фон для текстовых полей */
-.transparent-bg {
-    background-color: transparent;
+.text-input.transparent-bg,
+.text-input.transparent-bg .unity-base-text-field__input,
+.password-input.transparent-bg,
+.password-input.transparent-bg .unity-base-text-field__input {
+    background-color: transparent !important;
 }
 
 /* Стили для RadioButton */

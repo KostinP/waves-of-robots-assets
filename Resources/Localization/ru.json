@@ -20,7 +20,7 @@
   "player_count": "Количество игроков",
   "type": "Тип",
   "lobby_type": "Тип лобби",
-  "enter_name": "Название лобби",
+  "enter_name": "Введите название",
   "open": "Открытое",
   "closed": "Закрытое",
   "enter_password": "Введите пароль",
@@ -29,7 +29,15 @@
   "combat_toaster": "Боевой тостер",
   "gpt_coffee": "ChatGPT на кофеине",
   "wave_count": "Количество волн",
+  "bot_count": "Количество ботов",
   "infinity": "Бесконечность",
   "close": "Закрыть",
-  "settings": "Настройки"
+  "settings": "Настройки",
+  "players_header": "Игроки",
+  "player_name": "Игроки",
+  "weapon": "Оружие",
+  "ping": "Пинг",
+  "kick": "Выгнать",
+  "lobby_settings": "Настройки лобби",
+  "disband_lobby": "Распустить лобби"
 }

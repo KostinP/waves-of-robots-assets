@@ -1,3 +1,6 @@
+/* =========================================================
+   🌌 ОСНОВНАЯ СЦЕНА И КОМПОНОВКА
+   ========================================================= */
 .root {
     width: 100%;
     height: 100%;
@@ -8,7 +11,6 @@
 .background {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    /* Fixed background image reference from robohand.png to bg.png */
     background-image: resource("bg");
     -unity-background-scale-mode: scale-and-crop;
     opacity: 1;
@@ -22,7 +24,9 @@
     height: 100%;
 }
 
-/* Updated logo container for better positioning */
+/* =========================================================
+   🚀 ГЛАВНЫЙ ЭКРАН — ЛОГОТИП, ТИТУЛ, МЕНЮ
+   ========================================================= */
 .logo-container {
     margin-bottom: 60px;
     align-items: center;
@@ -34,7 +38,6 @@
     -unity-background-scale-mode: scale-to-fit;
 }
 
-/* Updated title styling to match "waves of ROBOTS" design */
 .title {
     font-size: 72px;
     color: white;
@@ -54,7 +57,9 @@
     display: none;
 }
 
-/* Updated button styling to match reference design */
+/* =========================================================
+   🎮 КНОПКИ МЕНЮ
+   ========================================================= */
 .menu-button {
     width: 380px;
     height: 50px;
@@ -68,14 +73,11 @@
     -unity-text-align: middle-center;
 }
 
-/* Enhanced hover state with purple border */
 .menu-button:hover {
     background-color: rgba(40, 40, 50, 0.85);
     border-color: rgba(200, 100, 255, 0.8);
-    border-width: 2px;
 }
 
-/* Специфичные стили для кнопок с фокусом */
 .menu-button.focused {
     border-color: #ffff00 !important;
     background-color: rgba(255, 255, 0, 0.1) !important;
@@ -87,6 +89,9 @@
     font-size: 18px;
 }
 
+/* =========================================================
+   📜 ТЕКСТЫ И ЛИСТЫ
+   ========================================================= */
 .subtitle {
     font-size: 28px;
     font-weight: bold;
@@ -112,7 +117,9 @@
     -unity-text-align: middle-center;
 }
 
-/* Network game screen title */
+/* =========================================================
+   🌐 ЭКРАН СЕТЕВОЙ ИГРЫ
+   ========================================================= */
 .network-title {
     font-size: 48px;
     color: white;
@@ -131,7 +138,9 @@
     gap: 0;
 }
 
-/* Two-panel layout container */
+/* =========================================================
+   🧩 ПАНЕЛИ ЛОББИ (Брауз / Создание)
+   ========================================================= */
 .panels-container {
     flex: 1;
     flex-direction: row;
@@ -139,43 +148,32 @@
     align-items: stretch;
     gap: 40px;
     width: 100%;
-    padding: 80px 60px 100px 60px; /* Уменьшаем отступы */
+    padding: 80px 60px 100px 60px;
     margin: 0;
-    min-height: 0; /* Важно для flex-контейнеров */
+    min-height: 0;
 }
 
-/* Делаем панели адаптивными по высоте */
 .panel {
     background-color: rgba(20, 15, 25, 0.85);
     border-width: 3px;
     border-color: #bb86fc;
     border-radius: 12px;
-    padding: 0;
     display: flex;
     flex-direction: column;
-    min-height: 400px; /* Минимальная высота */
+    min-height: 400px;
 }
 
-/* Контент панелей должен занимать все доступное пространство */
 .panel-content {
     padding: 0 20px 20px 20px;
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0; /* Важно для flex-контейнеров */
+    min-height: 0;
 }
 
-/* Left panel - Browse lobbies */
-.panel-browse {
-    flex: 1.2;
-}
+.panel-browse { flex: 1.2; }
+.panel-create { flex: 1; }
 
-/* Right panel - Create lobby */
-.panel-create {
-    flex: 1;
-}
-
-/* Panel header with angled corners */
 .panel-header {
     background-color: #bb86fc;
     height: 40px;
@@ -193,7 +191,9 @@
     -unity-text-align: middle-center;
 }
 
-/* Lobby list styles */
+/* =========================================================
+   📋 СПИСОК ЛОББИ
+   ========================================================= */
 .lobby-list-header {
     flex-direction: row;
     justify-content: space-between;
@@ -206,10 +206,8 @@
 .lobby-list-header-text {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.6);
-    -unity-font-style: normal;
 }
 
-/* Исправляем высоту списка лобби */
 .lobby-list-scroll {
     flex: 1;
     min-height: 200px;
@@ -239,19 +237,15 @@
     flex-grow: 1;
 }
 
-.lobby-players {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    width: 80px;
-    -unity-text-align: middle-center;
-}
-
+.lobby-players,
 .lobby-type {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.8);
-    width: 120px;
     -unity-text-align: middle-center;
 }
+
+.lobby-players { width: 80px; }
+.lobby-type { width: 120px; }
 
 .lobby-join-btn {
     width: 32px;
@@ -266,7 +260,9 @@
     background-color: rgba(187, 134, 252, 0.6);
 }
 
-/* Create lobby form styles */
+/* =========================================================
+   🏗️ СОЗДАНИЕ ЛОББИ — ФОРМЫ, ПОЛЯ, ПЕРСОНАЖИ
+   ========================================================= */
 .form-section {
     margin-bottom: 20px;
 }
@@ -282,54 +278,27 @@
     align-self: flex-start;
 }
 
-.radio-group {
-    flex-direction: column;
-    gap: 8px;
-}
-
-.radio-item {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-}
+/* === Радио-группы === */
+.radio-group { flex-direction: column; gap: 8px; }
+.radio-item { flex-direction: row; align-items: center; gap: 8px; }
 
 .radio-button {
-    width: 16px;
-    height: 16px;
+    width: 16px; height: 16px;
     border-radius: 8px;
     border-width: 2px;
     border-color: rgba(255, 255, 255, 0.4);
     background-color: transparent;
 }
-
 .radio-button.selected {
     background-color: #bb86fc;
     border-color: #bb86fc;
 }
+.radio-label { font-size: 14px; color: white; }
 
-.radio-label {
-    font-size: 14px;
-    color: white;
-}
-
-/* Slider styles */
-.slider-container {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-}
-
-.slider-label {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    width: 20px;
-}
-
-.slider {
-    flex-grow: 1;
-    height: 20px;
-}
-
+/* === Слайдер === */
+.slider-container { flex-direction: row; align-items: center; gap: 12px; }
+.slider-label { font-size: 14px; color: rgba(255, 255, 255, 0.6); width: 20px; }
+.slider { flex-grow: 1; height: 20px; }
 .slider-value {
     font-size: 16px;
     color: white;
@@ -338,16 +307,11 @@
     -unity-text-align: middle-center;
 }
 
-/* Character selection */
-.character-grid {
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 12px;
-}
+/* === Выбор персонажа === */
+.character-grid { flex-direction: row; justify-content: space-between; gap: 12px; }
 
 .character-card {
-    width: 120px;
-    height: 100px;
+    width: 120px; height: 100px;
     background-color: rgba(0, 0, 0, 0.4);
     border-width: 2px;
     border-color: rgba(255, 255, 255, 0.2);
@@ -356,12 +320,10 @@
     align-items: center;
     padding: 8px;
 }
-
 .character-card:hover {
     border-color: #bb86fc;
     background-color: rgba(40, 30, 50, 0.5);
 }
-
 .character-card.selected {
     border-color: #bb86fc;
     border-width: 3px;
@@ -373,7 +335,6 @@
     height: 60px;
     -unity-background-scale-mode: scale-to-fit;
 }
-
 .character-name {
     font-size: 11px;
     color: white;
@@ -381,12 +342,8 @@
     margin-top: 4px;
 }
 
-/* Bot count with infinity checkbox */
-.wave-slider-container {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-}
+/* === Количество ботов + чекбокс "Бесконечно" === */
+.wave-slider-container { flex-direction: row; align-items: center; gap: 12px; }
 
 .infinity-checkbox {
     flex-direction: row;
@@ -403,35 +360,31 @@
     border-radius: 3px;
     background-color: transparent;
 }
-
 .checkbox.checked {
     background-color: #bb86fc;
     border-color: #bb86fc;
 }
-
 .checkbox-label {
     font-size: 13px;
     color: white;
 }
 
-/* Create button */
+/* === Кнопка создания === */
 .create-button {
     width: 100%;
     height: 50px;
     background-color: #bb86fc;
-    border-width: 0;
     border-radius: 8px;
     font-size: 20px;
     color: white;
     -unity-font-style: bold;
     margin-top: 20px;
 }
+.create-button:hover { background-color: #d4a5ff; }
 
-.create-button:hover {
-    background-color: #d4a5ff;
-}
-
-/* Bottom shortcuts bar */
+/* =========================================================
+   ⌨️ НИЖНЯЯ ПАНЕЛЬ ГОРЯЧИХ КЛАВИШ
+   ========================================================= */
 .shortcuts-bar {
     position: absolute;
     bottom: 40px;
@@ -448,112 +401,90 @@
     padding: 0 40px;
 }
 
-.shortcut-item {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-}
-
+.shortcut-item { flex-direction: row; align-items: center; gap: 12px; }
 .shortcut-key {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     background-color: #bb86fc;
     border-radius: 6px;
     justify-content: center;
     align-items: center;
 }
-
 .shortcut-key-text {
     font-size: 18px;
     color: white;
     -unity-font-style: bold;
 }
+.shortcut-action { font-size: 16px; color: white; }
 
-.shortcut-action {
-    font-size: 16px;
-    color: white;
-}
-
-/* Желтое выделение для фокуса */
+/* =========================================================
+   ✨ ФОКУСЫ, ИНПУТЫ И ПАРОЛИ
+   ========================================================= */
 .focused {
     border-color: #ffff00 !important;
     background-color: rgba(255, 255, 0, 0.1) !important;
 }
 
-/* Стили для RadioButton с фокусом */
 RadioButton.focused .unity-radio-button__checkmark {
     border-color: #ffff00 !important;
 }
-
-/* Стили для слайдеров с фокусом */
 .slider.focused .unity-slider__tracker,
 .slider.focused .unity-slider__thumb {
     border-color: #ffff00 !important;
 }
 
-
-
-/* Стили для RadioButton */
+/* === Радио-кнопки === */
 RadioButton {
     flex-direction: row;
     align-items: center;
     gap: 8px;
 }
-
 RadioButton .unity-radio-button__checkmark {
     width: 16px;
     height: 16px;
     border-radius: 8px;
     border-width: 2px;
     border-color: rgba(255, 255, 255, 0.4);
-    background-color: transparent;
 }
-
 RadioButton:checked .unity-radio-button__checkmark {
     background-color: #bb86fc;
     border-color: #bb86fc;
 }
-
 RadioButton .unity-radio-button__text {
     font-size: 14px;
     color: white;
 }
 
+/* === Прозрачные текстовые поля === */
 .transparent-bg > .unity-text-input,
 .transparent-bg .unity-base-text-field__input {
     background: transparent !important;
-    --unity-colors-input_text: #ffffff !important;
     color: #ffffff !important;
     opacity: 1 !important;
 }
 
-/* РАМКИ — ЧТОБЫ ПОЛЕ БЫЛО ВИДНО */
+/* === Поля ввода (имя лобби, пароль) === */
 #createLobbyName,
 #lobbyPassword {
     border: 2px solid rgba(255,255,255,0.25) !important;
     border-radius: 8px !important;
 }
-
-/* ФОКУС — ЖЁЛТЫЙ */
 #createLobbyName.focused,
 #lobbyPassword.focused {
     border-color: #ffff00 !important;
     background-color: rgba(255,255,0,0.07) !important;
 }
 
-/* Обертка для пароля + кнопка-глаз */
+/* === Поле пароля с иконкой-глазом === */
 .password-wrapper {
     flex-direction: row;
     align-items: center;
     position: relative;
     width: 100%;
 }
-
 .password-wrapper > .password-input {
     flex: 1;
-    padding-right: 40px; /* место под глаз */
+    padding-right: 40px;
 }
-
 .password-toggle-btn {
     position: absolute;
     right: 8px;
@@ -565,40 +496,26 @@ RadioButton .unity-radio-button__text {
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0.7;
 }
-
-.password-toggle-btn:hover {
-    opacity: 1;
-}
-
-.password-toggle-btn.show-password {
-    background-image: resource("eye-open");
-}
-
+.password-toggle-btn:hover { opacity: 1; }
+.password-toggle-btn.show-password { background-image: resource("eye-open"); }
 .password-toggle-btn.focused {
     opacity: 1;
     outline: 2px solid #ffff00;
     outline-offset: 2px;
 }
 
-/* БОЛЬШОЙ ТЕКСТ ПАРОЛЯ */
+/* === Визуал пароля === */
 .password-input {
     font-size: 16px !important;
     height: 44px !important;
 }
-
-/* Видимый текст даже в режиме пароля */
 .password-input .unity-text-input {
-    -unity-text-overflow-position: middle;
     letter-spacing: 2px;
     color: white !important;
 }
-
-/* Когда пароль ВИДЕН — обычные буквы */
 .password-input.show-clear .unity-text-input {
     letter-spacing: normal;
 }
-
-/* Плейсхолдер тоже большой */
 .password-input .unity-base-text-field__placeholder {
     font-size: 14px !important;
     color: rgba(255,255,255,0.6) !important;

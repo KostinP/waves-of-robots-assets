@@ -29,7 +29,15 @@
   "combat_toaster": "Combat Toaster",
   "gpt_coffee": "ChatGPT on Caffeine",
   "wave_count": "Wave count",
+  "bot_count": "Bot count",
   "infinity": "Infinity",
   "close": "Close",
-  "settings": "Settings"
+  "settings": "Settings",
+  "players_header": "Players",
+  "player_name": "Players",
+  "weapon": "Weapon",
+  "ping": "Ping",
+  "kick": "Kick",
+  "lobby_settings": "Lobby Settings",
+  "disband_lobby": "Disband Lobby"
 }

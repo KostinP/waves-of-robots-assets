@@ -485,6 +485,11 @@ public class UIManager : MonoBehaviour
 
         ShowScreen("screen_main");
         StartCoroutine(SetInitialFocus());
+
+        if (_root.resolvedStyle.width < 1280)
+            _root.AddToClassList("small-screen");
+        else
+            _root.RemoveFromClassList("small-screen");
     }
 
     private void TogglePasswordVisibility()

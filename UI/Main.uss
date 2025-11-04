@@ -1,3 +1,79 @@
+/*
+// Размеры экранов:
+// 3840f — XXL (Extra Extra Large) или HUGE = 1x 1/1 = 30y
+// 2560f — XL (Extra Large) = 0.65x 1/1.5 = 20y
+// 1920f — LG (Large) = 0.5x 1/2 = 15y
+// 1280f — MD (Medium) = 0.35x 1/3 = 10y
+// 768f — SM (Small-Medium) или Medium = 0.2x 1/5 = 6y
+*/
+
+:root {
+    /* =========================================================
+                       🌌 ЦВЕТОВАЯ ПАЛИТРА
+    ========================================================= */
+    --color-white: white;
+    --color-primary: #bb86fc;
+    --color-accent: #ffff00;
+    --color-bg-dark: rgba(20, 20, 30, 0.7);
+    --color-bg-darker: rgba(20, 15, 25, 0.85);
+    
+    /* =========================================================
+                          🌌 СКРУГЛЕНИЯ
+    ========================================================= */
+    --border-radius-xxl: 30px 0px;
+    --border-radius-xl: 20px 0px;
+    --border-radius-lg: 15px 0px;
+    --border-radius-md: 10px 0px;
+    --border-radius-sm: 6px 0px;
+
+    /* =========================================================
+                       🌌 РАЗМЕРЫ ШРИФТОВ
+    ========================================================= */
+    /* xxl font (60px in figma *2) */
+    --font-size-xxl-xxl: 60px;
+    --font-size-xxl-xl: 40px;
+    --font-size-xxl-lg: 30px;
+    --font-size-xxl-md: 20px;
+    --font-size-xxl-sm: 12px;
+
+    /* xl font (40px in figma *4/3) */
+    --font-size-xl-xxl: 40px;
+    --font-size-xl-xl: 27px;
+    --font-size-xl-lg: 20px;
+    --font-size-xl-md: 13px;
+    --font-size-xl-sm: 8px;
+
+    /* lg font (24px in figma *4/5) */
+    --font-size-lg-xxl: 24px;
+    --font-size-lg-xl: 16px;
+    --font-size-lg-lg: 12px;
+    --font-size-lg-md: 8px;
+    --font-size-lg-sm: 5px;
+
+    /* md font (16px in figma *8/15) */
+    --font-size-md-xxl: 16px;
+    --font-size-md-xl: 11px;
+    --font-size-md-lg: 8px;
+    --font-size-md-md: 5px;
+    --font-size-md-sm: 3px;
+
+    /* sm font (12px in figma *2/5) */
+    --font-size-sm-xxl: 12px;
+    --font-size-sm-xl: 11px;
+    --font-size-sm-lg: 8px;
+    --font-size-sm-md: 4px;
+    --font-size-sm-sm: 3px;
+
+    /* =========================================================
+                       🌌 РАЗМЕРЫ РАМОК
+    ========================================================= */
+    --border-width-xxl: 3px;
+    --border-width-xl: 2px;
+    --border-width-lg: 1.5px;
+    --border-width-md: 1px;
+    --border-width-sm: 0.6px;
+}
+
 /* =========================================================
    🌌 ОСНОВНАЯ СЦЕНА И КОМПОНОВКА
    ========================================================= */
@@ -24,133 +100,103 @@
     height: 100%;
 }
 
-/* =========================================================
-   🚀 ГЛАВНЫЙ ЭКРАН — ЛОГОТИП, ТИТУЛ, МЕНЮ
-   ========================================================= */
-.logo-container {
-    margin-bottom: 60px;
-    align-items: center;
-}
-
-.logo {
-    width: 240px;
-    height: auto;
-    -unity-background-scale-mode: scale-to-fit;
-}
-
-.title {
-    font-size: 72px;
-    color: white;
-    margin-bottom: 80px;
-    -unity-text-align: middle-center;
-    -unity-font-style: bold;
-}
-
-.screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
 .hidden {
     display: none;
 }
 
 /* =========================================================
-   🎮 КНОПКИ МЕНЮ
+   🚀 ГЛАВНЫЙ ЭКРАН — ЛОГОТИП, ТИТУЛ, МЕНЮ
    ========================================================= */
-.menu-button {
-    width: 380px;
-    height: 50px;
-    font-size: 22px;
-    color: white;
-    background-color: rgba(20, 20, 30, 0.7);
-    border-width: 2px;
-    border-color: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    -unity-font-style: normal;
-    -unity-text-align: middle-center;
-}
-
-.menu-button:hover {
-    background-color: rgba(40, 40, 50, 0.85);
-    border-color: rgba(200, 100, 255, 0.8);
-}
-
-.menu-button.focused {
-    border-color: #ffff00 !important;
-    background-color: rgba(255, 255, 0, 0.1) !important;
-}
-
-.menu-button.small {
-    width: 220px;
-    height: 44px;
-    font-size: 18px;
-}
-
-/* =========================================================
-   📜 ТЕКСТЫ И ЛИСТЫ
-   ========================================================= */
-.subtitle {
-    font-size: 28px;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 20px;
-    -unity-text-align: middle-center;
-}
-
-.list {
-    width: 380px;
-    height: 200px;
-    background-color: rgba(20, 20, 30, 0.6);
-    border-radius: 8px;
-    border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.2);
-    margin-bottom: 16px;
-}
-
-.info {
-    color: white;
-    font-size: 18px;
-    margin-bottom: 12px;
-    -unity-text-align: middle-center;
-}
-
-/* =========================================================
-   🌐 ЭКРАН СЕТЕВОЙ ИГРЫ
-   ========================================================= */
-.network-title {
-    font-size: 48px;
-    color: white;
-    -unity-font-style: bold;
-    margin-bottom: 40px;
-    position: absolute;
-    top: 0px;
-    left: 60px;
-}
-
-#screen_lobby {
+#menu_screen {
     width: 100%;
     height: 100%;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
 }
 
+/* ЛОГОТИП */
+.logo {
+    margin-bottom: 6%;
+    height: 30%;
+    width: 80%;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* КНОПКИ МЕНЮ */
+.menu-button {
+    width: 25%;
+    height: 6%;
+    color: white;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0px;
+    border-color: rgba(200, 100, 255, 0.8);
+    
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+
+    transition-property: background-color, scale;
+    transition-duration: 0.25s;
+    transition-timing-function: ease-in-out-sine;
+}
+
+.xxl-screen .menu-button { font-size: var(--font-size-xl-xxl); border-radius: var(--border-radius-xxl); }
+.xl-screen .menu-button { font-size: var(--font-size-xl-xl); border-radius: var(--border-radius-xl); }
+.lg-screen .menu-button { font-size: var(--font-size-xl-lg); border-radius: var(--border-radius-lg); }
+.md-screen .menu-button { font-size: var(--font-size-xl-md); border-radius: var(--border-radius-md); }
+.sm-screen .menu-button { font-size: var(--font-size-xl-sm); border-radius: var(--border-radius-sm); }
+
+.menu-button:hover, .menu-button:focus {
+    scale: 1.05;
+    background-color: rgba(20, 20, 30, 0.7);
+}
+
+.menu-button:focus {
+    border-color: #ffff00;
+}
+
+.xxl-screen .menu-button:hover, .xxl-screen .menu-button:focus { border-width: var(--border-width-xxl); }
+.xl-screen .menu-button:hover, .xl-screen .menu-button:focus { border-width: var(--border-width-xl); }
+.lg-screen .menu-button:hover, .lg-screen .menu-button:focus { border-width: var(--border-width-lg); }
+.md-screen .menu-button:hover, .md-screen .menu-button:focus { border-width: var(--border-width-md); }
+.sm-screen .menu-button:hover, .sm-screen .menu-button:focus { border-width: var(--border-width-sm); }
+
 /* =========================================================
-   🧩 ПАНЕЛИ ЛОББИ (Брауз / Создание)
+   🌐 ЭКРАН ЛОББИ
    ========================================================= */
+
+#lobby_list_screen {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2%;
+    padding: 8% 12%;
+}
+
+/* ЗАГОЛОВОК ЭКРАНА ЛОББИ */
+.network-title {
+    color: white;
+    -unity-font-style: bold;
+    top: 0px;
+}
+
+.xxl-screen .network-title { font-size: var(--font-size-xxl-xxl); }
+.xl-screen .network-title { font-size: var(--font-size-xxl-xl); }
+.lg-screen .network-title { font-size: var(--font-size-xxl-lg); }
+.md-screen .network-title { font-size: var(--font-size-xxl-md); }
+.sm-screen .network-title { font-size: var(--font-size-xxl-sm); }
+
+/* ПАНЕЛИ ЛОББИ */
+
 .panels-container {
-    flex: 1;
     flex-direction: row;
     justify-content: center;
     align-items: stretch;
-    gap: 40px;
+    gap: 2%;
     width: 100%;
-    padding: 80px 60px 100px 60px;
-    margin: 0;
-    min-height: 0;
 }
 
 .panel {
@@ -160,7 +206,6 @@
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    min-height: 400px;
 }
 
 .panel-content {
@@ -168,11 +213,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0;
 }
-
-.panel-browse { flex: 1.2; }
-.panel-create { flex: 1; }
 
 .panel-header {
     background-color: #bb86fc;
@@ -190,6 +231,11 @@
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
+
+.panel-browse { flex: 1.2; }
+.panel-create { flex: 1; }
+
+
 
 /* =========================================================
    📋 СПИСОК ЛОББИ
@@ -386,10 +432,6 @@
    ⌨️ НИЖНЯЯ ПАНЕЛЬ ГОРЯЧИХ КЛАВИШ
    ========================================================= */
 .shortcuts-bar {
-    position: absolute;
-    bottom: 40px;
-    left: 60px;
-    right: 60px;
     height: 60px;
     background-color: rgba(20, 15, 25, 0.85);
     border-width: 3px;

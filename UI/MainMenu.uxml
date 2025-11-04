@@ -3,17 +3,17 @@
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="background" class="background" />
         <ui:VisualElement name="layout" class="layout">
-            <ui:VisualElement name="screen_main" class="screen">
+            <ui:VisualElement name="menu_screen" class="screen" style="display: none;">
                 <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;); height: 200px; width: 130%;" />
                 <ui:Button name="btnSingle" text="#single_player" class="menu-button" />
                 <ui:Button name="btnCreateLobby" text="#create_lobby" class="menu-button" />
                 <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
                 <ui:Button name="btnQuit" text="#quit" class="menu-button" />
             </ui:VisualElement>
-            <ui:VisualElement name="screen_lobby" class="screen hidden">
-                <ui:Label text="#network_game" class="network-title" />
-                <ui:VisualElement class="panels-container">
-                    <ui:VisualElement class="panel panel-browse">
+            <ui:VisualElement name="lobby_list_screen" class="screen hidden" style="display: flex;">
+                <ui:Label text="#network_game" name="title" class="network-title" />
+                <ui:VisualElement name="panels_container" class="panels-container">
+                    <ui:VisualElement name="left_panel" class="panel panel-browse">
                         <ui:VisualElement class="panel-header">
                             <ui:Label text="#join_lobby" class="panel-header-text" />
                         </ui:VisualElement>
@@ -57,7 +57,7 @@
                             </ui:ScrollView>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="panel panel-create">
+                    <ui:VisualElement name="right-panel" class="panel panel-create">
                         <ui:VisualElement class="panel-header">
                             <ui:Label text="#create_lobby" class="panel-header-text" />
                         </ui:VisualElement>
@@ -124,7 +124,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="shortcuts-bar">
+                <ui:VisualElement name="shortcuts_bar" class="shortcuts-bar">
                     <ui:VisualElement class="shortcut-item">
                         <ui:VisualElement class="shortcut-key">
                             <ui:Label text="Esc" class="shortcut-key-text" />

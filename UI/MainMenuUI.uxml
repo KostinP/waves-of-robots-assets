@@ -1,5 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/Main.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#Main" />
+    <Style src="project://database/Assets/UI/CommonStyles.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#CommonStyles" />
+    <Style src="project://database/Assets/UI/MainMenuStyles.uss?fileID=7433441132597879392&amp;guid=c7f65d3fa004e444083d6493388b3fb6&amp;type=3#MainMenuStyles" />
     <ui:VisualElement name="root" class="root">
         <ui:VisualElement name="background" class="background" />
         <ui:VisualElement name="layout" class="layout">

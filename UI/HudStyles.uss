@@ -1,0 +1,159 @@
+/* =========================================================
+   ⚙️ ОСНОВНОЙ КОНТЕЙНЕР
+   ========================================================= */
+.hud {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* =========================================================
+   🔹 ЛЕВАЯ ПАНЕЛЬ
+   ========================================================= */
+.hud__stats {
+    top: var(--size-30-adaptive);
+    left: var(--size-30-adaptive);
+    flex-direction: column;
+    gap: var(--size-12-adaptive);
+}
+
+.hud__bar {
+    width: var(--size-300-adaptive);
+    height: var(--size-48-adaptive);
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0,0,0,0.35);
+    border-radius: var(--size-6-adaptive);
+    padding: 0 var(--size-12-adaptive);
+    overflow: hidden;
+    border: var(--size-1-adaptive) solid rgba(255,255,255,0.08);
+}
+
+.hud__icon {
+    width: var(--size-24-adaptive);
+    height: var(--size-24-adaptive);
+    margin-right: var(--size-8-adaptive);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.hp-icon { background-image: resource("Icons/hp.png"); }
+.armor-icon { background-image: resource("Icons/armor.png"); }
+.xp-icon { background-image: resource("Icons/xp.png"); }
+
+.hud__label {
+    font-size: var(--size-16-adaptive);
+    color: #fff;
+    width: var(--size-60-adaptive);
+}
+
+.hud__bar-fill {
+    flex-grow: 1;
+    height: var(--size-12-adaptive);
+    margin-right: var(--size-8-adaptive);
+    border-radius: var(--size-6-adaptive);
+    background-color: rgba(255,255,255,0.1);
+    overflow: hidden;
+}
+
+.hud__bar-fill::before {
+    content: "";
+    position: absolute;
+    height: var(--size-12-adaptive);
+    left: 0;
+    top: 0;
+    border-radius: var(--size-6-adaptive);
+}
+
+.hud__bar-fill.hp::before { width: 75%; background-color: #ff4b4b; }
+.hud__bar-fill.armor::before { width: 60%; background-color: #3c4cff; }
+.hud__bar-fill.xp::before { width: 80%; background-color: #63ff63; }
+
+.hud__value {
+    font-size: var(--size-12-adaptive);
+    color: #c5c5c5;
+}
+
+/* =========================================================
+   💜 ВОЛНА
+   ========================================================= */
+.hud__wave {
+    top: var(--size-24-adaptive);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.hud__wave-title {
+    font-size: var(--size-16-adaptive);
+    color: #fff;
+    background-color: #5b2b82;
+    padding: var(--size-6-adaptive) var(--size-24-adaptive);
+    border-radius: var(--size-6-adaptive);
+    border: var(--size-3-adaptive) solid #b574ff;
+    text-shadow: 0 0 var(--size-6-adaptive) rgba(181,116,255,0.8);
+}
+
+.hud__wave-status {
+    margin-top: var(--size-6-adaptive);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--size-6-adaptive);
+}
+
+.hud__wave-dot {
+    width: var(--size-8-adaptive);
+    height: var(--size-8-adaptive);
+    border-radius: 50%;
+    background-color: #36ff36;
+}
+
+.hud__wave-text {
+    font-size: var(--size-16-adaptive);
+    color: #fff;
+}
+
+/* =========================================================
+   🧑 ПРАВАЯ ПАНЕЛЬ: ИГРОКИ
+   ========================================================= */
+.hud__players {
+    top: var(--size-30-adaptive);
+    right: var(--size-30-adaptive);
+    flex-direction: column;
+    gap: var(--size-8-adaptive);
+}
+
+.hud__player {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--size-12-adaptive);
+}
+
+.hud__player-icon {
+    width: var(--size-16-adaptive);
+    height: var(--size-16-adaptive);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.hud__player-icon.mic { background-image: resource("Icons/mic-off.png"); }
+.hud__player-icon.cam { background-image: resource("Icons/cam.png"); }
+
+.hud__player-name {
+    font-size: var(--size-16-adaptive);
+    color: #fff;
+    max-width: var(--size-150-adaptive);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud__player-ping {
+    font-size: var(--size-16-adaptive);
+    color: #ccc;
+}
+

@@ -1,195 +1,3 @@
-/*
-// Размеры экранов:
-// 3840f — XXL (Extra Extra Large) или HUGE = 1x 1/1 = 30y
-// 2560f — XL (Extra Large) = 0.65x 1/1.5 = 20y
-// 1920f — LG (Large) = 0.5x 1/2 = 15y
-// 1280f — MD (Medium) = 0.35x 1/3 = 10y
-// 768f — SM (Small-Medium) или Medium = 0.2x 1/5 = 6y
-*/
-
-* {
-    border-width: 0px !important;
-}
-
-/* size-scale-1 */
-.xxl-screen .root {--size-scale-1: 1; }
-.xl-screen .root { --size-scale-1: 0.65; }
-.lg-screen .root { --size-scale-1: 0.5; }
-.md-screen .root { --size-scale-1: 0.35; }
-.sm-screen .root { --size-scale-1: 0.2; }
-
-/* size-scale-2 */
-.xxl-screen .root {--size-scale-2: 2; }
-.xl-screen .root { --size-scale-2: 1.3; }
-.lg-screen .root { --size-scale-2: 1; }
-.md-screen .root { --size-scale-2: 0.66; }
-.sm-screen .root { --size-scale-2: 0.4; }
-
-/* 480px adaptive */
-.xxl-screen .root {--size-480-adaptive: 480px; }
-.xl-screen .root { --size-480-adaptive: 320px; }
-.lg-screen .root { --size-480-adaptive: 240px; }
-.md-screen .root { --size-480-adaptive: 160px; }
-.sm-screen .root { --size-480-adaptive: 100px; }
-
-/* 300px adaptive */
-.xxl-screen .root {--size-300-adaptive: 300px; }
-.xl-screen .root { --size-300-adaptive: 200px; }
-.lg-screen .root { --size-300-adaptive: 150px; }
-.md-screen .root { --size-300-adaptive: 100px; }
-.sm-screen .root { --size-300-adaptive: 60px; }
-
-/* 150px adaptive */
-.xxl-screen .root {--size-150-adaptive: 150px; }
-.xl-screen .root { --size-150-adaptive: 100px; }
-.lg-screen .root { --size-150-adaptive: 75px; }
-.md-screen .root { --size-150-adaptive: 50px; }
-.sm-screen .root { --size-150-adaptive: 30px; }
-
-/* 90px adaptive */
-.xxl-screen .root {--size-90-adaptive: 90px; }
-.xl-screen .root { --size-90-adaptive: 60px; }
-.lg-screen .root { --size-90-adaptive: 45px; }
-.md-screen .root { --size-90-adaptive: 30px; }
-.sm-screen .root { --size-90-adaptive: 18px; }
-
-/* -48px adaptive */
-.xxl-screen .root {--size--48-adaptive: -48px; }
-.xl-screen .root { --size--48-adaptive: -32px; }
-.lg-screen .root { --size--48-adaptive: -24px; }
-.md-screen .root { --size--48-adaptive: -16px; }
-.sm-screen .root { --size--48-adaptive: -10px; }
-
-/* 60px adaptive */
-.xxl-screen .root {--size-60-adaptive: 60px; }
-.xl-screen .root { --size-60-adaptive: 40px; }
-.lg-screen .root { --size-60-adaptive: 30px; }
-.md-screen .root { --size-60-adaptive: 20px; }
-.sm-screen .root { --size-60-adaptive: 12px; }
-
-/* 48px adaptive */
-.xxl-screen .root {--size-48-adaptive: 48px; }
-.xl-screen .root { --size-48-adaptive: 32px; }
-.lg-screen .root { --size-48-adaptive: 24px; }
-.md-screen .root { --size-48-adaptive: 16px; }
-.sm-screen .root { --size-48-adaptive: 10px; }
-
-/* 30px adaptive */
-.xxl-screen .root {--size-30-adaptive: 30px; }
-.xl-screen .root { --size-30-adaptive: 20px; }
-.lg-screen .root { --size-30-adaptive: 15px; }
-.md-screen .root { --size-30-adaptive: 10px; }
-.sm-screen .root { --size-30-adaptive: 6px; }
-
-/* 24px adaptive */
-.xxl-screen .root {--size-24-adaptive: 24px; }
-.xl-screen .root { --size-24-adaptive: 16px; }
-.lg-screen .root { --size-24-adaptive: 12px; }
-.md-screen .root { --size-24-adaptive: 8px; }
-.sm-screen .root { --size-24-adaptive: 5px; }
-
-/* 16px adaptive */
-.xxl-screen .root {--size-16-adaptive: 16px; }
-.xl-screen .root { --size-16-adaptive: 11px; }
-.lg-screen .root { --size-16-adaptive: 8px; }
-.md-screen .root { --size-16-adaptive: 6px; }
-.sm-screen .root { --size-16-adaptive: 4px; }
-
-/* 12px adaptive */
-.xxl-screen .root {--size-12-adaptive: 12px; }
-.xl-screen .root { --size-12-adaptive: 8px; }
-.lg-screen .root { --size-12-adaptive: 6px; }
-.md-screen .root { --size-12-adaptive: 4px; }
-.sm-screen .root { --size-12-adaptive: 3px; }
-
-/* 6px adaptive */
-.xxl-screen .root {--size-6-adaptive: 6px; }
-.xl-screen .root { --size-6-adaptive: 4px; }
-.lg-screen .root { --size-6-adaptive: 3px; }
-.md-screen .root { --size-6-adaptive: 2px; }
-.sm-screen .root { --size-6-adaptive: 1.2px; }
-
-/* 3px adaptive */
-.xxl-screen .root {--size-3-adaptive: 3px; }
-.xl-screen .root { --size-3-adaptive: 2px; }
-.lg-screen .root { --size-3-adaptive: 1.5px; }
-.md-screen .root { --size-3-adaptive: 1px; }
-.sm-screen .root { --size-3-adaptive: 0.6px; }
-
-:root {
-    /* =========================================================
-                       🌌 ЦВЕТОВАЯ ПАЛИТРА
-    ========================================================= */
-    --color-white: white;
-    --color-black: black;
-    --color-primary: #bb86fc;
-    --color-accent: #ffff00;
-    --color-bg-dark: rgba(20, 20, 30, 0.7);
-    --color-bg-darker: rgba(20, 15, 25, 0.85);
-    --color-bg-darkness: rgb(20, 15, 25);
-    
-    /* =========================================================
-                          🌌 СКРУГЛЕНИЯ
-    ========================================================= */
-
-    --border-radius-rpanel-xxl: 30px 60px 0px 0px;
-    --border-radius-rpanel-xl: 20px 40px 0px 0px;
-    --border-radius-rpanel-lg: 15px 30px 0px 0px;
-    --border-radius-rpanel-md: 10px 20px 0px 0px;
-    --border-radius-rpanel-sm: 6px 12px 0px 0px;
-
-    --border-radius-header-xxl: 30px 0px;
-    --border-radius-header-xl: 20px 0px;
-    --border-radius-header-lg: 15px 0px;
-    --border-radius-header-md: 10px 0px;
-    --border-radius-header-sm: 6px 0px;
-
-    /* =========================================================
-                       🌌 РАЗМЕРЫ РАМОК
-    ========================================================= */
-    --border-width-xxl: 3px;
-    --border-width-xl: 2px;
-    --border-width-lg: 1.5px;
-    --border-width-md: 1px;
-    --border-width-sm: 0.6px;
-
-    --border-width-big-xxl: 3px;
-    --border-width-big-xl: 2px;
-    --border-width-big-lg: 1.5px;
-    --border-width-big-md: 1px;
-    --border-width-big-sm: 0.6px;
-}
-
-/* =========================================================
-   🌌 ОСНОВНАЯ СЦЕНА И КОМПОНОВКА
-   ========================================================= */
-.root {
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-}
-
-.background {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: resource("bg");
-    -unity-background-scale-mode: scale-and-crop;
-    opacity: 1;
-}
-
-.layout {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-}
-
-.hidden {
-    display: none;
-}
-
 /* =========================================================
    🚀 ГЛАВНЫЙ ЭКРАН — ЛОГОТИП, ТИТУЛ, МЕНЮ
    ========================================================= */
@@ -538,6 +346,14 @@ RadioButton .unity-radio-button__text {
     -unity-text-align: middle-center;
 }
 
+.unity-base-slider__dragger {
+    background-color: var(--color-primary);
+}
+
+.unity-base-slider__tracker {
+    background-color: var(--color-white);
+}
+
 /* === Выбор персонажа === */
 .character-grid {
     flex-direction: row;
@@ -560,6 +376,7 @@ RadioButton .unity-radio-button__text {
     border-color: var(--color-primary);
     background-color: rgba(40, 30, 50, 0.5);
 }
+
 .character-card.selected {
     border-color: var(--color-primary);
     border-width: var(--size-3-adaptive);
@@ -661,17 +478,6 @@ RadioButton .unity-radio-button__text {
     background-image: resource("eye-closed");
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0.7;
-}
-.password-toggle-btn:hover { opacity: 1; }
-.password-toggle-btn:focus {
-    opacity: 1;
-    outline: 2px solid var(--color-accent) !important;
-    outline-offset: 2px;
-}
-.password-toggle-btn.focused {
-    opacity: 1;
-    outline: 2px solid var(--color-accent) !important;
-    outline-offset: 2px;
 }
 
 /* === Визуал пароля === */

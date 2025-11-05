@@ -2,8 +2,10 @@
     <Style src="project://database/Assets/UI/Main.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#Main" />
     <Style src="project://database/Assets/UI/card-screen.uss?fileID=7433441132597879392&amp;guid=a86dde121d8bd4a2d9f521db870ab023&amp;type=3#card-screen" />
     <ui:VisualElement class="root">
-        <ui:VisualElement class="background" />
         <ui:VisualElement class="cards-layout">
+            <ui:VisualElement class="panel-header" style="flex-grow: 1;">
+                <ui:Label text="Label" class="panel-header-text" />
+            </ui:VisualElement>
             <ui:Label text="ПОБЕДА" class="cards-title" />
             <ui:Label text="ВЫБЕРИТЕ 1 КАРТУ" class="cards-subtitle" />
             <ui:VisualElement class="cards-row">
@@ -29,6 +31,7 @@
                     <ui:Button text="ВЫБРАТЬ" class="card-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement style="flex-grow: 1;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

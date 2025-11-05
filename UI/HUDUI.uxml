@@ -1,0 +1,45 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Main.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#Main" />
+    <Style src="project://database/Assets/UI/hud-screen.uss?fileID=7433441132597879392&amp;guid=cb54f9ee2d0de40298c9d6b2d440aadb&amp;type=3#hud-screen" />
+    <ui:VisualElement class="hud" style="align-items: flex-start;">
+        <ui:VisualElement class="hud__stats">
+            <ui:VisualElement class="hud__bar">
+                <ui:VisualElement class="hud__icon hp-icon" />
+                <ui:Label text="HP" class="hud__label" />
+                <ui:VisualElement class="hud__bar-fill hp" />
+                <ui:Label text="3560 / 7635" class="hud__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="hud__bar">
+                <ui:VisualElement class="hud__icon armor-icon" />
+                <ui:Label text="Броня" class="hud__label" />
+                <ui:VisualElement class="hud__bar-fill armor" />
+                <ui:Label text="3560 / 7635" class="hud__value" />
+            </ui:VisualElement>
+            <ui:VisualElement class="hud__bar">
+                <ui:VisualElement class="hud__icon xp-icon" />
+                <ui:Label text="XP" class="hud__label" />
+                <ui:VisualElement class="hud__bar-fill xp" />
+                <ui:Label text="3560 / 7635" class="hud__value" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="hud__wave">
+            <ui:Label text="Волна: 4 / 15" class="hud__wave-title" />
+            <ui:VisualElement class="hud__wave-status">
+                <ui:VisualElement class="hud__wave-dot" />
+                <ui:Label text="Лёгкая волна" class="hud__wave-text" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="hud__players">
+            <ui:VisualElement class="hud__player">
+                <ui:VisualElement class="hud__player-icon mic" />
+                <ui:Label text="Виктор Баннов" class="hud__player-name" />
+                <ui:Label text="12мс" class="hud__player-ping" />
+            </ui:VisualElement>
+            <ui:VisualElement class="hud__player">
+                <ui:VisualElement class="hud__player-icon cam" />
+                <ui:Label text="Анна Давыдова" class="hud__player-name" />
+                <ui:Label text="230мс" class="hud__player-ping" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

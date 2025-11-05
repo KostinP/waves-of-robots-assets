@@ -361,6 +361,8 @@
     font-size: var(--size-24-adaptive);
 }
 
+/*.panel-header-text-left, .panel-header-text-right*/
+
 .panel-content {
     width: 100%;
     display: flex;
@@ -384,6 +386,8 @@
     font-size: var(--size-30-adaptive);
     color: var(--color-white);
 }
+
+/*.lobby-list-header-text-1, .lobby-list-header-text-2, .lobby-list-header-text-3, .lobby-list-header-text-4*/
 
 /* 📋 СПИСОК ЛОББИ */
 
@@ -550,6 +554,7 @@ RadioButton .unity-radio-button__text {
     justify-content: center;
     align-items: center;
     margin: 0px var(--size-30-adaptive);
+    padding: 0px var(--size-30-adaptive);
 }
 .character-card:hover {
     border-color: var(--color-primary);
@@ -565,6 +570,7 @@ RadioButton .unity-radio-button__text {
     width: var(--size-300-adaptive);
     height: var(--size-300-adaptive);
     -unity-background-scale-mode: scale-to-fit;
+    padding: var(--size-30-adaptive);
 }
 .character-name {
     font-size: var(--size-24-adaptive);
@@ -600,7 +606,7 @@ RadioButton .unity-radio-button__text {
 }
 
 /* === Кнопка создания === */
-.create-button {
+.right-panel-button {
     width: 100%;
     height: var(--size-60-adaptive);
     background-color: var(--color-primary);
@@ -610,7 +616,7 @@ RadioButton .unity-radio-button__text {
     -unity-font-style: bold;
     margin-top: var(--size-30-adaptive);
 }
-.create-button:hover { background-color: #d4a5ff; }
+.right-panel-button:hover { background-color: #d4a5ff; }
 
 /* === Прозрачные текстовые поля === */
 .transparent-bg > .unity-text-input,
@@ -682,3 +688,4 @@ RadioButton .unity-radio-button__text {
     border-color: #ffff00 !important;
     background-color: rgba(255, 255, 0, 0.1) !important;
 }
+

@@ -15,14 +15,14 @@
                 <ui:VisualElement name="panels_container" class="panels-container">
                     <ui:VisualElement name="left_panel" class="panel left-panel">
                         <ui:VisualElement class="panel-header">
-                            <ui:Label text="#join_lobby" class="panel-header-text" />
+                            <ui:Label text="#join_lobby" class="panel-header-text panel-header-text-left" />
                         </ui:VisualElement>
                         <ui:VisualElement class="panel-content">
                             <ui:VisualElement class="lobby-list-header">
-                                <ui:Label text="#lobby_name" class="lobby-list-header-text" style="width: 200px;" />
-                                <ui:Label text="#player_count" class="lobby-list-header-text" style="width: 80px; -unity-text-align: middle-center;" />
-                                <ui:Label text="#type" class="lobby-list-header-text" style="width: 120px; -unity-text-align: middle-center;" />
-                                <ui:Label />
+                                <ui:Label text="#lobby_name" class="lobby-list-header-text lobby-list-header-text-1" style="width: 200px;" />
+                                <ui:Label text="#player_count" class="lobby-list-header-text lobby-list-header-text-2" style="width: 80px; -unity-text-align: middle-center;" />
+                                <ui:Label text="#type" class="lobby-list-header-text lobby-list-header-text-3" style="width: 120px; -unity-text-align: middle-center;" />
+                                <ui:Label class="lobby-list-header-text lobby-list-header-text-4" />
                             </ui:VisualElement>
                             <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll">
                                 <ui:VisualElement class="lobby-item">
@@ -60,7 +60,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="right-panel" class="panel right-panel">
                         <ui:VisualElement class="panel-header">
-                            <ui:Label text="#create_lobby" class="panel-header-text" />
+                            <ui:Label text="#create_lobby" class="panel-header-text panel-header-text-right" />
                         </ui:VisualElement>
                         <ui:VisualElement class="panel-content">
                             <ui:VisualElement class="form-section">
@@ -121,7 +121,7 @@
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
-                            <ui:Button name="btnCreateLobby" text="#create" class="create-button" />
+                            <ui:Button name="btnCreateLobby" text="#create" class="right-panel-button" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

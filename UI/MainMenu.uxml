@@ -4,7 +4,7 @@
         <ui:VisualElement name="background" class="background" />
         <ui:VisualElement name="layout" class="layout">
             <ui:VisualElement name="menu_screen" class="screen" style="display: none;">
-                <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;); height: 200px; width: 130%;" />
+                <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;);" />
                 <ui:Button name="btnSingle" text="#single_player" class="menu-button" />
                 <ui:Button name="btnCreateLobby" text="#create_lobby" class="menu-button" />
                 <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
@@ -13,7 +13,7 @@
             <ui:VisualElement name="lobby_list_screen" class="screen hidden" style="display: flex;">
                 <ui:Label text="#network_game" name="title" class="network-title" />
                 <ui:VisualElement name="panels_container" class="panels-container">
-                    <ui:VisualElement name="left_panel" class="panel panel-browse">
+                    <ui:VisualElement name="left_panel" class="panel left-panel">
                         <ui:VisualElement class="panel-header">
                             <ui:Label text="#join_lobby" class="panel-header-text" />
                         </ui:VisualElement>
@@ -22,6 +22,7 @@
                                 <ui:Label text="#lobby_name" class="lobby-list-header-text" style="width: 200px;" />
                                 <ui:Label text="#player_count" class="lobby-list-header-text" style="width: 80px; -unity-text-align: middle-center;" />
                                 <ui:Label text="#type" class="lobby-list-header-text" style="width: 120px; -unity-text-align: middle-center;" />
+                                <ui:Label />
                             </ui:VisualElement>
                             <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll">
                                 <ui:VisualElement class="lobby-item">
@@ -57,7 +58,7 @@
                             </ui:ScrollView>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="right-panel" class="panel panel-create">
+                    <ui:VisualElement name="right-panel" class="panel right-panel">
                         <ui:VisualElement class="panel-header">
                             <ui:Label text="#create_lobby" class="panel-header-text" />
                         </ui:VisualElement>
@@ -76,7 +77,7 @@
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
                                         <ui:VisualElement class="password-wrapper">
                                             <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
-                                            <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" />
+                                            <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" style="background-image: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=8228938214290033325&amp;guid=293df427e8bd642319bd547283dd7192&amp;type=3#console.warnicon&quot;);" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
                                 </ui:VisualElement>

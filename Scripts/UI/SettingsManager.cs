@@ -126,13 +126,30 @@ public class SettingsManager : MonoBehaviour
     {
         if (LocalizationManager.Instance != null)
         {
-            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language);
+            // Всегда принудительно обновляем язык
+            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language, true);
+            Debug.Log($"Language applied: {CurrentSettings.language}");
         }
         else
         {
-            Debug.LogWarning("LocalizationManager not found, language will be applied when it's ready");
-            // Запланируем применение языка когда LocalizationManager будет готов
-            Invoke(nameof(RetryApplyLanguage), 0.5f);
+            Debug.LogWarning("LocalizationManager not found, retrying...");
+            // Пробуем еще раз через кадр
+            StartCoroutine(DelayedLanguageApply());
+        }
+    }
+
+    private System.Collections.IEnumerator DelayedLanguageApply()
+    {
+        yield return new WaitForEndOfFrame();
+        
+        if (LocalizationManager.Instance != null)
+        {
+            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language, true);
+            Debug.Log($"Language applied after delay: {CurrentSettings.language}");
+        }
+        else
+        {
+            Debug.LogError("LocalizationManager still not found after delay!");
         }
     }
 

@@ -16,6 +16,9 @@ public class LocalizationManager : MonoBehaviour
     private SystemLanguage _currentLanguage;
     private VisualElement _rootVisualElement;
 
+    // Кэш для всех UIDocument'ов в сцене
+    private List<UIDocument> _allUiDocuments = new List<UIDocument>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -24,15 +27,17 @@ public class LocalizationManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             _uiDocument = GetComponent<UIDocument>();
-
+            
+            // Находим все UIDocument'ы в сцене
+            RefreshUiDocuments();
+            
             // Подписываемся на событие изменения настроек
             if (SettingsManager.Instance != null)
             {
                 SettingsManager.Instance.OnSettingsChanged += OnSettingsChanged;
             }
-
-            // Не загружаем язык здесь - ждем SettingsManager
-            Debug.Log("LocalizationManager initialized, waiting for SettingsManager");
+            
+            Debug.Log("LocalizationManager initialized");
         }
         else
         {
@@ -48,16 +53,23 @@ public class LocalizationManager : MonoBehaviour
             _rootVisualElement = _uiDocument.rootVisualElement;
         }
 
-        // Если SettingsManager уже готов, загружаем язык
+        // Загружаем язык из настроек или используем системный
         if (SettingsManager.IsReady())
         {
-            LoadLanguage(SettingsManager.Instance.CurrentSettings.language);
+            LoadLanguage(SettingsManager.Instance.CurrentSettings.language, false);
         }
         else
         {
-            // Иначе используем системный язык
             DetectAndLoadLanguage();
         }
+    }
+
+    // Обновляем список всех UIDocument'ов
+    private void RefreshUiDocuments()
+    {
+        _allUiDocuments.Clear();
+        _allUiDocuments.AddRange(FindObjectsOfType<UIDocument>());
+        Debug.Log($"Found {_allUiDocuments.Count} UI documents in scene");
     }
 
     private void OnSettingsChanged(GameSettings newSettings)
@@ -65,7 +77,7 @@ public class LocalizationManager : MonoBehaviour
         // При изменении настроек меняем язык
         if (newSettings.language != _currentLanguage)
         {
-            LoadLanguage(newSettings.language);
+            LoadLanguage(newSettings.language, true);
         }
     }
 
@@ -73,20 +85,23 @@ public class LocalizationManager : MonoBehaviour
     {
         SystemLanguage systemLanguage = Application.systemLanguage;
 
-        // Поддерживаемые языки
         if (systemLanguage == SystemLanguage.Russian || systemLanguage == SystemLanguage.English)
         {
-            LoadLanguage(systemLanguage);
+            LoadLanguage(systemLanguage, false);
         }
         else
         {
-            LoadLanguage(_defaultLanguage);
+            LoadLanguage(_defaultLanguage, false);
         }
     }
 
-    public void LoadLanguage(SystemLanguage language)
+    public void LoadLanguage(SystemLanguage language, bool forceUpdate = true)
     {
-        Debug.Log($"Loading language: {language}");
+        Debug.Log($"Loading language: {language}, forceUpdate: {forceUpdate}");
+        
+        // Если язык не изменился, выходим
+        if (_currentLanguage == language && !forceUpdate)
+            return;
 
         _currentLanguage = language;
         string langCode = GetLanguageCode(language);
@@ -101,12 +116,14 @@ public class LocalizationManager : MonoBehaviour
         if (localizationFile != null)
         {
             ParseLocalizationFile(localizationFile.text);
+            
+            // Всегда обновляем UI при смене языка
             UpdateAllUIElements();
 
             // Вызываем событие об изменении языка
             OnLanguageChanged?.Invoke();
-
-            Debug.Log($"Language changed to: {language}");
+            
+            Debug.Log($"Language changed to: {language}, UI updated");
         }
         else
         {
@@ -118,7 +135,7 @@ public class LocalizationManager : MonoBehaviour
     {
         var newLanguage = _currentLanguage == SystemLanguage.English ?
             SystemLanguage.Russian : SystemLanguage.English;
-        LoadLanguage(newLanguage);
+        LoadLanguage(newLanguage, true);
     }
 
     private string GetLanguageCode(SystemLanguage language)
@@ -158,26 +175,32 @@ public class LocalizationManager : MonoBehaviour
     {
         if (_currentLocalization.ContainsKey(key))
             return _currentLocalization[key];
-
+        
         Debug.LogWarning($"Localization key not found: {key}");
         return $"#{key}";
     }
 
     public void UpdateAllUIElements()
     {
-        if (_uiDocument == null || _uiDocument.rootVisualElement == null)
+        Debug.Log("Updating ALL UI elements with new language");
+        
+        // Обновляем все UIDocument'ы в сцене
+        foreach (var uiDoc in _allUiDocuments)
         {
-            Debug.LogWarning("UI Document or root visual element is null");
-            return;
+            if (uiDoc != null && uiDoc.rootVisualElement != null)
+            {
+                UpdateElementsWithPrefix(uiDoc.rootVisualElement, "#");
+            }
         }
-
-        UpdateElementsWithPrefix(_uiDocument.rootVisualElement, "#");
-        Debug.Log("UI elements updated with new language");
+        
+        Debug.Log($"Updated {_allUiDocuments.Count} UI documents");
     }
 
     private void UpdateElementsWithPrefix(VisualElement root, string prefix)
     {
         if (root == null) return;
+
+        int updatedCount = 0;
 
         // ── LABELS ─────────────────────────────────────
         root.Query<Label>().ForEach(label =>
@@ -185,7 +208,12 @@ public class LocalizationManager : MonoBehaviour
             if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
             {
                 string key = label.text.Substring(prefix.Length);
-                label.text = GetLocalizedText(key);
+                string localized = GetLocalizedText(key);
+                if (label.text != localized)
+                {
+                    label.text = localized;
+                    updatedCount++;
+                }
             }
         });
 
@@ -195,7 +223,12 @@ public class LocalizationManager : MonoBehaviour
             if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
             {
                 string key = button.text.Substring(prefix.Length);
-                button.text = GetLocalizedText(key);
+                string localized = GetLocalizedText(key);
+                if (button.text != localized)
+                {
+                    button.text = localized;
+                    updatedCount++;
+                }
             }
         });
 
@@ -205,20 +238,30 @@ public class LocalizationManager : MonoBehaviour
             if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
             {
                 string key = textField.label.Substring(prefix.Length);
-                textField.label = GetLocalizedText(key);
+                string localized = GetLocalizedText(key);
+                if (textField.label != localized)
+                {
+                    textField.label = localized;
+                    updatedCount++;
+                }
             }
         });
 
         // ── TEXTFIELDS (placeholder) ───────────────────
         root.Query<TextField>().ForEach(textField =>
         {
-            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder")
+            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder") 
                            ?? textField.Q<Label>(className: "unity-text-field__placeholder");
-
+            
             if (placeholder != null && !string.IsNullOrEmpty(placeholder.text) && placeholder.text.StartsWith(prefix))
             {
                 string key = placeholder.text.Substring(prefix.Length);
-                placeholder.text = GetLocalizedText(key);
+                string localized = GetLocalizedText(key);
+                if (placeholder.text != localized)
+                {
+                    placeholder.text = localized;
+                    updatedCount++;
+                }
             }
         });
 
@@ -228,29 +271,35 @@ public class LocalizationManager : MonoBehaviour
             if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
             {
                 string key = field.label.Substring(prefix.Length);
-                field.label = GetLocalizedText(key);
-            }
-        });
-
-        // ── DROPDOWNFIELD ──────────────────────────────
-        root.Query<DropdownField>().ForEach(dropdown =>
-        {
-            // Обновляем выбранное значение если оно локализовано
-            if (!string.IsNullOrEmpty(dropdown.value) && dropdown.value.StartsWith(prefix))
-            {
-                string key = dropdown.value.Substring(prefix.Length);
-                dropdown.value = GetLocalizedText(key);
+                string localized = GetLocalizedText(key);
+                if (field.label != localized)
+                {
+                    field.label = localized;
+                    updatedCount++;
+                }
             }
         });
 
         // ── Рекурсия по детям ──────────────────────────
         foreach (VisualElement child in root.Children())
             UpdateElementsWithPrefix(child, prefix);
+
+        if (updatedCount > 0)
+        {
+            Debug.Log($"Updated {updatedCount} elements in {root.name}");
+        }
     }
 
     public SystemLanguage GetCurrentLanguage()
     {
         return _currentLanguage;
+    }
+
+    // Метод для принудительного обновления при смене сцены
+    public void RefreshForNewScene()
+    {
+        RefreshUiDocuments();
+        UpdateAllUIElements();
     }
 
     private void OnDestroy()

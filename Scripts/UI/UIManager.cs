@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -75,6 +76,12 @@ public class UIManager : MonoBehaviour
         _characterSelectionManager = new UICharacterSelectionManager(_root);
         _settingsManager = new UISettingsManager(_root, _uiDocument);
 
+        // Подписываемся на событие изменения языка
+        if (LocalizationManager.Instance != null)
+        {
+            LocalizationManager.Instance.OnLanguageChanged += OnLanguageChanged;
+        }
+
         _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
         Debug.Log("UIManager initialized successfully");
     }
@@ -86,16 +93,51 @@ public class UIManager : MonoBehaviour
         _inputManager?.Cleanup();
         _responsiveManager?.Cleanup();
         _settingsManager?.Cleanup();
+
+        // Отписываемся от события
+        if (LocalizationManager.Instance != null)
+        {
+            LocalizationManager.Instance.OnLanguageChanged -= OnLanguageChanged;
+        }
     }
 
     #endregion
 
     #region Public Methods
+    // Вызывай этот метод при смене экранов
+    public void RefreshLocalization()
+    {
+        if (LocalizationManager.Instance != null)
+        {
+            StartCoroutine(DelayedLocalizationRefresh());
+        }
+    }
 
-    public void ShowScreen(string screenName) => _screenManager?.ShowScreen(screenName);
+    private IEnumerator DelayedLocalizationRefresh()
+    {
+        yield return new WaitForEndOfFrame(); // Ждем конца кадра
+        LocalizationManager.Instance.UpdateAllUIElements();
+        Debug.Log("Localization refreshed by UIManager");
+    }
+
+
+    public void ShowScreen(string screenName)
+    {
+        _screenManager?.ShowScreen(screenName);
+        // Дополнительно обновляем локализацию
+        RefreshLocalization();
+    }
+
     public void SwitchToPlayerInput() => _inputManager?.SwitchToPlayerInput();
     public void SwitchToUIInput() => _inputManager?.SwitchToUIInput();
     public void RefreshResponsiveUI() => _responsiveManager?.RefreshResponsiveUI();
+
+    // Обработчик события изменения языка
+    private void OnLanguageChanged()
+    {
+        Debug.Log("Language changed event received in UIManager");
+        RefreshLocalization();
+    }
 
     // Network Events
     public void OnConnectedToServer()
@@ -110,6 +152,8 @@ public class UIManager : MonoBehaviour
         ShowScreen(UIScreenManager.MenuScreenName);
         SwitchToUIInput();
     }
+
+
 
     #endregion
 }

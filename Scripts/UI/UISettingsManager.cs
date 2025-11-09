@@ -302,15 +302,14 @@ public class UISettingsManager
     private void OnLanguageChanged(SystemLanguage language)
     {
         UpdateLanguageButtons(language);
-
+        
+        Debug.Log($"Language changed in UI to: {language}");
+        
         // НЕМЕДЛЕННО применяем язык для предпросмотра
         if (LocalizationManager.Instance != null)
         {
-            LocalizationManager.Instance.LoadLanguage(language);
-            Debug.Log($"Language preview changed to: {language}");
-
-            // Принудительно обновляем все UI элементы
-            LocalizationManager.Instance.UpdateAllUIElements();
+            // Принудительно обновляем ВСЕ UI элементы
+            LocalizationManager.Instance.LoadLanguage(language, true);
         }
         else
         {
@@ -332,13 +331,33 @@ public class UISettingsManager
         var newSettings = CreateSettingsFromUI();
         SettingsManager.Instance.SaveSettings(newSettings);
 
-        // Принудительно обновляем UI после сохранения
+        // Язык уже должен быть применен через OnSettingsChanged,
+        // но на всякий случай принудительно обновляем
         if (LocalizationManager.Instance != null)
         {
-            LocalizationManager.Instance.UpdateAllUIElements();
+            // Ждем немного перед обновлением UI
+            _uiDocument.StartCoroutine(DelayedUIRefresh());
         }
+        else
+        {
+            ReturnToMainMenu();
+        }
+    }
 
-        // Возвращаемся на предыдущий экран
+
+    private System.Collections.IEnumerator DelayedUIRefresh()
+    {
+        yield return new WaitForSeconds(0.1f); // Ждем 100ms
+        
+        // Принудительно обновляем ВЕСЬ UI
+        LocalizationManager.Instance.UpdateAllUIElements();
+        
+        // Возвращаемся на главный экран
+        ReturnToMainMenu();
+    }
+
+    private void ReturnToMainMenu()
+    {
         if (UIManager.Instance != null)
         {
             UIManager.Instance.ShowScreen(UIScreenManager.MenuScreenName);

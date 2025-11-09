@@ -1,8 +1,7 @@
 ﻿{
     "game_title": "waves of ROBOTS",
     "my_netcode_game": "Моя Сетевая Игра",
-    "single_player": "Одиночная игра",
-    "create_lobby": "Сетевая игра",
+    "create_lobby": "Начать игру",
     "browse_lobbies": "Поиск лобби",
     "statistics": "Статистика",
     "quit": "Выход",
@@ -78,5 +77,7 @@
     "ping_label": "Пинг",
     "difficulty_label": "Сложность",
     "wave_count_label": "Количество волн",
-    "lobby_settings_label": "Настройки лобби"
+    "lobby_settings_label": "Настройки лобби",
+
+    "leave_game": "Покинуть игру"
 }

@@ -2,7 +2,7 @@
     "game_title": "waves of ROBOTS",
     "my_netcode_game": "My Netcode Game",
     "single_player": "Single Player",
-    "create_lobby": "Network Game",
+    "create_lobby": "Start Game",
     "browse_lobbies": "Browse Lobbies",
     "statistics": "Statistics",
     "quit": "Quit",
@@ -78,5 +78,7 @@
     "ping_label": "Ping",
     "difficulty_label": "Difficulty",
     "wave_count_label": "Wave count",
-    "lobby_settings_label": "Lobby Settings"
+    "lobby_settings_label": "Lobby Settings",
+
+    "leave_game": "Leave game"
 }

@@ -6,7 +6,6 @@
         <ui:VisualElement name="layout" class="layout">
             <ui:VisualElement name="menu_screen" class="screen" style="display: flex;">
                 <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;);" />
-                <ui:Button name="btnSingle" text="#single_player" class="menu-button" />
                 <ui:Button name="btnShowLobbyList" text="#create_lobby" class="menu-button" />
                 <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
                 <ui:Button name="btnQuit" text="#quit" class="menu-button" />

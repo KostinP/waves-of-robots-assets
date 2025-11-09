@@ -1,9 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ui:UXML
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:ui="UnityEngine.UIElements"
-    xmlns:uie="UnityEditor.UIElements"
-    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
->
-    
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/UI/CommonStyles.uss" />
+    <Style src="project://database/Assets/UI/HudStyles.uss" />
+
+    <ui:VisualElement class="pause-menu-overlay">
+        <ui:VisualElement class="pause-menu">
+            <ui:Label text="#pause" class="pause-title" />
+            <ui:Button name="leave_game" text="#leave_game" class="menu-button" />
+            <ui:Button name="resume" text="#resume" class="menu-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
 </ui:UXML>

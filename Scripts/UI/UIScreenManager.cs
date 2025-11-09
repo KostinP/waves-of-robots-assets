@@ -17,7 +17,6 @@ public class UIScreenManager
     private LobbySettingsManager _lobbySettingsManager;
 
     // UI Elements
-    private Button _btnSingle;
     private Button _btnCreateLobby;
     private Button _btnQuit;
     private Button _btnDisbandLobby;
@@ -32,7 +31,6 @@ public class UIScreenManager
 
     private void InitializeButtons()
     {
-        _btnSingle = _root.Q<Button>("btnSingle");
         _btnCreateLobby = _root.Q<Button>("btnShowLobbyList");
         _btnQuit = _root.Q<Button>("btnQuit");
         _btnDisbandLobby = _root.Q<Button>("btnDisbandLobby");
@@ -43,7 +41,6 @@ public class UIScreenManager
 
     private void SetupButtonCallbacks()
     {
-        if (_btnSingle != null) _btnSingle.clicked += OnSinglePlayer;
         if (_btnCreateLobby != null) _btnCreateLobby.clicked += OnCreateLobby;
         if (_btnQuit != null) _btnQuit.clicked += OnQuit;
         if (_btnDisbandLobby != null) _btnDisbandLobby.clicked += OnDisbandLobby;
@@ -81,12 +78,6 @@ public class UIScreenManager
     }
 
     #region Button Handlers
-    private void OnSinglePlayer()
-    {
-        Debug.Log("Starting single player...");
-        ShowScreen(MenuScreenName);
-    }
-
     private void OnCreateLobby()
     {
         Debug.Log("Opening lobby list...");

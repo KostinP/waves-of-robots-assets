@@ -17,6 +17,14 @@ public class UIResponsiveManager
         _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
         UpdateResponsiveClasses();
         Debug.Log("Responsive UI manager initialized");
+        HideScrollers();
+        Debug.Log("Responsive UI manager hide scrollers");
+    }
+
+    private void HideScrollers()
+    {
+        _root.Q<ScrollView>().verticalScrollerVisibility = ScrollerVisibility.Hidden;
+        _root.Q<ScrollView>().horizontalScrollerVisibility = ScrollerVisibility.Hidden;
     }
 
     private void OnGeometryChanged(GeometryChangedEvent evt)

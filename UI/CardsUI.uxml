@@ -1,35 +1,17 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/Main.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#Main" />
-    <Style src="project://database/Assets/UI/card-screen.uss?fileID=7433441132597879392&amp;guid=a86dde121d8bd4a2d9f521db870ab023&amp;type=3#card-screen" />
+    <Style src="project://database/Assets/UI/CommonStyles.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#CommonStyles" />
+    <Style src="project://database/Assets/UI/CardsStyles.uss?fileID=7433441132597879392&amp;guid=a86dde121d8bd4a2d9f521db870ab023&amp;type=3#CardsStyles" />
     <ui:VisualElement class="root">
         <ui:VisualElement class="cards-layout">
             <ui:VisualElement class="panel-header" style="flex-grow: 1;">
-                <ui:Label text="Label" class="panel-header-text" />
+                <ui:Label text="#upgrade" class="panel-header-text" />
             </ui:VisualElement>
-            <ui:Label text="ПОБЕДА" class="cards-title" />
-            <ui:Label text="ВЫБЕРИТЕ 1 КАРТУ" class="cards-subtitle" />
+            <ui:Label text="#card_title" name="Label" class="cards-title" />
+            <ui:Label text="#card_subtitle" class="cards-subtitle" style="display: none;" />
             <ui:VisualElement class="cards-row">
-                <ui:VisualElement class="card card-blue">
-                    <ui:VisualElement class="card-image" style="background-image: resource(&apos;card-energy-shield&apos;);" />
-                    <ui:Label text="Энергетический щит" class="card-name" />
-                    <ui:Label text="«Щит спасает больше, чем пули.»" class="card-quote" />
-                    <ui:Label text="10% к броне, блокирует 1 снаряд" class="card-desc" />
-                    <ui:Button text="ВЫБРАТЬ" class="card-button" />
-                </ui:VisualElement>
-                <ui:VisualElement class="card card-green">
-                    <ui:VisualElement class="card-image" style="background-image: resource(&apos;card-overdrive&apos;);" />
-                    <ui:Label text="Овердрайв" class="card-name" />
-                    <ui:Label text="«Когда перегрев — это стиль игры.»" class="card-quote" />
-                    <ui:Label text="+20% к скорости атаки всех модулей" class="card-desc" />
-                    <ui:Button text="ВЫБРАТЬ" class="card-button" />
-                </ui:VisualElement>
-                <ui:VisualElement class="card card-purple">
-                    <ui:VisualElement class="card-image" style="background-image: resource(&apos;card-adamant&apos;);" />
-                    <ui:Label text="Адамант" class="card-name" />
-                    <ui:Label text="«Толстая сталь спасает от тонких пуль.»" class="card-quote" />
-                    <ui:Label text="25% броня, -10% скорость движения" class="card-desc" />
-                    <ui:Button text="ВЫБРАТЬ" class="card-button" />
-                </ui:VisualElement>
+                <ui:VisualElement class="card card-blue" style="background-image: resource(&apos;Cards/arms_blue_1&apos;); -unity-background-scale-mode: scale-to-fit;" />
+                <ui:VisualElement class="card card-green" style="-unity-background-scale-mode: scale-to-fit;" />
+                <ui:VisualElement class="card card-purple" style="-unity-background-scale-mode: scale-to-fit;" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-grow: 1;" />
         </ui:VisualElement>

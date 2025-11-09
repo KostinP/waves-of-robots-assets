@@ -134,7 +134,18 @@ public class UIInputManager
     private void OnOpenSettingsPerformed(InputAction.CallbackContext context)
     {
         if (!context.performed || _isTextFieldFocused) return;
-        Debug.Log("OpenSettings action triggered");
+
+        string currentScreen = _screenManager.GetCurrentScreen();
+        if (currentScreen != UIScreenManager.SettingsScreenName)
+        {
+            // Сохраняем текущий экран для возврата
+            _screenManager.ShowScreen(UIScreenManager.SettingsScreenName);
+        }
+        else
+        {
+            // Если уже в настройках - возвращаемся назад
+            _screenManager.ReturnToMainMenu();
+        }
     }
 
     private void OnOpenStatisticsPerformed(InputAction.CallbackContext context)

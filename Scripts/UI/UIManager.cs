@@ -19,6 +19,7 @@ public class UIManager : MonoBehaviour
     private UIResponsiveManager _responsiveManager;
     private UILobbySetupManager _lobbySetupManager;
     private UICharacterSelectionManager _characterSelectionManager;
+    private UISettingsManager _settingsManager;
 
     #region Lifecycle Methods
 
@@ -54,12 +55,25 @@ public class UIManager : MonoBehaviour
 
         _root.style.display = DisplayStyle.Flex;
 
+        // Проверяем, что SettingsManager готов
+        if (!SettingsManager.IsReady())
+        {
+            Debug.LogWarning("SettingsManager is not ready yet, but continuing UI initialization...");
+        }
+
+        // Проверяем LocalizationManager
+        if (LocalizationManager.Instance == null)
+        {
+            Debug.LogWarning("LocalizationManager is not ready yet, but continuing UI initialization...");
+        }
+
         // Инициализация подсистем
         _inputManager = new UIInputManager(inputActions, _root);
         _screenManager = new UIScreenManager(_root);
         _responsiveManager = new UIResponsiveManager(_root);
         _lobbySetupManager = new UILobbySetupManager(_root);
         _characterSelectionManager = new UICharacterSelectionManager(_root);
+        _settingsManager = new UISettingsManager(_root, _uiDocument);
 
         _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
         Debug.Log("UIManager initialized successfully");
@@ -71,6 +85,7 @@ public class UIManager : MonoBehaviour
     {
         _inputManager?.Cleanup();
         _responsiveManager?.Cleanup();
+        _settingsManager?.Cleanup();
     }
 
     #endregion

@@ -64,6 +64,14 @@
     padding: 5% 10%;
 }
 
+#settings_screen {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: stretch;
+    padding: 5% 10%;
+}
+
 /* ЗАГОЛОВОК ЭКРАНА ЛОББИ */
 .network-title {
     color: white;
@@ -435,6 +443,17 @@ RadioButton .unity-radio-button__text {
 }
 .right-panel-button:hover { background-color: #d4a5ff; }
 
+/* ===  Кнопка случайная === */
+.random-button {
+    height: var(--size-60-adaptive);
+    background-color: var(--color-primary);
+    border-radius: var(--size-8-adaptive);
+    font-size: var(--size-30-adaptive);
+    color: white;
+    -unity-font-style: bold;
+}
+.random-button:hover { background-color: #d4a5ff; }
+
 /* === Прозрачные текстовые поля === */
 .transparent-bg > .unity-text-input,
 .transparent-bg .unity-base-text-field__input {
@@ -495,3 +514,25 @@ RadioButton .unity-radio-button__text {
     background-color: rgba(255, 255, 0, 0.1) !important;
 }
 
+/* === Выпадающий список === */
+.custom-foldout {
+    color: white;
+    font-size: var(--size-24-adaptive);
+}
+
+.custom-dropfield {
+    color: white;
+    font-size: var(--size-24-adaptive);
+}
+
+/* === Переключающееся оружие === */
+.custom-radio-button {
+    color: white;
+    font-size: var(--size-24-adaptive);
+}
+
+.selected-language {
+    border-color: var(--color-accent) !important;
+    background-color: rgba(255, 255, 0, 0.2) !important;
+    border-width: var(--size-3-adaptive);
+}

@@ -2,12 +2,12 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 public class UIScreenManager
 {
     public const string MenuScreenName = "menu_screen";
     public const string SettingsScreenName = "settings_screen";
-    public const string StatisticsScreenName = "statistics_screen";
     public const string LobbyListScreenName = "lobby_list_screen";
     public const string LobbySettingsScreenName = "lobby_settings_screen";
     public const string GameScreenName = "game_screen";
@@ -18,7 +18,6 @@ public class UIScreenManager
     // UI Elements
     private Button _btnSingle;
     private Button _btnCreateLobby;
-    private Button _btnStatistics;
     private Button _btnQuit;
 
     public UIScreenManager(VisualElement root)
@@ -31,7 +30,6 @@ public class UIScreenManager
     {
         _btnSingle = _root.Q<Button>("btnSingle");
         _btnCreateLobby = _root.Q<Button>("btnCreateLobby");
-        _btnStatistics = _root.Q<Button>("btnStatistics");
         _btnQuit = _root.Q<Button>("btnQuit");
 
         SetupButtonCallbacks();
@@ -41,7 +39,6 @@ public class UIScreenManager
     {
         if (_btnSingle != null) _btnSingle.clicked += OnSinglePlayer;
         if (_btnCreateLobby != null) _btnCreateLobby.clicked += OnCreateLobby;
-        if (_btnStatistics != null) _btnStatistics.clicked += OnStatistics;
         if (_btnQuit != null) _btnQuit.clicked += OnQuit;
     }
 
@@ -85,16 +82,17 @@ public class UIScreenManager
         ShowScreen(LobbyListScreenName);
     }
 
-    private void OnStatistics()
-    {
-        Debug.Log("Opening statistics...");
-        // ShowScreen(StatisticsScreenName);
-    }
-
     private void OnQuit()
     {
         Debug.Log("Quit button clicked");
         // Логика выхода должна быть в UIManager
+#if UNITY_EDITOR
+        // If running in the Unity Editor, stop Play mode
+        EditorApplication.isPlaying = false;
+#else
+        // If running as a built application, quit the application
+        Application.Quit();
+#endif
     }
 
     #endregion

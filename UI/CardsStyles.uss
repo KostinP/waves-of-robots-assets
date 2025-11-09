@@ -55,8 +55,9 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--size-24-adaptive);
-    border-width: var(--size-3-adaptive);
-    background-color: rgba(20, 20, 30, 0.9);
+    /*border-width: var(--size-3-adaptive);*/
+    /*background-color: rgba(20, 20, 30, 0.9);*/
+    border-width: 0;
     box-shadow: 0px 8px 40px rgba(0,0,0,0.6);
     transition: scale 0.25s ease-in-out;
     margin-bottom: var(--size-24-adaptive);

@@ -7,7 +7,6 @@ public class LocalizationManager : MonoBehaviour
 {
     public static LocalizationManager Instance { get; private set; }
 
-    // Добавляем событие для уведомления об изменении языка
     public event Action OnLanguageChanged;
 
     [SerializeField] private SystemLanguage _defaultLanguage = SystemLanguage.English;
@@ -15,6 +14,7 @@ public class LocalizationManager : MonoBehaviour
     private Dictionary<string, string> _currentLocalization = new Dictionary<string, string>();
     private UIDocument _uiDocument;
     private SystemLanguage _currentLanguage;
+    private VisualElement _rootVisualElement;
 
     private void Awake()
     {
@@ -24,7 +24,15 @@ public class LocalizationManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             _uiDocument = GetComponent<UIDocument>();
-            DetectAndLoadLanguage();
+
+            // Подписываемся на событие изменения настроек
+            if (SettingsManager.Instance != null)
+            {
+                SettingsManager.Instance.OnSettingsChanged += OnSettingsChanged;
+            }
+
+            // Не загружаем язык здесь - ждем SettingsManager
+            Debug.Log("LocalizationManager initialized, waiting for SettingsManager");
         }
         else
         {
@@ -34,7 +42,31 @@ public class LocalizationManager : MonoBehaviour
 
     private void Start()
     {
-        UpdateUIElements();
+        // Получаем root visual element
+        if (_uiDocument != null)
+        {
+            _rootVisualElement = _uiDocument.rootVisualElement;
+        }
+
+        // Если SettingsManager уже готов, загружаем язык
+        if (SettingsManager.IsReady())
+        {
+            LoadLanguage(SettingsManager.Instance.CurrentSettings.language);
+        }
+        else
+        {
+            // Иначе используем системный язык
+            DetectAndLoadLanguage();
+        }
+    }
+
+    private void OnSettingsChanged(GameSettings newSettings)
+    {
+        // При изменении настроек меняем язык
+        if (newSettings.language != _currentLanguage)
+        {
+            LoadLanguage(newSettings.language);
+        }
     }
 
     private void DetectAndLoadLanguage()
@@ -54,6 +86,8 @@ public class LocalizationManager : MonoBehaviour
 
     public void LoadLanguage(SystemLanguage language)
     {
+        Debug.Log($"Loading language: {language}");
+
         _currentLanguage = language;
         string langCode = GetLanguageCode(language);
         var localizationFile = Resources.Load<TextAsset>($"Localization/{langCode}");
@@ -67,10 +101,12 @@ public class LocalizationManager : MonoBehaviour
         if (localizationFile != null)
         {
             ParseLocalizationFile(localizationFile.text);
-            UpdateUIElements();
+            UpdateAllUIElements();
 
             // Вызываем событие об изменении языка
             OnLanguageChanged?.Invoke();
+
+            Debug.Log($"Language changed to: {language}");
         }
         else
         {
@@ -110,6 +146,7 @@ public class LocalizationManager : MonoBehaviour
                     }
                 }
             }
+            Debug.Log($"Parsed {_currentLocalization.Count} localization entries");
         }
         catch (Exception e)
         {
@@ -119,58 +156,91 @@ public class LocalizationManager : MonoBehaviour
 
     public string GetLocalizedText(string key)
     {
-        return _currentLocalization.ContainsKey(key) ? _currentLocalization[key] : $"#{key}";
+        if (_currentLocalization.ContainsKey(key))
+            return _currentLocalization[key];
+
+        Debug.LogWarning($"Localization key not found: {key}");
+        return $"#{key}";
     }
 
-    public void UpdateUIElements()
+    public void UpdateAllUIElements()
     {
-        if (_uiDocument == null || _uiDocument.rootVisualElement == null) return;
+        if (_uiDocument == null || _uiDocument.rootVisualElement == null)
+        {
+            Debug.LogWarning("UI Document or root visual element is null");
+            return;
+        }
 
         UpdateElementsWithPrefix(_uiDocument.rootVisualElement, "#");
+        Debug.Log("UI elements updated with new language");
     }
 
     private void UpdateElementsWithPrefix(VisualElement root, string prefix)
     {
+        if (root == null) return;
+
         // ── LABELS ─────────────────────────────────────
         root.Query<Label>().ForEach(label =>
         {
             if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
-                label.text = GetLocalizedText(label.text.Substring(prefix.Length));
+            {
+                string key = label.text.Substring(prefix.Length);
+                label.text = GetLocalizedText(key);
+            }
         });
 
         // ── BUTTONS ────────────────────────────────────
         root.Query<Button>().ForEach(button =>
         {
             if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
-                button.text = GetLocalizedText(button.text.Substring(prefix.Length));
+            {
+                string key = button.text.Substring(prefix.Length);
+                button.text = GetLocalizedText(key);
+            }
         });
 
-        // ── TEXTFIELDS (label + placeholder) ───────────
+        // ── TEXTFIELDS (label) ─────────────────────────
         root.Query<TextField>().ForEach(textField =>
         {
-            // 1. Локализуем обычный label
             if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
-                textField.label = GetLocalizedText(textField.label.Substring(prefix.Length));
+            {
+                string key = textField.label.Substring(prefix.Length);
+                textField.label = GetLocalizedText(key);
+            }
         });
 
-        // ── ОСОБАЯ ОБРАБОТКА ДЛЯ ПОЛЯ ПАРОЛЯ ───────────
-        TextField passwordField = root.Q<TextField>("lobbyPassword");
-        if (passwordField != null)
+        // ── TEXTFIELDS (placeholder) ───────────────────
+        root.Query<TextField>().ForEach(textField =>
         {
-            Label passwordPlaceholder = passwordField.Q<Label>(className: "unity-base-text-field__placeholder")
-                                      ?? passwordField.Q<Label>(className: "unity-text-field__placeholder");
+            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder")
+                           ?? textField.Q<Label>(className: "unity-text-field__placeholder");
 
-            if (passwordPlaceholder != null && passwordPlaceholder.text == "#enter_password")
+            if (placeholder != null && !string.IsNullOrEmpty(placeholder.text) && placeholder.text.StartsWith(prefix))
             {
-                passwordPlaceholder.text = GetLocalizedText("enter_password");
+                string key = placeholder.text.Substring(prefix.Length);
+                placeholder.text = GetLocalizedText(key);
             }
-        }
+        });
 
         // ── INTEGERFIELD ───────────────────────────────
         root.Query<IntegerField>().ForEach(field =>
         {
             if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
-                field.label = GetLocalizedText(field.label.Substring(prefix.Length));
+            {
+                string key = field.label.Substring(prefix.Length);
+                field.label = GetLocalizedText(key);
+            }
+        });
+
+        // ── DROPDOWNFIELD ──────────────────────────────
+        root.Query<DropdownField>().ForEach(dropdown =>
+        {
+            // Обновляем выбранное значение если оно локализовано
+            if (!string.IsNullOrEmpty(dropdown.value) && dropdown.value.StartsWith(prefix))
+            {
+                string key = dropdown.value.Substring(prefix.Length);
+                dropdown.value = GetLocalizedText(key);
+            }
         });
 
         // ── Рекурсия по детям ──────────────────────────
@@ -181,5 +251,14 @@ public class LocalizationManager : MonoBehaviour
     public SystemLanguage GetCurrentLanguage()
     {
         return _currentLanguage;
+    }
+
+    private void OnDestroy()
+    {
+        // Отписываемся от события
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.OnSettingsChanged -= OnSettingsChanged;
+        }
     }
 }

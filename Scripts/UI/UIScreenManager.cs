@@ -14,23 +14,29 @@ public class UIScreenManager
 
     private readonly VisualElement _root;
     private string _currentScreen = MenuScreenName;
+    private LobbySettingsManager _lobbySettingsManager;
 
     // UI Elements
     private Button _btnSingle;
     private Button _btnCreateLobby;
     private Button _btnQuit;
+    private Button _btnDisbandLobby;
+    private Button _btnCreateLobbyConfirm;
 
     public UIScreenManager(VisualElement root)
     {
         _root = root;
+        _lobbySettingsManager = new LobbySettingsManager(root);
         InitializeButtons();
     }
 
     private void InitializeButtons()
     {
         _btnSingle = _root.Q<Button>("btnSingle");
-        _btnCreateLobby = _root.Q<Button>("btnCreateLobby");
+        _btnCreateLobby = _root.Q<Button>("btnShowLobbyList");
         _btnQuit = _root.Q<Button>("btnQuit");
+        _btnDisbandLobby = _root.Q<Button>("btnDisbandLobby");
+        _btnCreateLobbyConfirm = _root.Q<Button>("btnCreateLobby");
 
         SetupButtonCallbacks();
     }
@@ -40,6 +46,15 @@ public class UIScreenManager
         if (_btnSingle != null) _btnSingle.clicked += OnSinglePlayer;
         if (_btnCreateLobby != null) _btnCreateLobby.clicked += OnCreateLobby;
         if (_btnQuit != null) _btnQuit.clicked += OnQuit;
+        if (_btnDisbandLobby != null) _btnDisbandLobby.clicked += OnDisbandLobby;
+        if (_btnCreateLobbyConfirm != null) _btnCreateLobbyConfirm.clicked += OnConfirmCreateLobby; // ← НОВЫЙ ХЕНДЛЕР
+    }
+
+    private void OnConfirmCreateLobby()
+    {
+        Debug.Log("Lobby created! Opening settings...");
+        _lobbySettingsManager.SyncAllSettings();
+        ShowScreen(LobbySettingsScreenName);
     }
 
     public void ShowScreen(string screenName)
@@ -49,13 +64,11 @@ public class UIScreenManager
         {
             screen.style.display = screen.name == screenName ? DisplayStyle.Flex : DisplayStyle.None;
         }
-
         _currentScreen = screenName;
         Debug.Log($"Showing screen: {screenName}");
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
-
     public string GetCurrentScreen() => _currentScreen;
 
     public IEnumerator SetInitialFocus(List<VisualElement> interactiveElements)
@@ -63,13 +76,11 @@ public class UIScreenManager
         yield return null;
         if (interactiveElements.Count > 0)
         {
-            // Здесь нужно установить фокус на первый элемент
-            // Логика фокуса должна быть в UIInputManager
+            interactiveElements[0].Focus();
         }
     }
 
     #region Button Handlers
-
     private void OnSinglePlayer()
     {
         Debug.Log("Starting single player...");
@@ -78,22 +89,24 @@ public class UIScreenManager
 
     private void OnCreateLobby()
     {
-        Debug.Log("Creating lobby...");
+        Debug.Log("Opening lobby list...");
         ShowScreen(LobbyListScreenName);
     }
 
     private void OnQuit()
     {
         Debug.Log("Quit button clicked");
-        // Логика выхода должна быть в UIManager
 #if UNITY_EDITOR
-        // If running in the Unity Editor, stop Play mode
         EditorApplication.isPlaying = false;
 #else
-        // If running as a built application, quit the application
         Application.Quit();
 #endif
     }
 
+    private void OnDisbandLobby()
+    {
+        Debug.Log("Disbanding lobby...");
+        ShowScreen(LobbyListScreenName); // или MenuScreenName
+    }
     #endregion
 }

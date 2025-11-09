@@ -66,5 +66,17 @@
     "screen_quality": "Screen quality",
     "language": "language",
     "save_button": "Save",
-    "cancel_button": "Cancel"
+    "cancel_button": "Cancel",
+
+    "lobby_name_label": "Lobby name",
+    "player_count_label": "Player count",
+    "type_label": "Type",
+    "lobby_type_label": "Lobby type",
+    "players_header_label": "Players",
+    "player_name_label": "Player",
+    "weapon_label": "Weapon",
+    "ping_label": "Ping",
+    "difficulty_label": "Difficulty",
+    "wave_count_label": "Wave count",
+    "lobby_settings_label": "Lobby Settings"
 }

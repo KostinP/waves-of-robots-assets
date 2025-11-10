@@ -7,7 +7,6 @@ public class UIInputManager
 {
     private readonly InputActionAsset _inputActions;
     private readonly VisualElement _root;
-
     private InputActionMap _uiActionMap;
     private InputAction _navigateAction, _submitAction, _cancelAction;
     private InputAction _openSettingsAction, _openStatisticsAction, _tabAction;
@@ -16,14 +15,22 @@ public class UIInputManager
     private VisualElement _currentlyFocusedElement;
     private bool _isSettingFocus = false;
 
-    // Navigation
-    private UIScreenManager _screenManager;
+    private bool _cancelSubscribed = false;
+    private bool _navigateSubscribed = false;
+    private bool _submitSubscribed = false;
+    private bool _tabSubscribed = false;
+    private bool _settingsSubscribed = false;
+    private bool _statsSubscribed = false;
 
-    public UIInputManager(InputActionAsset inputActions, VisualElement root)
+    private UIScreenManager _screenManager;
+    private MainMenuController _controller; // Добавляем ссылку
+
+    public UIInputManager(InputActionAsset inputActions, VisualElement root, MainMenuController controller)
     {
         _inputActions = inputActions;
         _root = root;
-        _screenManager = new UIScreenManager(root);
+        _controller = controller;
+        _screenManager = new UIScreenManager(root, controller); // Передаём controller
         Initialize();
     }
 
@@ -54,301 +61,235 @@ public class UIInputManager
         _openSettingsAction = _uiActionMap.FindAction("OpenSettings");
         _openStatisticsAction = _uiActionMap.FindAction("OpenStatistics");
         _tabAction = _uiActionMap.FindAction("Tab");
-
-        if (_navigateAction == null) Debug.LogError("Navigate action not found!");
-        if (_submitAction == null) Debug.LogError("Submit action not found!");
-        if (_cancelAction == null) Debug.LogError("Cancel action not found!");
-        if (_openSettingsAction == null) Debug.LogWarning("OpenSettings action not found!");
-        if (_openStatisticsAction == null) Debug.LogWarning("OpenStatistics action not found!");
-        if (_tabAction == null) Debug.LogWarning("Tab action not found!");
     }
 
     private void SubscribeToInputEvents()
     {
-        if (_cancelAction != null) _cancelAction.performed += OnCancelPerformed;
-        if (_navigateAction != null) _navigateAction.performed += OnNavigatePerformed;
-        if (_submitAction != null) _submitAction.performed += OnSubmitPerformed;
-        if (_tabAction != null) _tabAction.performed += OnTabPerformed;
-        if (_openSettingsAction != null) _openSettingsAction.performed += OnOpenSettingsPerformed;
-        if (_openStatisticsAction != null) _openStatisticsAction.performed += OnOpenStatisticsPerformed;
+        if (_cancelAction != null)
+        {
+            _cancelAction.performed += OnCancelPerformed;
+            _cancelSubscribed = true;
+        }
+
+        if (_navigateAction != null)
+        {
+            _navigateAction.performed += OnNavigatePerformed;
+            _navigateSubscribed = true;
+        }
+
+        if (_submitAction != null)
+        {
+            _submitAction.performed += OnSubmitPerformed;
+            _submitSubscribed = true;
+        }
+
+        if (_tabAction != null)
+        {
+            _tabAction.performed += OnTabPerformed;
+            _tabSubscribed = true;
+        }
+
+        if (_openSettingsAction != null)
+        {
+            _openSettingsAction.performed += OnOpenSettingsPerformed;
+            _settingsSubscribed = true;
+        }
+
+        if (_openStatisticsAction != null)
+        {
+            _openStatisticsAction.performed += OnOpenStatisticsPerformed;
+            _statsSubscribed = true;
+        }
+    }
+
+    public void Cleanup()
+    {
+        if (_cancelSubscribed && _cancelAction != null)
+            _cancelAction.performed -= OnCancelPerformed;
+
+        if (_navigateSubscribed && _navigateAction != null)
+            _navigateAction.performed -= OnNavigatePerformed;
+
+        if (_submitSubscribed && _submitAction != null)
+            _submitAction.performed -= OnSubmitPerformed;
+
+        if (_tabSubscribed && _tabAction != null)
+            _tabAction.performed -= OnTabPerformed;
+
+        if (_settingsSubscribed && _openSettingsAction != null)
+            _openSettingsAction.performed -= OnOpenSettingsPerformed;
+
+        if (_statsSubscribed && _openStatisticsAction != null)
+            _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
+
+        // Сбрасываем флаги
+        _cancelSubscribed = _navigateSubscribed = _submitSubscribed =
+            _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
     }
 
     public void Enable()
     {
-        if (_inputActions == null) return;
-        _inputActions.Disable();
+        _inputActions?.Disable();
         _uiActionMap?.Enable();
     }
 
     public void Disable() => _uiActionMap?.Disable();
 
-    public void Cleanup()
+    #region Input Handlers
+    private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
-        if (_cancelAction != null) _cancelAction.performed -= OnCancelPerformed;
-        if (_navigateAction != null) _navigateAction.performed -= OnNavigatePerformed;
-        if (_submitAction != null) _submitAction.performed -= OnSubmitPerformed;
-        if (_tabAction != null) _tabAction.performed -= OnTabPerformed;
-        if (_openSettingsAction != null) _openSettingsAction.performed -= OnOpenSettingsPerformed;
-        if (_openStatisticsAction != null) _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
-    }
-
-    #region Input Event Handlers
-
-    private void OnCancelPerformed(InputAction.CallbackContext context)
-    {
-        if (!context.performed || _isTextFieldFocused) return;
+        if (!ctx.performed || _isTextFieldFocused) return;
         HandleEscapeKey();
     }
 
-    private void OnNavigatePerformed(InputAction.CallbackContext context)
+    private void OnNavigatePerformed(InputAction.CallbackContext ctx)
     {
         if (_isSettingFocus || _isTextFieldFocused) return;
-
-        Vector2 direction = context.ReadValue<Vector2>();
-        if (Mathf.Abs(direction.y) > 0.1f)
-        {
-            NavigateUI(Mathf.RoundToInt(-direction.y));
-        }
-        else if (Mathf.Abs(direction.x) > 0.1f)
-        {
-            NavigateHorizontal(Mathf.RoundToInt(direction.x));
-        }
+        Vector2 dir = ctx.ReadValue<Vector2>();
+        if (Mathf.Abs(dir.y) > 0.1f) NavigateUI(Mathf.RoundToInt(-dir.y));
+        else if (Mathf.Abs(dir.x) > 0.1f) NavigateHorizontal(Mathf.RoundToInt(dir.x));
     }
 
-    private void OnTabPerformed(InputAction.CallbackContext context)
+    private void OnTabPerformed(InputAction.CallbackContext ctx)
     {
-        if (!context.performed || _isTextFieldFocused) return;
+        if (!ctx.performed || _isTextFieldFocused) return;
         NavigateUI(1);
     }
 
-    private void OnSubmitPerformed(InputAction.CallbackContext context)
+    private void OnSubmitPerformed(InputAction.CallbackContext ctx)
     {
-        if (!context.performed || _isTextFieldFocused) return;
-
-        if (_currentlyFocusedElement is Button focusedButton && focusedButton.enabledSelf)
-        {
-            HandleButtonClick(focusedButton);
-        }
+        if (!ctx.performed || _isTextFieldFocused) return;
+        if (_currentlyFocusedElement is Button btn && btn.enabledSelf)
+            HandleButtonClick(btn);
     }
 
-    private void OnOpenSettingsPerformed(InputAction.CallbackContext context)
+    private void OnOpenSettingsPerformed(InputAction.CallbackContext ctx)
     {
-        if (!context.performed || _isTextFieldFocused) return;
-
-        string currentScreen = _screenManager.GetCurrentScreen();
-        if (currentScreen != UIScreenManager.SettingsScreenName)
-        {
-            // Сохраняем текущий экран для возврата
-            _screenManager.ShowScreen(UIScreenManager.SettingsScreenName);
-        }
+        if (!ctx.performed || _isTextFieldFocused) return;
+        string current = _screenManager.GetCurrentScreen();
+        if (current != UIScreenManager.SettingsScreenName)
+            _controller.ShowScreen(UIScreenManager.SettingsScreenName);
         else
-        {
-            // Если уже в настройках - возвращаемся назад
             _screenManager.ReturnToMainMenu();
-        }
     }
 
-    private void OnOpenStatisticsPerformed(InputAction.CallbackContext context)
+    private void OnOpenStatisticsPerformed(InputAction.CallbackContext ctx)
     {
-        if (!context.performed || _isTextFieldFocused) return;
-        Debug.Log("OpenStatistics action triggered");
-        OnStatistics();
+        if (!ctx.performed || _isTextFieldFocused) return;
+        Debug.Log("Open Statistics");
+        // _controller.ShowScreen("statistics_screen");
     }
-
     #endregion
 
     #region Navigation
-
     private void NavigateUI(int direction)
     {
-        var interactiveElements = GetInteractiveElements();
-        if (interactiveElements.Count == 0) return;
+        var elements = GetInteractiveElements();
+        if (elements.Count == 0) return;
 
-        int currentIndex = _currentlyFocusedElement != null ?
-            interactiveElements.IndexOf(_currentlyFocusedElement) : -1;
-
-        int newIndex = currentIndex + direction;
-        if (newIndex < 0) newIndex = interactiveElements.Count - 1;
-        if (newIndex >= interactiveElements.Count) newIndex = 0;
-
-        SetFocusToElement(interactiveElements[newIndex]);
+        int current = _currentlyFocusedElement != null ? elements.IndexOf(_currentlyFocusedElement) : -1;
+        int next = (current + direction + elements.Count) % elements.Count;
+        SetFocusToElement(elements[next]);
     }
 
-    private void NavigateHorizontal(int direction)
-    {
-        // Логика для горизонтальной навигации (например, между радио-кнопками)
-    }
+    private void NavigateHorizontal(int direction) { }
 
     private List<VisualElement> GetInteractiveElements()
     {
-        var elements = new List<VisualElement>();
-
-        elements.AddRange(_root.Query<Button>().Where(btn =>
-            btn.resolvedStyle.display == DisplayStyle.Flex &&
-            btn.enabledSelf &&
-            btn.visible &&
-            btn.focusable).ToList());
-
-        elements.AddRange(_root.Query<TextField>().Where(tf =>
-            tf.resolvedStyle.display == DisplayStyle.Flex &&
-            tf.enabledSelf &&
-            tf.visible &&
-            tf.focusable).ToList());
-
-        elements.AddRange(_root.Query<RadioButton>().Where(rb =>
-            rb.resolvedStyle.display == DisplayStyle.Flex &&
-            rb.enabledSelf &&
-            rb.visible &&
-            rb.focusable).ToList());
-
-        return elements;
+        var list = new List<VisualElement>();
+        list.AddRange(_root.Query<Button>().Where(b => b.enabledSelf && b.visible && b.focusable && b.resolvedStyle.display == DisplayStyle.Flex).ToList());
+        list.AddRange(_root.Query<TextField>().Where(t => t.enabledSelf && t.visible && t.focusable && t.resolvedStyle.display == DisplayStyle.Flex).ToList());
+        list.AddRange(_root.Query<RadioButton>().Where(r => r.enabledSelf && r.visible && r.focusable && r.resolvedStyle.display == DisplayStyle.Flex).ToList());
+        return list;
     }
 
-    private void SetFocusToElement(VisualElement element)
+    private void SetFocusToElement(VisualElement el)
     {
-        if (_isSettingFocus || element == null) return;
-
+        if (_isSettingFocus || el == null) return;
         _isSettingFocus = true;
 
         try
         {
-            if (_currentlyFocusedElement != null && _currentlyFocusedElement != element)
-            {
-                _currentlyFocusedElement.Blur();
-                _currentlyFocusedElement.RemoveFromClassList("focused");
+            _currentlyFocusedElement?.Blur();
+            _currentlyFocusedElement?.RemoveFromClassList("focused");
 
-                if (_currentlyFocusedElement is TextField)
-                {
-                    _isTextFieldFocused = false;
-                }
-            }
+            _currentlyFocusedElement = el;
+            el.focusable = true;
+            el.Focus();
+            el.AddToClassList("focused");
 
-            _currentlyFocusedElement = element;
-
-            if (!_currentlyFocusedElement.focusable)
-                _currentlyFocusedElement.focusable = true;
-
-            _currentlyFocusedElement.Focus();
-            _currentlyFocusedElement.AddToClassList("focused");
-
-            if (_currentlyFocusedElement is TextField textField)
+            if (el is TextField tf)
             {
                 _isTextFieldFocused = true;
-                textField.Q<TextElement>().style.color = Color.white;
+                tf.Q<TextElement>().style.color = Color.white;
             }
-
-            Debug.Log($"Focused on: {element.name} (Type: {element.GetType().Name})");
+            else
+            {
+                _isTextFieldFocused = false;
+            }
         }
         finally
         {
             _isSettingFocus = false;
         }
     }
-
     #endregion
 
     #region Button Handlers
-
-    private void HandleButtonClick(Button button)
+    private void HandleButtonClick(Button btn)
     {
-        string buttonName = button.name;
-
-        switch (buttonName)
+        switch (btn.name)
         {
-            case "btnSingle":
-                OnSinglePlayer();
-                break;
-            case "btnCreateLobby":
-                OnCreateLobby();
-                break;
-            case "btnStatistics":
-                OnStatistics();
-                break;
-            case "btnQuit":
-                OnQuit();
-                break;
-            default:
-                SimulateButtonClick(button);
-                break;
+            case "btnSingle": OnSinglePlayer(); break;
+            case "btnCreateLobby": OnCreateLobby(); break;
+            case "btnStatistics": OnStatistics(); break;
+            case "btnQuit": OnQuit(); break;
+            default: SimulateButtonClick(btn); break;
         }
     }
 
-    private void SimulateButtonClick(Button button)
+    private void SimulateButtonClick(Button btn)
     {
-        using (var clickEvent = NavigationSubmitEvent.GetPooled())
-        {
-            clickEvent.target = button;
-            button.SendEvent(clickEvent);
-        }
+        using var e = NavigationSubmitEvent.GetPooled();
+        e.target = btn;
+        btn.SendEvent(e);
     }
 
     private void HandleEscapeKey()
     {
-        string currentScreen = _screenManager.GetCurrentScreen();
-
-        switch (currentScreen)
-        {
-            case UIScreenManager.LobbyListScreenName:
-                _screenManager.ReturnToMainMenu();
-                Debug.Log("Returned to main menu from lobby");
-                break;
-            case UIScreenManager.MenuScreenName:
-                // StartCoroutine(QuitWithConfirmation()); // Нужно перенести в UIManager
-                break;
-            default:
-                _screenManager.ReturnToMainMenu();
-                break;
-        }
+        string screen = _screenManager.GetCurrentScreen();
+        if (screen == UIScreenManager.LobbyListScreenName || screen == UIScreenManager.SettingsScreenName)
+            _screenManager.ReturnToMainMenu();
     }
 
     private void OnSinglePlayer()
     {
-        Debug.Log("Starting single player...");
         SwitchToPlayerInput();
-        _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
+        _controller.ShowScreen(UIScreenManager.MenuScreenName);
     }
 
     private void OnCreateLobby()
     {
-        Debug.Log("Creating lobby...");
-        _screenManager.ShowScreen(UIScreenManager.LobbyListScreenName);
+        _controller.ShowScreen(UIScreenManager.LobbyListScreenName);
     }
 
-    private void OnStatistics()
-    {
-        Debug.Log("Opening statistics...");
-        // _screenManager.ShowScreen(UIScreenManager.StatisticsScreenName);
-    }
-
-    private void OnQuit()
-    {
-        // StartCoroutine(QuitWithConfirmation()); // Нужно перенести в UIManager
-        Debug.Log("Quit requested");
-    }
-
+    private void OnStatistics() => Debug.Log("Statistics");
+    private void OnQuit() => Debug.Log("Quit");
     #endregion
 
-    #region Input Switching
-
+    #region Input Switch
     public void SwitchToPlayerInput()
     {
-        if (_inputActions == null) return;
-
         _uiActionMap?.Disable();
-        var playerActionMap = _inputActions.FindActionMap("Player");
-        playerActionMap?.Enable();
-        Debug.Log("Switched to Player input");
+        var playerMap = _inputActions.FindActionMap("Player");
+        playerMap?.Enable();
     }
 
     public void SwitchToUIInput()
     {
-        if (_inputActions == null) return;
-
-        var playerActionMap = _inputActions.FindActionMap("Player");
-        playerActionMap?.Disable();
+        var playerMap = _inputActions.FindActionMap("Player");
+        playerMap?.Disable();
         _uiActionMap?.Enable();
-        Debug.Log("Switched to UI input");
     }
-
     #endregion
 }

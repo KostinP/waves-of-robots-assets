@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Collections;
+using Unity.Collections;
+using Unity.Entities;
 
 public class LobbySettingsManager
 {
-    private VisualElement _root;
+    private readonly VisualElement _root;
+    private readonly MainMenuController _controller; // Добавляем
 
-    // Элементы lobby_list_screen (источник)
+    // lobby_list_screen (источник)
     private TextField _createLobbyName;
     private RadioButton _radioOpen;
     private RadioButton _radioClosed;
@@ -19,7 +21,7 @@ public class LobbySettingsManager
     private Slider _waveCountSlider;
     private Label _waveCountValue;
 
-    // Элементы lobby_settings_screen (приёмник)
+    // lobby_settings_screen (приёмник)
     private TextField _lobbyNameField;
     private RadioButton _settingsRadioOpen;
     private RadioButton _settingsRadioClosed;
@@ -32,57 +34,56 @@ public class LobbySettingsManager
     private Slider _settingsWaveCountSlider;
     private Label _settingsWaveCountValue;
 
-    public LobbySettingsManager(VisualElement root)
+    public LobbySettingsManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
+        _controller = controller;
         InitializeElements();
         SetupEventListeners();
     }
 
     private void InitializeElements()
     {
-        // lobby_list_screen (создание)
-        var lobbyListScreen = _root.Q<VisualElement>("lobby_list_screen");
-        _createLobbyName = lobbyListScreen.Q<TextField>("createLobbyName");
-        _radioOpen = lobbyListScreen.Q<RadioButton>("radioOpen");
-        _radioClosed = lobbyListScreen.Q<RadioButton>("radioClosed");
-        _lobbyPassword = lobbyListScreen.Q<TextField>("lobbyPassword");
-        _playerCountSlider = lobbyListScreen.Q<Slider>("playerCountSlider");
-        _playerCountValue = lobbyListScreen.Q<Label>("playerCountValue");
-        _charVacuum = lobbyListScreen.Q<VisualElement>("charVacuum");
-        _charToaster = lobbyListScreen.Q<VisualElement>("charToaster");
-        _charGPT = lobbyListScreen.Q<VisualElement>("charGPT");
-        _waveCountSlider = lobbyListScreen.Q<Slider>("waveCountSlider");
-        _waveCountValue = lobbyListScreen.Q<Label>("waveCountValue");
+        var lobbyList = _root.Q<VisualElement>("lobby_list_screen");
+        _createLobbyName = lobbyList.Q<TextField>("createLobbyName");
+        _radioOpen = lobbyList.Q<RadioButton>("radioOpen");
+        _radioClosed = lobbyList.Q<RadioButton>("radioClosed");
+        _lobbyPassword = lobbyList.Q<TextField>("lobbyPassword");
+        _playerCountSlider = lobbyList.Q<Slider>("playerCountSlider");
+        _playerCountValue = lobbyList.Q<Label>("playerCountValue");
+        _charVacuum = lobbyList.Q<VisualElement>("charVacuum");
+        _charToaster = lobbyList.Q<VisualElement>("charToaster");
+        _charGPT = lobbyList.Q<VisualElement>("charGPT");
+        _waveCountSlider = lobbyList.Q<Slider>("waveCountSlider");
+        _waveCountValue = lobbyList.Q<Label>("waveCountValue");
 
-        // lobby_settings_screen (настройки)
-        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
-        _lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
-        _settingsRadioOpen = lobbySettingsScreen.Q<RadioButton>("radioOpen");
-        _settingsRadioClosed = lobbySettingsScreen.Q<RadioButton>("radioClosed");
-        _lobbyPasswordField = lobbySettingsScreen.Q<TextField>("lobbyPasswordField");
-        _settingsPlayerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
-        _settingsPlayerCountValue = lobbySettingsScreen.Q<Label>("playerCountValue");
-        _settingsCharVacuum = lobbySettingsScreen.Q<VisualElement>("charVacuum");
-        _settingsCharToaster = lobbySettingsScreen.Q<VisualElement>("charToaster");
-        _settingsCharGPT = lobbySettingsScreen.Q<VisualElement>("charGPT");
-        _settingsWaveCountSlider = lobbySettingsScreen.Q<Slider>("waveCountSlider");
-        _settingsWaveCountValue = lobbySettingsScreen.Q<Label>("waveCountValue");
+        var lobbySettings = _root.Q<VisualElement>("lobby_settings_screen");
+        _lobbyNameField = lobbySettings.Q<TextField>("lobbyNameField");
+        _settingsRadioOpen = lobbySettings.Q<RadioButton>("radioOpen");
+        _settingsRadioClosed = lobbySettings.Q<RadioButton>("radioClosed");
+        _lobbyPasswordField = lobbySettings.Q<TextField>("lobbyPasswordField");
+        _settingsPlayerCountSlider = lobbySettings.Q<Slider>("playerCountSlider");
+        _settingsPlayerCountValue = lobbySettings.Q<Label>("playerCountValue");
+        _settingsCharVacuum = lobbySettings.Q<VisualElement>("charVacuum");
+        _settingsCharToaster = lobbySettings.Q<VisualElement>("charToaster");
+        _settingsCharGPT = lobbySettings.Q<VisualElement>("charGPT");
+        _settingsWaveCountSlider = lobbySettings.Q<Slider>("waveCountSlider");
+        _settingsWaveCountValue = lobbySettings.Q<Label>("waveCountValue");
     }
 
     private void SetupEventListeners()
     {
-        // Синхронизация при изменении формы создания
-        if (_createLobbyName != null) _createLobbyName.RegisterValueChangedCallback(evt => SyncLobbyName());
-        if (_radioOpen != null) _radioOpen.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_radioClosed != null) _radioClosed.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_lobbyPassword != null) _lobbyPassword.RegisterValueChangedCallback(evt => SyncPassword());
-        if (_playerCountSlider != null) _playerCountSlider.RegisterValueChangedCallback(evt => SyncPlayerCount());
-        if (_playerCountValue != null) _playerCountValue.RegisterValueChangedCallback(evt => SyncPlayerCount());
+        _createLobbyName?.RegisterValueChangedCallback(_ => SyncLobbyName());
+        _radioOpen?.RegisterValueChangedCallback(_ => SyncLobbyType());
+        _radioClosed?.RegisterValueChangedCallback(_ => SyncLobbyType());
+        _lobbyPassword?.RegisterValueChangedCallback(_ => SyncPassword());
+        _playerCountSlider?.RegisterValueChangedCallback(_ => SyncPlayerCount());
+        _waveCountSlider?.RegisterValueChangedCallback(_ => SyncWaveCount());
 
-        SyncCharacterSelection();
-        if (_waveCountSlider != null) _waveCountSlider.RegisterValueChangedCallback(evt => SyncWaveCount());
-        if (_waveCountValue != null) _waveCountValue.RegisterValueChangedCallback(evt => SyncWaveCount());
+        // Синхронизация при смене персонажа
+        _charVacuum?.RegisterCallback<ClickEvent>(_ => SyncCharacterSelection());
+        _charToaster?.RegisterCallback<ClickEvent>(_ => SyncCharacterSelection());
+        _charGPT?.RegisterCallback<ClickEvent>(_ => SyncCharacterSelection());
     }
 
     public void SyncAllSettings()
@@ -93,59 +94,48 @@ public class LobbySettingsManager
         SyncPlayerCount();
         SyncCharacterSelection();
         SyncWaveCount();
+
+        // Синхронизация с NetCode
+        var lobbyData = _controller.LobbySetupManager.GetLobbyData();
+        var world = World.DefaultGameObjectInjectionWorld;
+        var em = world.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyDataComponent>());
+        if (query.TryGetSingletonEntity<LobbyDataComponent>(out var entity))
+        {
+            var lobby = em.GetComponentData<LobbyDataComponent>(entity);
+            lobby.Name = new FixedString128Bytes(lobbyData.name);
+            lobby.Password = new FixedString64Bytes(lobbyData.password);
+            lobby.MaxPlayers = lobbyData.maxPlayers;
+            lobby.IsOpen = lobbyData.isOpen;
+            em.SetComponentData(entity, lobby);
+        }
     }
 
-    #region Синхронизация
-    private void SyncLobbyName()
-    {
-        if (_lobbyNameField != null && _createLobbyName != null)
-            _lobbyNameField.value = _createLobbyName.value;
-    }
-
+    private void SyncLobbyName() => _lobbyNameField.value = _createLobbyName.value;
     private void SyncLobbyType()
     {
-        if (_settingsRadioOpen != null && _radioOpen != null)
-            _settingsRadioOpen.SetValueWithoutNotify(_radioOpen.value);
-        if (_settingsRadioClosed != null && _radioClosed != null)
-            _settingsRadioClosed.SetValueWithoutNotify(_radioClosed.value);
+        _settingsRadioOpen.SetValueWithoutNotify(_radioOpen.value);
+        _settingsRadioClosed.SetValueWithoutNotify(_radioClosed.value);
     }
-
-    private void SyncPassword()
-    {
-        if (_lobbyPasswordField != null && _lobbyPassword != null)
-            _lobbyPasswordField.value = _lobbyPassword.value;
-    }
-
+    private void SyncPassword() => _lobbyPasswordField.value = _lobbyPassword.value;
     private void SyncPlayerCount()
     {
-        if (_settingsPlayerCountSlider != null && _playerCountSlider != null)
-            _settingsPlayerCountSlider.SetValueWithoutNotify(_playerCountSlider.value);
-        if (_settingsPlayerCountValue != null && _playerCountValue != null)
-            _settingsPlayerCountValue.text = _playerCountValue.text;
+        _settingsPlayerCountSlider.SetValueWithoutNotify(_playerCountSlider.value);
+        _settingsPlayerCountValue.text = _playerCountValue.text;
     }
-
-    private void SyncCharacterSelection()
-    {
-        // Убираем selected со всех
-        _settingsCharVacuum?.RemoveFromClassList("selected");
-        _settingsCharToaster?.RemoveFromClassList("selected");
-        _settingsCharGPT?.RemoveFromClassList("selected");
-
-        // Добавляем selected к активному
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            _settingsCharVacuum?.AddToClassList("selected");
-        else if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            _settingsCharToaster?.AddToClassList("selected");
-        else if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            _settingsCharGPT?.AddToClassList("selected");
-    }
-
     private void SyncWaveCount()
     {
-        if (_settingsWaveCountSlider != null && _waveCountSlider != null)
-            _settingsWaveCountSlider.SetValueWithoutNotify(_waveCountSlider.value);
-        if (_settingsWaveCountValue != null && _waveCountValue != null)
-            _settingsWaveCountValue.text = _waveCountValue.text;
+        _settingsWaveCountSlider.SetValueWithoutNotify(_waveCountSlider.value);
+        _settingsWaveCountValue.text = _waveCountValue.text;
     }
-    #endregion
+    private void SyncCharacterSelection()
+    {
+        _settingsCharVacuum.RemoveFromClassList("selected");
+        _settingsCharToaster.RemoveFromClassList("selected");
+        _settingsCharGPT.RemoveFromClassList("selected");
+
+        if (_charVacuum.ClassListContains("selected")) _settingsCharVacuum.AddToClassList("selected");
+        else if (_charToaster.ClassListContains("selected")) _settingsCharToaster.AddToClassList("selected");
+        else if (_charGPT.ClassListContains("selected")) _settingsCharGPT.AddToClassList("selected");
+    }
 }

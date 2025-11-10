@@ -1,12 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <Style src="project://database/Assets/UI/CommonStyles.uss" />
-    <Style src="project://database/Assets/UI/HudStyles.uss" />
-
-    <ui:VisualElement class="pause-menu-overlay">
-        <ui:VisualElement class="pause-menu">
-            <ui:Label text="#pause" class="pause-title" />
-            <ui:Button name="leave_game" text="#leave_game" class="menu-button" />
-            <ui:Button name="resume" text="#resume" class="menu-button" />
-        </ui:VisualElement>
+    <Style src="project://database/Assets/UI/MainMenuStyles.uss" />
+    <ui:VisualElement name="root" class="pause-root">
+        <ui:Label text="#pause_title" class="pause-title" />
+        <ui:Button name="btnResume" text="#resume" class="pause-button" />
+        <ui:Button name="btnLeaveGame" text="#leave_game" class="pause-button leave-btn" />
     </ui:VisualElement>
 </ui:UXML>

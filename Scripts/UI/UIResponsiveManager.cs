@@ -1,3 +1,4 @@
+// Assets/Scripts/UI/UIResponsiveManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,7 +16,7 @@ public class UIResponsiveManager
     private void Initialize()
     {
         _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-        UpdateResponsiveClasses();
+        // УБРАТЬ: UpdateResponsiveClasses(); — будет NaN
         Debug.Log("Responsive UI manager initialized");
         HideScrollers();
         Debug.Log("Responsive UI manager hide scrollers");
@@ -38,14 +39,21 @@ public class UIResponsiveManager
 
         float width = _root.resolvedStyle.width;
 
-        // Удаляем все классы размеров
+        // ЗАЩИТА ОТ NaN
+        if (float.IsNaN(width) || width <= 0)
+        {
+            // Отложим до первого валидного события
+            return;
+        }
+
+        // Удаляем все классы
         _root.RemoveFromClassList("sm-screen");
         _root.RemoveFromClassList("md-screen");
         _root.RemoveFromClassList("lg-screen");
         _root.RemoveFromClassList("xl-screen");
         _root.RemoveFromClassList("xxl-screen");
 
-        // Добавляем соответствующий класс
+        // Добавляем нужный
         if (width < _breakpoints[0])
             _root.AddToClassList("sm-screen");
         else if (width < _breakpoints[1])

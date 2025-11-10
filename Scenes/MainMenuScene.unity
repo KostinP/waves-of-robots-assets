@@ -129,8 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 974139191}
   - component: {fileID: 974139190}
-  - component: {fileID: 974139189}
-  - component: {fileID: 974139188}
   - component: {fileID: 974139192}
   m_Layer: 0
   m_Name: UI_Manager
@@ -139,32 +137,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &974139188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 974139187}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e07b992dfa7a5440f946f179f313772b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIManager
-  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
---- !u!114 &974139189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 974139187}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d6ee21fbc5574bc58699e9c4ea085dc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LocalizationManager
-  _defaultLanguage: 30
 --- !u!114 &974139190
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,12 +184,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 974139187}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5f865d230ab540949e6af892534ca78, type: 3}
+  m_Script: {fileID: 11500000, guid: 086a81eac129840a8beb929f053a8e4a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  settingsManagerPrefab: {fileID: 0}
-  localizationManagerPrefab: {fileID: 0}
-  uiManagerPrefab: {fileID: 0}
+  m_EditorClassIdentifier: '::'
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

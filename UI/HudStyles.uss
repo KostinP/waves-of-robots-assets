@@ -157,34 +157,6 @@
     color: #ccc;
 }
 
-.pause-menu-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    justify-content: center;
-    align-items: center;
-    display: none;
-}
-
-.pause-menu {
-    width: 400px;
-    background-color: var(--color-bg-darker);
-    border-radius: var(--size-30-adaptive);
-    padding: 40px;
-    flex-direction: column;
-    align-items: center;
-    border: 3px solid var(--color-primary);
-}
-
-.pause-title {
-    font-size: var(--size-48-adaptive);
-    color: white;
-    margin-bottom: 30px;
-}
-
-.pause-menu .menu-button {
-    width: 80%;
-    margin-bottom: 15px;
-}
-
+.hud__player-ping.good { color: #00ff00; }
+.hud__player-ping.medium { color: #ffff00; }
+.hud__player-ping.bad { color: #ff0000; }

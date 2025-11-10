@@ -1,7 +1,9 @@
+// Assets/Scripts/UI/LocalizationManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 
 public class LocalizationManager : MonoBehaviour
 {

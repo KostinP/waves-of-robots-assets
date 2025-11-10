@@ -1,3 +1,4 @@
+// Assets/Scripts/UI/SettingsManager.cs
 using UnityEngine;
 using System;
 
@@ -150,14 +151,6 @@ public class SettingsManager : MonoBehaviour
         else
         {
             Debug.LogError("LocalizationManager still not found after delay!");
-        }
-    }
-
-    private void RetryApplyLanguage()
-    {
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language);
         }
     }
 

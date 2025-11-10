@@ -64,8 +64,11 @@
                         </ui:VisualElement>
                         <ui:VisualElement class="panel-content">
                             <ui:VisualElement class="form-section">
-                                <ui:Label text="#lobby_name" class="section-label" />
-                                <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input transparent-bg" />
+                                <ui:Label text="#player_name" class="section-label" />
+                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+                                    <ui:Button text="#random_name" name="randomNameBtn" class="random-button" />
+                                    <ui:TextField name="playerNameField" placeholder-text="#enter_player_name" class="text-input transparent-bg" style="flex-grow: 1;" />
+                                </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_type" class="section-label" />
@@ -274,6 +277,10 @@
                                         <ui:RadioButton name="infinityRadio" text="#infinity" value="false" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#start_game" class="section-label" />
+                                <ui:Button name="btnStartGame" text="#start_game" class="right-panel-button start-game-btn" />
                             </ui:VisualElement>
                             <ui:Button name="btnDisbandLobby" text="#disband_lobby" class="right-panel-button disband-btn" />
                         </ui:VisualElement>

@@ -10,48 +10,76 @@ public class UIScreenManager
     public const string SettingsScreenName = "settings_screen";
     public const string LobbyListScreenName = "lobby_list_screen";
     public const string LobbySettingsScreenName = "lobby_settings_screen";
-    public const string GameScreenName = "game_screen";
 
     private readonly VisualElement _root;
+    private readonly MainMenuController _controller; // ← Обязательно!
     private string _currentScreen = MenuScreenName;
-    private LobbySettingsManager _lobbySettingsManager;
 
     // UI Elements
+    private Button _btnShowLobbyList;
     private Button _btnCreateLobby;
-    private Button _btnQuit;
     private Button _btnDisbandLobby;
-    private Button _btnCreateLobbyConfirm;
+    private Button _btnStartGame;
+    private ScrollView _lobbyListScroll;
+    private ScrollView _playersScroll;
 
-    public UIScreenManager(VisualElement root)
+    public UIScreenManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
-        _lobbySettingsManager = new LobbySettingsManager(root);
+        _controller = controller; // ← Получаем через конструктор
         InitializeButtons();
+        SetupCallbacks();
     }
 
     private void InitializeButtons()
     {
-        _btnCreateLobby = _root.Q<Button>("btnShowLobbyList");
-        _btnQuit = _root.Q<Button>("btnQuit");
-        _btnDisbandLobby = _root.Q<Button>("btnDisbandLobby");
-        _btnCreateLobbyConfirm = _root.Q<Button>("btnCreateLobby");
+        // Menu screen
+        var menuScreen = _root.Q<VisualElement>(MenuScreenName);
+        _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
 
-        SetupButtonCallbacks();
+        // Lobby list screen
+        var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
+        _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
+        _lobbyListScroll = lobbyListScreen?.Q<ScrollView>("lobbyListScroll");
+
+        // Lobby settings screen
+        var lobbySettingsScreen = _root.Q<VisualElement>(LobbySettingsScreenName);
+        _playersScroll = lobbySettingsScreen?.Q<ScrollView>("playersScroll");
+        _btnDisbandLobby = lobbySettingsScreen?.Q<Button>("btnDisbandLobby");
+        _btnStartGame = lobbySettingsScreen?.Q<Button>("btnStartGame");
     }
 
-    private void SetupButtonCallbacks()
+    private void SetupCallbacks()
     {
-        if (_btnCreateLobby != null) _btnCreateLobby.clicked += OnCreateLobby;
-        if (_btnQuit != null) _btnQuit.clicked += OnQuit;
-        if (_btnDisbandLobby != null) _btnDisbandLobby.clicked += OnDisbandLobby;
-        if (_btnCreateLobbyConfirm != null) _btnCreateLobbyConfirm.clicked += OnConfirmCreateLobby; // ← НОВЫЙ ХЕНДЛЕР
+        // Lobby List → Lobby List Screen
+        if (_btnShowLobbyList != null)
+            _btnShowLobbyList.clicked += () => _controller.ShowScreen(LobbyListScreenName);
+
+        // Create Lobby
+        if (_btnCreateLobby != null)
+            _btnCreateLobby.clicked += OnCreateLobby;
+
+        // Disband Lobby
+        if (_btnDisbandLobby != null)
+            _btnDisbandLobby.clicked += OnDisbandLobby;
+
+        // Start Game
+        if (_btnStartGame != null)
+            _btnStartGame.clicked += () => UIManager.Instance.StartGame();
     }
 
-    private void OnConfirmCreateLobby()
+    private void OnCreateLobby()
     {
-        Debug.Log("Lobby created! Opening settings...");
-        _lobbySettingsManager.SyncAllSettings();
-        ShowScreen(LobbySettingsScreenName);
+        // ✅ Используем локальный доступ через _controller
+        var lobbyData = _controller.LobbySetupManager.GetLobbyData();
+        var playerData = _controller.CharacterSelectionManager.GetPlayerData();
+
+        UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
+    }
+
+    private void OnDisbandLobby()
+    {
+        UIManager.Instance.LobbyManager.DisbandLobby();
     }
 
     public void ShowScreen(string screenName)
@@ -68,6 +96,27 @@ public class UIScreenManager
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
     public string GetCurrentScreen() => _currentScreen;
 
+    // ✅ Обновление списков через контроллер
+    public void UpdatePlayerList()
+    {
+        // Очищаем и заполняем список игроков
+        if (_playersScroll != null)
+        {
+            _playersScroll.Clear();
+            UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
+        }
+    }
+
+    public void RefreshLobbyList()
+    {
+        // Очищаем и заполняем список лобби
+        if (_lobbyListScroll != null)
+        {
+            _lobbyListScroll.Clear();
+            UIManager.Instance.LobbyManager.PopulateLobbyList(_lobbyListScroll);
+        }
+    }
+
     public IEnumerator SetInitialFocus(List<VisualElement> interactiveElements)
     {
         yield return null;
@@ -76,28 +125,4 @@ public class UIScreenManager
             interactiveElements[0].Focus();
         }
     }
-
-    #region Button Handlers
-    private void OnCreateLobby()
-    {
-        Debug.Log("Opening lobby list...");
-        ShowScreen(LobbyListScreenName);
-    }
-
-    private void OnQuit()
-    {
-        Debug.Log("Quit button clicked");
-#if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-
-    private void OnDisbandLobby()
-    {
-        Debug.Log("Disbanding lobby...");
-        ShowScreen(LobbyListScreenName); // или MenuScreenName
-    }
-    #endregion
 }

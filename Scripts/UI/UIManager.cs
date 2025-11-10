@@ -1,28 +1,20 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.NetCode;
 using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
-using UnityEngine.InputSystem;
-using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("Dependencies")]
     [SerializeField] private InputActionAsset inputActions;
+    public InputActionAsset InputActions => inputActions;
 
-    private UIDocument _uiDocument;
-    private VisualElement _root;
+    public LobbyManager LobbyManager { get; private set; }
 
-    // Подсистемы
-    private UIInputManager _inputManager;
-    private UIScreenManager _screenManager;
-    private UIResponsiveManager _responsiveManager;
-    private UILobbySetupManager _lobbySetupManager;
-    private UICharacterSelectionManager _characterSelectionManager;
-    private UISettingsManager _settingsManager;
-
-    #region Lifecycle Methods
+    private MainMenuController _mainMenuController;
+    private HUDController _hudController;
+    private PauseMenuController _pauseController;
 
     private void Awake()
     {
@@ -30,7 +22,8 @@ public class UIManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Initialize();
+            LobbyManager = GetComponent<LobbyManager>() ?? gameObject.AddComponent<LobbyManager>();
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
@@ -38,122 +31,53 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void Initialize()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        _uiDocument = GetComponent<UIDocument>();
-        if (_uiDocument == null)
+        if (scene.name == "MainMenuScene")
         {
-            Debug.LogError("UIDocument not found!");
-            return;
+            _mainMenuController = FindObjectOfType<MainMenuController>();
         }
-
-        _root = _uiDocument.rootVisualElement;
-        if (_root == null)
+        else if (scene.name == "GameCoreScene")
         {
-            Debug.LogError("Root visual element is null!");
-            return;
+            // HUD и Pause загружаются в SceneUIController
         }
-
-        _root.style.display = DisplayStyle.Flex;
-
-        // Проверяем, что SettingsManager готов
-        if (!SettingsManager.IsReady())
-        {
-            Debug.LogWarning("SettingsManager is not ready yet, but continuing UI initialization...");
-        }
-
-        // Проверяем LocalizationManager
-        if (LocalizationManager.Instance == null)
-        {
-            Debug.LogWarning("LocalizationManager is not ready yet, but continuing UI initialization...");
-        }
-
-        // Инициализация подсистем
-        _inputManager = new UIInputManager(inputActions, _root);
-        _screenManager = new UIScreenManager(_root);
-        _responsiveManager = new UIResponsiveManager(_root);
-        _lobbySetupManager = new UILobbySetupManager(_root);
-        _characterSelectionManager = new UICharacterSelectionManager(_root);
-        _settingsManager = new UISettingsManager(_root, _uiDocument);
-
-        // Подписываемся на событие изменения языка
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.OnLanguageChanged += OnLanguageChanged;
-        }
-
-        _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
-        Debug.Log("UIManager initialized successfully");
     }
 
-    private void OnEnable() => _inputManager?.Enable();
-    private void OnDisable() => _inputManager?.Disable();
+    public void SetHUDController(HUDController controller) => _hudController = controller;
+    public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
+
+    // === События для UI ===
+    public void OnPlayerJoined(int connectionId, string name)
+    {
+        _mainMenuController?.UpdatePlayerList();
+        _hudController?.UpdatePlayerList();
+    }
+
+    public void OnPlayerLeft(int connectionId)
+    {
+        _mainMenuController?.UpdatePlayerList();
+        _hudController?.UpdatePlayerList();
+    }
+
+    public void OnLobbyListUpdated()
+    {
+        _mainMenuController?.OnLobbyListUpdated();
+    }
+
+    public void StartGame()
+    {
+        LobbyManager.StartGame();
+        SceneManager.LoadScene("GameCoreScene");
+    }
+
+    public void LeaveGame()
+    {
+        LobbyManager.DisbandLobby();
+        SceneManager.LoadScene("ManagersScene");
+    }
+
     private void OnDestroy()
     {
-        _inputManager?.Cleanup();
-        _responsiveManager?.Cleanup();
-        _settingsManager?.Cleanup();
-
-        // Отписываемся от события
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.OnLanguageChanged -= OnLanguageChanged;
-        }
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
-
-    #endregion
-
-    #region Public Methods
-    // Вызывай этот метод при смене экранов
-    public void RefreshLocalization()
-    {
-        if (LocalizationManager.Instance != null)
-        {
-            StartCoroutine(DelayedLocalizationRefresh());
-        }
-    }
-
-    private IEnumerator DelayedLocalizationRefresh()
-    {
-        yield return new WaitForEndOfFrame(); // Ждем конца кадра
-        LocalizationManager.Instance.UpdateAllUIElements();
-        Debug.Log("Localization refreshed by UIManager");
-    }
-
-
-    public void ShowScreen(string screenName)
-    {
-        _screenManager?.ShowScreen(screenName);
-        // Дополнительно обновляем локализацию
-        RefreshLocalization();
-    }
-
-    public void SwitchToPlayerInput() => _inputManager?.SwitchToPlayerInput();
-    public void SwitchToUIInput() => _inputManager?.SwitchToUIInput();
-    public void RefreshResponsiveUI() => _responsiveManager?.RefreshResponsiveUI();
-
-    // Обработчик события изменения языка
-    private void OnLanguageChanged()
-    {
-        Debug.Log("Language changed event received in UIManager");
-        RefreshLocalization();
-    }
-
-    // Network Events
-    public void OnConnectedToServer()
-    {
-        Debug.Log("Connected to server");
-        ShowScreen(UIScreenManager.LobbyListScreenName);
-    }
-
-    public void OnDisconnectedFromServer()
-    {
-        Debug.Log("Disconnected from server");
-        ShowScreen(UIScreenManager.MenuScreenName);
-        SwitchToUIInput();
-    }
-
-
-
-    #endregion
 }

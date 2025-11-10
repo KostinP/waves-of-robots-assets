@@ -564,3 +564,39 @@ RadioButton .unity-radio-button__text {
     color: rgba(255, 255, 255, 0.4);
     font-style: italic;
 }
+
+/* Pause Menu */
+.pause-root {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--size-30-adaptive);
+}
+.pause-title {
+    font-size: var(--size-60-adaptive);
+    color: white;
+    -unity-font-style: bold;
+}
+.pause-button {
+    width: 30%;
+    height: var(--size-60-adaptive);
+    background-color: var(--color-primary);
+    border-radius: var(--size-8-adaptive);
+    font-size: var(--size-30-adaptive);
+    color: white;
+}
+.leave-btn {
+    background-color: #c0392b;
+}
+.leave-btn:hover {
+    background-color: #e74c3c;
+}
+.start-game-btn {
+    background-color: #27ae60;
+}
+.start-game-btn:hover {
+    background-color: #2ecc71;
+}
+/* Dynamic items */
+.lobby-item.empty { opacity: 0.5; }
+.kick-btn { background-color: rgba(255,80,80,0.3); }

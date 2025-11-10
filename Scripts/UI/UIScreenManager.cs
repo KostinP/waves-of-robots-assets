@@ -4,7 +4,7 @@ using Unity.NetCode;
 using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Collections;  // For FixedString
+using Unity.Collections;
 
 public class UIScreenManager
 {
@@ -14,7 +14,7 @@ public class UIScreenManager
     public const string LobbySettingsScreenName = "lobby_settings_screen";
 
     private readonly VisualElement _root;
-    private readonly MainMenuController _controller; // ← Обязательно!
+    private readonly MainMenuController _controller;
     private string _currentScreen = MenuScreenName;
 
     // UI Elements
@@ -28,23 +28,26 @@ public class UIScreenManager
     public UIScreenManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
-        _controller = controller; // ← Получаем через конструктор
+        _controller = controller;
         InitializeButtons();
         SetupCallbacks();
+
+        // Подписываемся на обновления списка лобби
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbiesUpdated += OnLobbiesUpdated;
+        }
     }
 
     private void InitializeButtons()
     {
-        // Menu screen
         var menuScreen = _root.Q<VisualElement>(MenuScreenName);
         _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
 
-        // Lobby list screen
         var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
         _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
         _lobbyListScroll = lobbyListScreen?.Q<ScrollView>("lobbyListScroll");
 
-        // Lobby settings screen
         var lobbySettingsScreen = _root.Q<VisualElement>(LobbySettingsScreenName);
         _playersScroll = lobbySettingsScreen?.Q<ScrollView>("playersScroll");
         _btnDisbandLobby = lobbySettingsScreen?.Q<Button>("btnDisbandLobby");
@@ -53,28 +56,109 @@ public class UIScreenManager
 
     private void SetupCallbacks()
     {
-        // Lobby List → Lobby List Screen
         if (_btnShowLobbyList != null)
-            _btnShowLobbyList.clicked += () => _controller.ShowScreen(LobbyListScreenName);
+            _btnShowLobbyList.clicked += () => {
+                _controller.ShowScreen(LobbyListScreenName);
+                RefreshLobbyList();
+            };
 
-        // Create Lobby
         if (_btnCreateLobby != null)
             _btnCreateLobby.clicked += OnCreateLobby;
 
-        // Disband Lobby
         if (_btnDisbandLobby != null)
             _btnDisbandLobby.clicked += OnDisbandLobby;
 
-        // Start Game
         if (_btnStartGame != null)
             _btnStartGame.clicked += () => UIManager.Instance.StartGame();
     }
 
+    private void OnLobbiesUpdated(List<LobbyInfo> lobbies)
+    {
+        if (_currentScreen == LobbyListScreenName)
+        {
+            RefreshLobbyList();
+        }
+    }
+
+    public void ShowScreen(string screenName)
+    {
+        var screens = _root.Query<VisualElement>(className: "screen").ToList();
+        foreach (var screen in screens)
+        {
+            screen.style.display = screen.name == screenName ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+        _currentScreen = screenName;
+
+        if (screenName == LobbyListScreenName)
+        {
+            RefreshLobbyList();
+        }
+
+        Debug.Log($"Showing screen: {screenName}");
+    }
+
+    public void RefreshLobbyList()
+    {
+        if (_lobbyListScroll != null)
+        {
+            _lobbyListScroll.Clear();
+
+            var lobbies = UIManager.Instance.LobbyManager.GetDiscoveredLobbies();
+            if (lobbies == null || lobbies.Count == 0)
+            {
+                var noLobbies = new Label("No lobbies found. Waiting for discovery...");
+                noLobbies.AddToClassList("no-lobbies-label");
+                _lobbyListScroll.Add(noLobbies);
+            }
+            else
+            {
+                foreach (var lobby in lobbies)
+                {
+                    CreateLobbyItem(_lobbyListScroll, lobby);
+                }
+                Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
+            }
+        }
+    }
+
+    private VisualElement CreateLobbyItem(ScrollView scroll, LobbyInfo info)
+    {
+        var item = new VisualElement();
+        item.AddToClassList("lobby-item");
+
+        var nameLabel = new Label(info.name);
+        nameLabel.AddToClassList("lobby-name");
+
+        var playersLabel = new Label($"{info.currentPlayers}/{info.maxPlayers}");
+        playersLabel.AddToClassList("lobby-players");
+
+        var typeLabel = new Label(info.isOpen ? "Open" : "Password");
+        typeLabel.AddToClassList("lobby-type");
+
+        var joinBtn = new Button(() => {
+            Debug.Log($"Joining lobby: {info.name} at {info.ip}:{info.port}");
+            UIManager.Instance.LobbyManager.JoinLobby(info,
+                SettingsManager.Instance.CurrentSettings.playerName,
+                info.password);
+        })
+        {
+            text = "Join"
+        };
+        joinBtn.AddToClassList("join-button");
+
+        item.Add(nameLabel);
+        item.Add(playersLabel);
+        item.Add(typeLabel);
+        item.Add(joinBtn);
+
+        scroll.Add(item);
+        return item;
+    }
+
     private void OnCreateLobby()
     {
-        // ✅ Используем локальный доступ через _controller
         var lobbyData = _controller.LobbySetupManager.GetLobbyData();
-        var playerName = _controller.LobbySetupManager.GetPlayerName();  // Assuming you add this method
+        var playerName = _controller.LobbySetupManager.GetPlayerName();
         var selectedCharacter = _controller.CharacterSelectionManager.GetSelectedCharacter();
         var playerData = new PlayerData
         {
@@ -89,38 +173,15 @@ public class UIScreenManager
         UIManager.Instance.LobbyManager.DisbandLobby();
     }
 
-    public void ShowScreen(string screenName)
-    {
-        var screens = _root.Query<VisualElement>(className: "screen").ToList();
-        foreach (var screen in screens)
-        {
-            screen.style.display = screen.name == screenName ? DisplayStyle.Flex : DisplayStyle.None;
-        }
-        _currentScreen = screenName;
-        Debug.Log($"Showing screen: {screenName}");
-    }
-
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
     public string GetCurrentScreen() => _currentScreen;
 
-    // ✅ Обновление списков через контроллер
     public void UpdatePlayerList()
     {
-        // Очищаем и заполняем список игроков
         if (_playersScroll != null)
         {
             _playersScroll.Clear();
             UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
-        }
-    }
-
-    public void RefreshLobbyList()
-    {
-        // Очищаем и заполняем список лобби
-        if (_lobbyListScroll != null)
-        {
-            _lobbyListScroll.Clear();
-            UIManager.Instance.LobbyManager.PopulateLobbyList(_lobbyListScroll);
         }
     }
 

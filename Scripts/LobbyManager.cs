@@ -6,6 +6,8 @@ using Unity.NetCode;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using System.Net;
+using System.Net.Sockets;
 
 public struct LobbyData
 {
@@ -24,7 +26,11 @@ public class LobbyManager : MonoBehaviour
 
     private void Start()
     {
-        _discovery = gameObject.AddComponent<LobbyDiscovery>();
+        _discovery = LobbyDiscovery.Instance;
+        if (_discovery == null)
+        {
+            _discovery = gameObject.AddComponent<LobbyDiscovery>();
+        }
         _discovery.OnLobbiesUpdated += OnLobbiesUpdated;
     }
 
@@ -40,11 +46,19 @@ public class LobbyManager : MonoBehaviour
     {
         _currentLobby = data;
         var serverWorld = GetServerWorld();
-        if (serverWorld == null) { Debug.LogError("No server world!"); return; }
+        if (serverWorld == null)
+        {
+            Debug.LogError("No server world! Make sure NetCode is initialized.");
+            return;
+        }
+
         var em = serverWorld.EntityManager;
+
+        // Очищаем старые лобби данные
         var oldQuery = em.CreateEntityQuery(typeof(LobbyDataComponent));
         if (!oldQuery.IsEmptyIgnoreFilter)
             em.DestroyEntity(oldQuery.GetSingletonEntity());
+
         var lobbyEntity = em.CreateEntity();
         em.AddComponentData(lobbyEntity, new LobbyDataComponent
         {
@@ -53,6 +67,7 @@ public class LobbyManager : MonoBehaviour
             MaxPlayers = data.maxPlayers,
             IsOpen = data.isOpen
         });
+
         var buffer = em.AddBuffer<LobbyPlayerBuffer>(lobbyEntity);
         _players.Clear();
         _players[0] = hostData;
@@ -61,51 +76,47 @@ public class LobbyManager : MonoBehaviour
             PlayerName = new FixedString128Bytes(hostData.name),
             ConnectionId = 0
         });
-        StartCoroutine(BroadcastLoop());
-        UIManager.Instance.OnLobbyListUpdated(); // Обновляем UI
+
+        // Запускаем широковещание
+        var lobbyInfo = new LobbyInfo
+        {
+            name = _currentLobby.name,
+            currentPlayers = 1,
+            maxPlayers = _currentLobby.maxPlayers,
+            isOpen = _currentLobby.isOpen,
+            password = _currentLobby.password,
+            ip = GetLocalIPAddress(),
+            port = _discovery.gamePort
+        };
+
+        _discovery.StartHosting(lobbyInfo);
+
+        UIManager.Instance.OnLobbyListUpdated();
         FindObjectOfType<MainMenuController>()?.OnLobbyCreated();
+
+        Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
     }
 
-    IEnumerator BroadcastLoop()
+    private string GetLocalIPAddress()
     {
-        while (!_gameStarted)
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
         {
-            var info = new LobbyInfo
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
             {
-                name = _currentLobby.name,
-                currentPlayers = GetPlayerCount(),
-                maxPlayers = _currentLobby.maxPlayers,
-                isOpen = _currentLobby.isOpen,
-                password = _currentLobby.password
-            };
-            _discovery.BroadcastLobby(info);
-            yield return new WaitForSeconds(2f);
-        }
-    }
-
-    public void JoinLobby(string ip, string playerName, string password = "")
-    {
-        World clientWorld = null;
-        foreach (var w in World.All)
-        {
-            if (w.IsCreated && w.IsClient())
-            {
-                clientWorld = w;
-                break;
+                return ip.ToString();
             }
         }
-        if (clientWorld != null)
-        {
-            var em = clientWorld.EntityManager;
-            var joinCmd = em.CreateEntity();
-            em.AddComponentData(joinCmd, new JoinLobbyCommand
-            {
-                PlayerName = new FixedString128Bytes(playerName),
-                Password = new FixedString64Bytes(password),
-                ConnectionId = 0
-            });
-        }
-        SceneManager.LoadScene("Game");
+        return "127.0.0.1";
+    }
+
+    public void JoinLobby(LobbyInfo lobbyInfo, string playerName, string password = "")
+    {
+        Debug.Log($"Joining lobby: {lobbyInfo.name} at {lobbyInfo.ip}:{lobbyInfo.port}");
+
+        // Здесь должна быть логика подключения через NetCode
+        // Временно просто загружаем сцену игры
+        SceneManager.LoadScene("GameCoreScene");
     }
 
     public void KickPlayer(ulong connectionId)
@@ -114,7 +125,7 @@ public class LobbyManager : MonoBehaviour
         if (serverWorld == null) return;
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
-        using var entities = query.ToEntityArray(Allocator.Temp);
+        using var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
         foreach (var e in entities)
         {
             if (em.GetComponentData<NetworkId>(e).Value == (int)connectionId)
@@ -129,6 +140,8 @@ public class LobbyManager : MonoBehaviour
 
     public void DisbandLobby()
     {
+        _discovery.StopHosting();
+        _discovery.ClearLobbies();
         ShutdownAllNetCodeWorlds();
         SceneManager.LoadScene("ManagersScene");
     }
@@ -136,6 +149,7 @@ public class LobbyManager : MonoBehaviour
     public void StartGame()
     {
         _gameStarted = true;
+        _discovery.StopHosting();
         var serverWorld = GetServerWorld();
         if (serverWorld == null) return;
         var em = serverWorld.EntityManager;
@@ -156,12 +170,29 @@ public class LobbyManager : MonoBehaviour
     public void PopulateLobbyList(ScrollView scroll)
     {
         scroll.Clear();
-        var lobbies = _discovery.DiscoveredLobbies;
-        if (lobbies == null) return;
+        var lobbies = GetDiscoveredLobbies(); // Используем новый метод
+        if (lobbies == null || lobbies.Count == 0)
+        {
+            var noLobbies = new Label("No lobbies found");
+            noLobbies.AddToClassList("no-lobbies-label");
+            scroll.Add(noLobbies);
+            return;
+        }
+
         foreach (var lobby in lobbies)
         {
             CreateLobbyItem(scroll, lobby);
         }
+    }
+
+    // ДОБАВЛЯЕМ ОТСУТСТВУЮЩИЙ МЕТОД
+    public List<LobbyInfo> GetDiscoveredLobbies()
+    {
+        if (_discovery != null)
+        {
+            return _discovery.GetDiscoveredLobbies();
+        }
+        return new List<LobbyInfo>();
     }
 
     public void PopulatePlayerList(ScrollView scroll)
@@ -184,33 +215,54 @@ public class LobbyManager : MonoBehaviour
     {
         var item = new VisualElement();
         item.AddToClassList("lobby-item");
+
         var nameLabel = new Label(info.name);
+        nameLabel.AddToClassList("lobby-name");
+
         var playersLabel = new Label($"{info.currentPlayers}/{info.maxPlayers}");
-        var typeLabel = new Label(info.isOpen ? "Открытое" : "Пароль");
-        var joinBtn = new Button(() => JoinLobby(info.ip, SettingsManager.Instance.CurrentSettings.playerName, PromptPassword()))
+        playersLabel.AddToClassList("lobby-players");
+
+        var typeLabel = new Label(info.isOpen ? "Open" : "Password");
+        typeLabel.AddToClassList("lobby-type");
+
+        var joinBtn = new Button(() => {
+            JoinLobby(info, SettingsManager.Instance.CurrentSettings.playerName, info.password);
+        })
         {
             text = "Join"
         };
+        joinBtn.AddToClassList("join-button");
+
         item.Add(nameLabel);
         item.Add(playersLabel);
         item.Add(typeLabel);
         item.Add(joinBtn);
+
         scroll.Add(item);
         return item;
     }
-
-    private string PromptPassword() => "";
 
     private VisualElement CreatePlayerItem(ScrollView scroll, ulong id, string name)
     {
         var item = new VisualElement();
         item.AddToClassList("player-item");
+
         var nameLabel = new Label(name);
-        var pingLabel = new Label($"{GetPing(id)} мс");
-        var kickBtn = new Button(() => KickPlayer(id)) { text = "Kick" };
+        nameLabel.AddToClassList("player-name");
+
+        var pingLabel = new Label($"{GetPing(id)} ms");
+        pingLabel.AddToClassList("player-ping");
+
+        var kickBtn = new Button(() => KickPlayer(id))
+        {
+            text = "Kick"
+        };
+        kickBtn.AddToClassList("kick-button");
+
         item.Add(nameLabel);
         item.Add(pingLabel);
         item.Add(kickBtn);
+
         scroll.Add(item);
         return item;
     }
@@ -221,7 +273,7 @@ public class LobbyManager : MonoBehaviour
         if (serverWorld == null) return "0";
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
-        using var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
+        using var players = query.ToComponentDataArray<PlayerComponent>(Unity.Collections.Allocator.Temp);
         foreach (var player in players)
         {
             if (player.ConnectionId == id)

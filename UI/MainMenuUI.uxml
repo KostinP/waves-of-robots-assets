@@ -6,6 +6,7 @@
         <ui:VisualElement name="layout" class="layout">
             <ui:VisualElement name="menu_screen" class="screen" style="display: flex;">
                 <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;);" />
+                <ui:Button name="btnSingle" text="#single_player" class="menu-button" />
                 <ui:Button name="btnShowLobbyList" text="#create_lobby" class="menu-button" />
                 <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
                 <ui:Button name="btnQuit" text="#quit" class="menu-button" />
@@ -24,38 +25,7 @@
                                 <ui:Label text="#type" class="lobby-list-header-text lobby-list-header-text-3" style="width: 120px; -unity-text-align: middle-center;" />
                                 <ui:Label class="lobby-list-header-text lobby-list-header-text-4" />
                             </ui:VisualElement>
-                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll">
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Бешеные стринги" class="lobby-name" />
-                                    <ui:Label text="1/15 ⊖" class="lobby-players" />
-                                    <ui:Label text="Открытое" class="lobby-type" />
-                                    <ui:Button text="▶" class="lobby-join-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Конченые ястребы" class="lobby-name" />
-                                    <ui:Label text="1/12 ⊖" class="lobby-players" />
-                                    <ui:Label text="Открытое" class="lobby-type" />
-                                    <ui:Button text="▶" class="lobby-join-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Зеленые макароны" class="lobby-name" />
-                                    <ui:Label text="1/12 ⊖" class="lobby-players" />
-                                    <ui:Label text="Открытое" class="lobby-type" />
-                                    <ui:Button text="▶" class="lobby-join-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Прикоски" class="lobby-name" />
-                                    <ui:Label text="1/4 ⊖" class="lobby-players" />
-                                    <ui:Label text="Ввести пароль" class="lobby-type" />
-                                    <ui:Button text="▶" class="lobby-join-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Смерть в нищете" class="lobby-name" />
-                                    <ui:Label text="1/2 ⊖" class="lobby-players" />
-                                    <ui:Label text="Открытое" class="lobby-type" />
-                                    <ui:Button text="▶" class="lobby-join-btn" />
-                                </ui:VisualElement>
-                            </ui:ScrollView>
+                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="right-panel" class="panel right-panel">
@@ -79,7 +49,7 @@
                                     <ui:VisualElement class="radio-item">
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
                                         <ui:VisualElement class="password-wrapper">
-                                            <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
+                                            <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" value="" />
                                             <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" style="background-image: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=8228938214290033325&amp;guid=293df427e8bd642319bd547283dd7192&amp;type=3#console.warnicon&quot;);" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
@@ -163,56 +133,7 @@
                                 <ui:Label text="#ping_label" class="lobby-list-header-text lobby-list-header-text-3" style="width: 80px; -unity-text-align: middle-center;" />
                                 <ui:Label class="lobby-list-header-text lobby-list-header-text-4" />
                             </ui:VisualElement>
-                            <ui:ScrollView name="playersScroll" class="lobby-list-scroll">
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Виктор Баннов" class="lobby-name" />
-                                    <ui:Label text="Огнемёт" class="lobby-players" />
-                                    <ui:Label text="123мс" class="lobby-type" />
-                                    <ui:Button text="Выгнать" class="lobby-join-btn kick-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Анна Давыдова" class="lobby-name" />
-                                    <ui:Label text="Автопушка" class="lobby-players" />
-                                    <ui:Label text="10мс" class="lobby-type" />
-                                    <ui:Button text="Выгнать" class="lobby-join-btn kick-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Данил Дроков" class="lobby-name" />
-                                    <ui:Label text="Ракеты" class="lobby-players" />
-                                    <ui:Label text="11мс" class="lobby-type" />
-                                    <ui:Button text="Выгнать" class="lobby-join-btn kick-btn" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Пусто" class="lobby-name empty-slot" />
-                                    <ui:Label text="Нет" class="lobby-players" />
-                                    <ui:Label text="—" class="lobby-type" />
-                                </ui:VisualElement>
-                            </ui:ScrollView>
+                            <ui:ScrollView name="playersScroll" class="lobby-list-scroll" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="right-panel" class="panel right-panel">
@@ -222,7 +143,7 @@
                         <ui:VisualElement class="panel-content" style="justify-content: flex-start;">
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_name_label" class="section-label" />
-                                <ui:TextField name="lobbyNameField" value="Пароль 123456789 заходите" class="text-input transparent-bg" />
+                                <ui:TextField name="lobbyNameField" value="" class="text-input transparent-bg" />
                             </ui:VisualElement>
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_type_label" class="section-label" />
@@ -233,7 +154,7 @@
                                     <ui:VisualElement class="radio-item">
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
                                         <ui:VisualElement class="password-wrapper">
-                                            <ui:TextField name="lobbyPasswordField" value="123456789" class="password-input transparent-bg" />
+                                            <ui:TextField name="lobbyPasswordField" value="" class="password-input transparent-bg" />
                                             <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
@@ -321,11 +242,7 @@
                                 <ui:Label text="#type" class="lobby-list-header-text lobby-list-header-text-3" style="width: 120px; -unity-text-align: middle-center;" />
                                 <ui:Label class="lobby-list-header-text lobby-list-header-text-4" />
                             </ui:VisualElement>
-                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll">
-                                <ui:VisualElement class="lobby-item">
-                                    <ui:Label text="Бешеные стринги" class="lobby-name" />
-                                </ui:VisualElement>
-                            </ui:ScrollView>
+                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="right-panel" class="panel right-panel">
@@ -336,7 +253,7 @@
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#current_player_name" class="section-label" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
-                                    <ui:Button text="Button" name="RandomNameButton" class="random-button" />
+                                    <ui:Button text="#random_name" name="RandomNameButton" class="random-button" />
                                     <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input transparent-bg" style="flex-grow: 1;" />
                                 </ui:VisualElement>
                             </ui:VisualElement>

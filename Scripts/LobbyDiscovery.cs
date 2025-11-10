@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/LobbyDiscovery.cs
-using UnityEngine;
+﻿using UnityEngine;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -23,6 +22,8 @@ public struct LobbyInfo
 
 public class LobbyDiscovery : MonoBehaviour
 {
+    public static LobbyDiscovery Instance { get; private set; }
+
     public int port = 8888;
     public float broadcastInterval = 2f;
     private UdpClient udpClient;
@@ -30,6 +31,17 @@ public class LobbyDiscovery : MonoBehaviour
     private Thread listenThread;
     public Action<List<LobbyInfo>> OnLobbiesUpdated;
     public List<LobbyInfo> DiscoveredLobbies = new List<LobbyInfo>();
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     void Start()
     {
@@ -39,12 +51,19 @@ public class LobbyDiscovery : MonoBehaviour
     IEnumerator StartDiscovery()
     {
         yield return new WaitForSeconds(1f);
-        udpClient = new UdpClient(port);
-        udpClient.EnableBroadcast = true;
-        broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, port);
-        listenThread = new Thread(ListenForBroadcasts);
-        listenThread.Start();
-        StartCoroutine(SendDiscoveryRequest());
+        try
+        {
+            udpClient = new UdpClient(port);
+            udpClient.EnableBroadcast = true;
+            broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, port);
+            listenThread = new Thread(ListenForBroadcasts);
+            listenThread.Start();
+            StartCoroutine(SendDiscoveryRequest());
+        }
+        catch (SocketException e)
+        {
+            Debug.LogError($"SocketException: {e.Message}. Port {port} may be in use.");
+        }
     }
 
     void ListenForBroadcasts()
@@ -80,13 +99,17 @@ public class LobbyDiscovery : MonoBehaviour
     {
         while (true)
         {
-            udpClient.Send(Encoding.UTF8.GetBytes("DISCOVER"), 8, broadcastEndPoint);
+            if (udpClient != null)
+            {
+                udpClient.Send(Encoding.UTF8.GetBytes("DISCOVER"), 8, broadcastEndPoint);
+            }
             yield return new WaitForSeconds(3f);
         }
     }
 
     public void BroadcastLobby(LobbyInfo info)
     {
+        if (udpClient == null) return;
         string message = "LOBBY:" + JsonUtility.ToJson(info);
         byte[] data = Encoding.UTF8.GetBytes(message);
         udpClient.Send(data, data.Length, broadcastEndPoint);
@@ -96,6 +119,7 @@ public class LobbyDiscovery : MonoBehaviour
     {
         udpClient?.Close();
         listenThread?.Abort();
+        if (Instance == this) Instance = null;
     }
 
     public List<LobbyInfo> GetDiscoveredLobbies()

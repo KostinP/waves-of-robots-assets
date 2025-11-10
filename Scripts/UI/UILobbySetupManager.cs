@@ -1,14 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public struct LobbyData
-{
-    public string name;
-    public bool isOpen;
-    public string password;
-    public int maxPlayers;
-}
-
 public class UILobbySetupManager
 {
     private readonly VisualElement _root;
@@ -23,9 +15,10 @@ public class UILobbySetupManager
     private RadioButton _infinityRadio;
     private RadioButton _radioOpen;
     private RadioButton _radioClosed;
-    private TextField _createLobbyName;
+    private TextField _playerNameField;
     private TextField _lobbyPassword;
     private Button _togglePasswordBtn;
+    private Button _randomNameBtn;
     private bool _isPasswordVisible = false;
 
     public UILobbySetupManager(VisualElement root, MainMenuController controller)
@@ -35,17 +28,6 @@ public class UILobbySetupManager
         Initialize();
     }
 
-    public LobbyData GetLobbyData()
-    {
-        return new LobbyData
-        {
-            name = _createLobbyName?.value ?? "My Lobby",
-            isOpen = _radioOpen?.value ?? true,
-            password = _radioClosed?.value == true ? (_lobbyPassword?.value ?? "") : "",
-            maxPlayers = _playerCountSlider != null ? Mathf.RoundToInt(_playerCountSlider.value) : 4
-        };
-    }
-
     private void Initialize()
     {
         FindUIElements();
@@ -53,35 +35,35 @@ public class UILobbySetupManager
         SetupRadioButtons();
         SetupPasswordField();
         SetupTextFields();
+        SetupRandomNameButton();
         Debug.Log("UILobbySetupManager initialized");
     }
 
     private void FindUIElements()
     {
-        var lobbySettingsScreen = _root.Q<VisualElement>(UIScreenManager.LobbySettingsScreenName);
-        if (lobbySettingsScreen == null) return;
-
-        _playerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
-        _playerCountValue = lobbySettingsScreen.Q<Label>("playerCountValue");
-        _waveCountSlider = lobbySettingsScreen.Q<Slider>("waveCountSlider");
-        _waveCountValue = lobbySettingsScreen.Q<Label>("waveCountValue");
-        _waveCountRadio = lobbySettingsScreen.Q<RadioButton>("waveCountRadio");
-        _infinityRadio = lobbySettingsScreen.Q<RadioButton>("infinityRadio");
-        _radioOpen = lobbySettingsScreen.Q<RadioButton>("radioOpen");
-        _radioClosed = lobbySettingsScreen.Q<RadioButton>("radioClosed");
-        _createLobbyName = lobbySettingsScreen.Q<TextField>("createLobbyName");
-        _lobbyPassword = lobbySettingsScreen.Q<TextField>("lobbyPassword");
-        _togglePasswordBtn = lobbySettingsScreen.Q<Button>("togglePasswordVisibility");
+        _playerCountSlider = _root.Q<Slider>("playerCountSlider");
+        _playerCountValue = _root.Q<Label>("playerCountValue");
+        _waveCountSlider = _root.Q<Slider>("waveCountSlider");
+        _waveCountValue = _root.Q<Label>("waveCountValue");
+        _waveCountRadio = _root.Q<RadioButton>("waveCountRadio");
+        _infinityRadio = _root.Q<RadioButton>("infinityRadio");
+        _radioOpen = _root.Q<RadioButton>("radioOpen");
+        _radioClosed = _root.Q<RadioButton>("radioClosed");
+        _playerNameField = _root.Q<TextField>("playerNameField");
+        _lobbyPassword = _root.Q<TextField>("lobbyPassword");
+        _togglePasswordBtn = _root.Q<Button>("togglePasswordVisibility");
+        _randomNameBtn = _root.Q<Button>("randomNameBtn");
     }
 
     private void SetupTextFields()
     {
-        if (_createLobbyName != null)
+        if (_playerNameField != null)
         {
-            _createLobbyName.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_createLobbyName, true));
-            _createLobbyName.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_createLobbyName, false));
-            SetupTextFieldStyle(_createLobbyName);
+            _playerNameField.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_playerNameField, true));
+            _playerNameField.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_playerNameField, false));
+            SetupTextFieldStyle(_playerNameField);
         }
+
         if (_lobbyPassword != null)
         {
             _lobbyPassword.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_lobbyPassword, true));
@@ -92,19 +74,45 @@ public class UILobbySetupManager
 
     private void SetupTextFieldStyle(TextField textField)
     {
-        textField.style.color = Color.white;
+        textField.style.color = new StyleColor(Color.white);
         textField.style.opacity = 1f;
-        var input = textField.Q(className: "unity-base-text-field__input");
-        if (input != null)
+
+        var textInput = textField.Q(className: "unity-base-text-field__input");
+        if (textInput != null)
         {
-            input.style.color = Color.white;
-            input.style.backgroundColor = Color.clear;
+            textInput.style.color = new StyleColor(Color.white);
+            textInput.style.opacity = 1f;
+            textInput.style.backgroundColor = new StyleColor(Color.clear);
         }
     }
 
     private void OnTextFieldFocus(TextField textField, bool focused)
     {
         Debug.Log($"TextField {textField.name} focused: {focused}");
+    }
+
+    private void SetupRandomNameButton()
+    {
+        if (_randomNameBtn != null)
+        {
+            _randomNameBtn.clicked += OnRandomNameClicked;
+        }
+    }
+
+    private void OnRandomNameClicked()
+    {
+        if (_playerNameField != null)
+        {
+            _playerNameField.value = GenerateRandomName();
+        }
+    }
+
+    private string GenerateRandomName()
+    {
+        // Простая логика генерации случайного имени
+        string[] prefixes = { "Cool", "Epic", "Super", "Mega", "Ultra" };
+        string[] suffixes = { "Player", "Gamer", "Hero", "Warrior", "Master" };
+        return prefixes[Random.Range(0, prefixes.Length)] + suffixes[Random.Range(0, suffixes.Length)] + Random.Range(100, 999).ToString();
     }
 
     #region Sliders
@@ -118,9 +126,6 @@ public class UILobbySetupManager
     {
         if (_playerCountSlider != null && _playerCountValue != null)
         {
-            _playerCountSlider.lowValue = 2;
-            _playerCountSlider.highValue = 8;
-            _playerCountSlider.value = 4;
             _playerCountSlider.RegisterValueChangedCallback(OnPlayerCountChanged);
             UpdatePlayerCountValue(_playerCountSlider.value);
         }
@@ -133,6 +138,7 @@ public class UILobbySetupManager
             _waveCountSlider.lowValue = 10;
             _waveCountSlider.highValue = 50;
             _waveCountSlider.value = 10;
+
             _waveCountSlider.RegisterValueChangedCallback(OnWaveCountChanged);
             UpdateWaveCountValue(_waveCountSlider.value);
         }
@@ -145,22 +151,28 @@ public class UILobbySetupManager
 
     private void OnWaveCountChanged(ChangeEvent<float> evt)
     {
-        float rounded = Mathf.Round(evt.newValue / 10f) * 10f;
-        if (Mathf.Abs(rounded - evt.newValue) > 0.1f)
-            _waveCountSlider.value = rounded;
+        float roundedValue = Mathf.Round(evt.newValue / 10f) * 10f;
+        if (Mathf.Abs(roundedValue - evt.newValue) > 0.1f)
+        {
+            _waveCountSlider.value = roundedValue;
+        }
         UpdateWaveCountValue(_waveCountSlider.value);
     }
 
     private void UpdatePlayerCountValue(float value)
     {
         if (_playerCountValue != null)
+        {
             _playerCountValue.text = Mathf.RoundToInt(value).ToString();
+        }
     }
 
     private void UpdateWaveCountValue(float value)
     {
         if (_waveCountValue != null)
+        {
             _waveCountValue.text = Mathf.RoundToInt(value).ToString();
+        }
     }
     #endregion
 
@@ -175,7 +187,7 @@ public class UILobbySetupManager
     {
         if (_waveCountRadio != null && _infinityRadio != null)
         {
-            _waveCountRadio.SetValueWithoutNotify(true);
+            _waveCountRadio.SetValueWithoutNotify(false);
             _infinityRadio.SetValueWithoutNotify(false);
 
             _waveCountRadio.RegisterValueChangedCallback(evt =>
@@ -183,7 +195,8 @@ public class UILobbySetupManager
                 if (evt.newValue)
                 {
                     _infinityRadio.SetValueWithoutNotify(false);
-                    _waveCountSlider?.SetEnabled(true);
+                    if (_waveCountSlider != null)
+                        _waveCountSlider.SetEnabled(true);
                 }
                 else if (!_infinityRadio.value)
                 {
@@ -196,7 +209,8 @@ public class UILobbySetupManager
                 if (evt.newValue)
                 {
                     _waveCountRadio.SetValueWithoutNotify(false);
-                    _waveCountSlider?.SetEnabled(false);
+                    if (_waveCountSlider != null)
+                        _waveCountSlider.SetEnabled(false);
                 }
                 else if (!_waveCountRadio.value)
                 {
@@ -204,7 +218,10 @@ public class UILobbySetupManager
                 }
             });
 
-            _waveCountSlider?.SetEnabled(true);
+            _waveCountRadio.value = true;
+            _infinityRadio.value = false;
+            if (_waveCountSlider != null)
+                _waveCountSlider.SetEnabled(true);
         }
     }
 
@@ -212,7 +229,7 @@ public class UILobbySetupManager
     {
         if (_radioOpen != null && _radioClosed != null)
         {
-            _radioOpen.SetValueWithoutNotify(true);
+            _radioOpen.SetValueWithoutNotify(false);
             _radioClosed.SetValueWithoutNotify(false);
 
             _radioOpen.RegisterValueChangedCallback(evt =>
@@ -220,7 +237,7 @@ public class UILobbySetupManager
                 if (evt.newValue)
                 {
                     _radioClosed.SetValueWithoutNotify(false);
-                    if (_lobbyPassword?.parent != null)
+                    if (_lobbyPassword != null && _lobbyPassword.parent != null)
                         _lobbyPassword.parent.style.display = DisplayStyle.None;
                 }
                 else if (!_radioClosed.value)
@@ -234,8 +251,8 @@ public class UILobbySetupManager
                 if (evt.newValue)
                 {
                     _radioOpen.SetValueWithoutNotify(false);
-                    if (_lobbyPassword?.parent != null)
-                        _lobbyPassword.parent.style.display = DisplayStyle.None;
+                    if (_lobbyPassword != null && _lobbyPassword.parent != null)
+                        _lobbyPassword.parent.style.display = DisplayStyle.Flex;
                 }
                 else if (!_radioOpen.value)
                 {
@@ -243,7 +260,9 @@ public class UILobbySetupManager
                 }
             });
 
-            if (_lobbyPassword?.parent != null)
+            _radioOpen.value = true;
+            _radioClosed.value = false;
+            if (_lobbyPassword != null && _lobbyPassword.parent != null)
                 _lobbyPassword.parent.style.display = DisplayStyle.None;
         }
     }
@@ -263,16 +282,74 @@ public class UILobbySetupManager
     {
         _isPasswordVisible = !_isPasswordVisible;
         if (_lobbyPassword != null)
+        {
             _lobbyPassword.isPasswordField = !_isPasswordVisible;
+        }
         UpdatePasswordEyeIcon();
     }
 
     private void UpdatePasswordEyeIcon()
     {
         if (_togglePasswordBtn == null) return;
-        _togglePasswordBtn.RemoveFromClassList("show-password");
+
         if (_isPasswordVisible)
+        {
+            _togglePasswordBtn.RemoveFromClassList("show-password");
             _togglePasswordBtn.AddToClassList("show-password");
+        }
+        else
+        {
+            _togglePasswordBtn.RemoveFromClassList("show-password");
+        }
     }
     #endregion
+
+    #region Debug Methods
+    public void DebugTextFieldState(TextField textField, string fieldName)
+    {
+        if (textField == null)
+        {
+            Debug.LogError($"{fieldName} is null!");
+            return;
+        }
+
+        Debug.Log($"=== {fieldName} State ===");
+        Debug.Log($"- Display: {textField.resolvedStyle.display}");
+        Debug.Log($"- Visibility: {textField.resolvedStyle.visibility}");
+        Debug.Log($"- Opacity: {textField.resolvedStyle.opacity}");
+        Debug.Log($"- Enabled: {textField.enabledSelf}");
+        Debug.Log($"- Focusable: {textField.focusable}");
+        Debug.Log($"- Value: '{textField.value}'");
+
+        var inputElement = textField.Q(className: "unity-base-text-field__input");
+        if (inputElement != null)
+        {
+            Debug.Log($"- Input Display: {inputElement.resolvedStyle.display}");
+            Debug.Log($"- Input Color: {inputElement.resolvedStyle.color}");
+        }
+        else
+        {
+            Debug.LogError("- Input element not found!");
+        }
+
+        Debug.Log($"=== End {fieldName} State ===\n");
+    }
+    #endregion
+
+    // Данные для создания лобби
+    public LobbyData GetLobbyData()
+    {
+        return new LobbyData
+        {
+            name = _playerNameField?.value ?? "Default Lobby",
+            password = _radioClosed.value ? _lobbyPassword?.value ?? "" : "",
+            maxPlayers = Mathf.RoundToInt(_playerCountSlider.value),
+            isOpen = _radioOpen.value
+        };
+    }
+
+    public string GetPlayerName()
+    {
+        return _playerNameField?.value ?? "Default Player";
+    }
 }

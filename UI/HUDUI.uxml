@@ -7,39 +7,30 @@
                 <ui:VisualElement class="hud__icon hp-icon" />
                 <ui:Label text="HP" class="hud__label" />
                 <ui:VisualElement class="hud__bar-fill hp" />
-                <ui:Label text="3560 / 7635" class="hud__value" />
+                <ui:Label text="" class="hud__value" />
             </ui:VisualElement>
             <ui:VisualElement class="hud__bar">
                 <ui:VisualElement class="hud__icon armor-icon" />
                 <ui:Label text="Броня" class="hud__label" />
                 <ui:VisualElement class="hud__bar-fill armor" />
-                <ui:Label text="3560 / 7635" class="hud__value" />
+                <ui:Label text="" class="hud__value" />
             </ui:VisualElement>
             <ui:VisualElement class="hud__bar">
                 <ui:VisualElement class="hud__icon xp-icon" />
                 <ui:Label text="XP" class="hud__label" />
                 <ui:VisualElement class="hud__bar-fill xp" />
-                <ui:Label text="3560 / 7635" class="hud__value" />
+                <ui:Label text="" class="hud__value" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="hud__wave">
-            <ui:Label text="Волна: 4 / 15" class="hud__wave-title" />
+            <ui:Label text="Волна: 0 / 0" class="hud__wave-title" />
             <ui:VisualElement class="hud__wave-status">
                 <ui:VisualElement class="hud__wave-dot" />
-                <ui:Label text="Лёгкая волна" class="hud__wave-text" />
+                <ui:Label text="" class="hud__wave-text" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="hud__players">
-            <ui:VisualElement class="hud__player">
-                <ui:VisualElement class="hud__player-icon mic" />
-                <ui:Label text="Виктор Баннов" class="hud__player-name" />
-                <ui:Label text="12мс" class="hud__player-ping" />
-            </ui:VisualElement>
-            <ui:VisualElement class="hud__player">
-                <ui:VisualElement class="hud__player-icon cam" />
-                <ui:Label text="Анна Давыдова" class="hud__player-name" />
-                <ui:Label text="230мс" class="hud__player-ping" />
-            </ui:VisualElement>
+            <!-- Players will be populated dynamically in HUDController.cs -->
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

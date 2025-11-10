@@ -2,8 +2,9 @@
 using Unity.Scenes;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Collections;
 
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]  // Only on server
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial struct SceneLoaderSystem : ISystem
 {
@@ -30,10 +31,19 @@ public partial struct SceneLoaderSystem : ISystem
 
         Debug.Log("SceneLoaderSystem: Loading game scenes...");
 
-        // Загружаем сцены (Additive)
-        SceneManager.LoadSceneAsync("ArenaSubscene", LoadSceneMode.Additive);
-        SceneManager.LoadSceneAsync("EntitiesSubscene", LoadSceneMode.Additive);
-        SceneManager.LoadSceneAsync("SystemsSubscene", LoadSceneMode.Additive);
+        // Загружаем сцены (Additive) only once
+        if (!SceneManager.GetSceneByName("ArenaSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("ArenaSubscene", LoadSceneMode.Additive);
+        }
+        if (!SceneManager.GetSceneByName("EntitiesSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("EntitiesSubscene", LoadSceneMode.Additive);
+        }
+        if (!SceneManager.GetSceneByName("SystemsSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("SystemsSubscene", LoadSceneMode.Additive);
+        }
 
         // Уничтожаем оставшуюся команду
         state.EntityManager.DestroyEntity(entities[0]);

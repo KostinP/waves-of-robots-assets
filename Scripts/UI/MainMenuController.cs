@@ -9,6 +9,7 @@ public class MainMenuController : MonoBehaviour
     private UILobbySetupManager _lobbySetup;
     private UICharacterSelectionManager _charSelect;
     private UISettingsManager _settings;
+    private LobbySettingsManager _lobbySettings;
 
     public UILobbySetupManager LobbySetupManager => _lobbySetup;
     public UICharacterSelectionManager CharacterSelectionManager => _charSelect;
@@ -22,9 +23,9 @@ public class MainMenuController : MonoBehaviour
 
         _screenManager = new UIScreenManager(_root, this);  // ← this!
         _lobbySetup = new UILobbySetupManager(_root, this);
-        _charSelect = new UICharacterSelectionManager(_root, this);
+        _charSelect = new UICharacterSelectionManager(_root);
         _settings = new UISettingsManager(_root, uiDoc, this);
-
+        _lobbySettings = new LobbySettingsManager(_root);
         _inputManager.Enable();
         _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
 
@@ -37,7 +38,11 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowScreen(string screenName) => _screenManager.ShowScreen(screenName);
     public void UpdatePlayerList() => _screenManager.UpdatePlayerList();
-    public void OnLobbyCreated() => ShowScreen(UIScreenManager.LobbySettingsScreenName);
+    public void OnLobbyCreated()
+    {
+        ShowScreen(UIScreenManager.LobbySettingsScreenName);
+        _lobbySettings.SyncAllSettings();  // Sync on create
+    }
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
 
     private void OnDestroy()

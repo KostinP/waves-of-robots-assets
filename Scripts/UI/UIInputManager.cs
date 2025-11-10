@@ -10,18 +10,15 @@ public class UIInputManager
     private InputActionMap _uiActionMap;
     private InputAction _navigateAction, _submitAction, _cancelAction;
     private InputAction _openSettingsAction, _openStatisticsAction, _tabAction;
-
     private bool _isTextFieldFocused = false;
     private VisualElement _currentlyFocusedElement;
     private bool _isSettingFocus = false;
-
     private bool _cancelSubscribed = false;
     private bool _navigateSubscribed = false;
     private bool _submitSubscribed = false;
     private bool _tabSubscribed = false;
     private bool _settingsSubscribed = false;
     private bool _statsSubscribed = false;
-
     private UIScreenManager _screenManager;
     private MainMenuController _controller; // Добавляем ссылку
 
@@ -41,14 +38,12 @@ public class UIInputManager
             Debug.LogWarning("InputActionAsset is not assigned!");
             return;
         }
-
         _uiActionMap = _inputActions.FindActionMap("UI");
         if (_uiActionMap == null)
         {
             Debug.LogError("UI Action Map not found!");
             return;
         }
-
         SetupInputActions();
         SubscribeToInputEvents();
     }
@@ -70,31 +65,26 @@ public class UIInputManager
             _cancelAction.performed += OnCancelPerformed;
             _cancelSubscribed = true;
         }
-
         if (_navigateAction != null)
         {
             _navigateAction.performed += OnNavigatePerformed;
             _navigateSubscribed = true;
         }
-
         if (_submitAction != null)
         {
             _submitAction.performed += OnSubmitPerformed;
             _submitSubscribed = true;
         }
-
         if (_tabAction != null)
         {
             _tabAction.performed += OnTabPerformed;
             _tabSubscribed = true;
         }
-
         if (_openSettingsAction != null)
         {
             _openSettingsAction.performed += OnOpenSettingsPerformed;
             _settingsSubscribed = true;
         }
-
         if (_openStatisticsAction != null)
         {
             _openStatisticsAction.performed += OnOpenStatisticsPerformed;
@@ -106,22 +96,16 @@ public class UIInputManager
     {
         if (_cancelSubscribed && _cancelAction != null)
             _cancelAction.performed -= OnCancelPerformed;
-
         if (_navigateSubscribed && _navigateAction != null)
             _navigateAction.performed -= OnNavigatePerformed;
-
         if (_submitSubscribed && _submitAction != null)
             _submitAction.performed -= OnSubmitPerformed;
-
         if (_tabSubscribed && _tabAction != null)
             _tabAction.performed -= OnTabPerformed;
-
         if (_settingsSubscribed && _openSettingsAction != null)
             _openSettingsAction.performed -= OnOpenSettingsPerformed;
-
         if (_statsSubscribed && _openStatisticsAction != null)
             _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
-
         // Сбрасываем флаги
         _cancelSubscribed = _navigateSubscribed = _submitSubscribed =
             _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
@@ -186,7 +170,6 @@ public class UIInputManager
     {
         var elements = GetInteractiveElements();
         if (elements.Count == 0) return;
-
         int current = _currentlyFocusedElement != null ? elements.IndexOf(_currentlyFocusedElement) : -1;
         int next = (current + direction + elements.Count) % elements.Count;
         SetFocusToElement(elements[next]);
@@ -207,17 +190,14 @@ public class UIInputManager
     {
         if (_isSettingFocus || el == null) return;
         _isSettingFocus = true;
-
         try
         {
             _currentlyFocusedElement?.Blur();
             _currentlyFocusedElement?.RemoveFromClassList("focused");
-
             _currentlyFocusedElement = el;
             el.focusable = true;
             el.Focus();
             el.AddToClassList("focused");
-
             if (el is TextField tf)
             {
                 _isTextFieldFocused = true;

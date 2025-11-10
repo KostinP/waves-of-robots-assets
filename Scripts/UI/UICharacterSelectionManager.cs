@@ -4,77 +4,65 @@ using UnityEngine.UIElements;
 public class UICharacterSelectionManager
 {
     private readonly VisualElement _root;
-    private readonly MainMenuController _controller;
 
+    // Character Elements
     private VisualElement _charVacuum;
     private VisualElement _charToaster;
     private VisualElement _charGPT;
 
-    public UICharacterSelectionManager(VisualElement root, MainMenuController controller)
+    public UICharacterSelectionManager(VisualElement root)
     {
         _root = root;
-        _controller = controller;
         Initialize();
-    }
-
-    public PlayerData GetPlayerData()
-    {
-        var playerNameField = _root.Q<TextField>("playerNameField");
-        return new PlayerData
-        {
-            name = playerNameField?.value ?? "Player",
-            selectedCharacter = GetSelectedCharacter()
-        };
     }
 
     private void Initialize()
     {
         FindCharacterElements();
         SetupCharacterSelection();
-        SelectDefaultCharacter();
         Debug.Log("UICharacterSelectionManager initialized");
     }
 
     private void FindCharacterElements()
     {
-        var lobbySettingsScreen = _root.Q<VisualElement>(UIScreenManager.LobbySettingsScreenName);
-        if (lobbySettingsScreen == null) return;
-
-        _charVacuum = lobbySettingsScreen.Q<VisualElement>("charVacuum");
-        _charToaster = lobbySettingsScreen.Q<VisualElement>("charToaster");
-        _charGPT = lobbySettingsScreen.Q<VisualElement>("charGPT");
+        _charVacuum = _root.Q<VisualElement>("charVacuum");
+        _charToaster = _root.Q<VisualElement>("charToaster");
+        _charGPT = _root.Q<VisualElement>("charGPT");
     }
 
     private void SetupCharacterSelection()
     {
         if (_charVacuum != null)
             _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
+
         if (_charToaster != null)
             _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
+
         if (_charGPT != null)
             _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
     }
 
-    private void SelectCharacter(VisualElement selected)
+    private void SelectCharacter(VisualElement selectedCharacter)
     {
-        _charVacuum?.RemoveFromClassList("selected");
-        _charToaster?.RemoveFromClassList("selected");
-        _charGPT?.RemoveFromClassList("selected");
+        // Снимаем выделение со всех персонажей
+        if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
+        if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
+        if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
 
-        selected.AddToClassList("selected");
-        Debug.Log($"Selected character: {selected.name}");
-    }
-
-    private void SelectDefaultCharacter()
-    {
-        _charVacuum?.AddToClassList("selected");
+        // Выделяем выбранного персонажа
+        selectedCharacter.AddToClassList("selected");
+        Debug.Log($"Selected character: {selectedCharacter.name}");
     }
 
     public string GetSelectedCharacter()
     {
-        if (_charVacuum?.ClassListContains("selected") == true) return "Vacuum";
-        if (_charToaster?.ClassListContains("selected") == true) return "Toaster";
-        if (_charGPT?.ClassListContains("selected") == true) return "GPT";
-        return "Vacuum";
+        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
+            return "Vacuum";
+        if (_charToaster != null && _charToaster.ClassListContains("selected"))
+            return "Toaster";
+        if (_charGPT != null && _charGPT.ClassListContains("selected"))
+            return "GPT";
+
+        return "None";
     }
 }

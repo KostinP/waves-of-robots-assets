@@ -1,6 +1,8 @@
 ﻿using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
+using UnityEngine.LightTransport;
 
 public class PlayerSpawnManager : MonoBehaviour
 {

@@ -7,6 +7,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 
+public struct LobbyData
+{
+    public string name;
+    public string password;
+    public int maxPlayers;
+    public bool isOpen;
+}
+
 public class LobbyManager : MonoBehaviour
 {
     private LobbyDiscovery _discovery;
@@ -33,12 +41,10 @@ public class LobbyManager : MonoBehaviour
         _currentLobby = data;
         var serverWorld = GetServerWorld();
         if (serverWorld == null) { Debug.LogError("No server world!"); return; }
-
         var em = serverWorld.EntityManager;
         var oldQuery = em.CreateEntityQuery(typeof(LobbyDataComponent));
         if (!oldQuery.IsEmptyIgnoreFilter)
             em.DestroyEntity(oldQuery.GetSingletonEntity());
-
         var lobbyEntity = em.CreateEntity();
         em.AddComponentData(lobbyEntity, new LobbyDataComponent
         {
@@ -48,7 +54,6 @@ public class LobbyManager : MonoBehaviour
             IsOpen = data.isOpen
         });
         var buffer = em.AddBuffer<LobbyPlayerBuffer>(lobbyEntity);
-
         _players.Clear();
         _players[0] = hostData;
         buffer.Add(new LobbyPlayerBuffer
@@ -56,7 +61,6 @@ public class LobbyManager : MonoBehaviour
             PlayerName = new FixedString128Bytes(hostData.name),
             ConnectionId = 0
         });
-
         StartCoroutine(BroadcastLoop());
         UIManager.Instance.OnLobbyListUpdated(); // Обновляем UI
         FindObjectOfType<MainMenuController>()?.OnLobbyCreated();
@@ -90,7 +94,6 @@ public class LobbyManager : MonoBehaviour
                 break;
             }
         }
-
         if (clientWorld != null)
         {
             var em = clientWorld.EntityManager;
@@ -109,7 +112,6 @@ public class LobbyManager : MonoBehaviour
     {
         var serverWorld = GetServerWorld();
         if (serverWorld == null) return;
-
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
         using var entities = query.ToEntityArray(Allocator.Temp);
@@ -136,7 +138,6 @@ public class LobbyManager : MonoBehaviour
         _gameStarted = true;
         var serverWorld = GetServerWorld();
         if (serverWorld == null) return;
-
         var em = serverWorld.EntityManager;
         var startEntity = em.CreateEntity();
         em.AddComponent<StartGameCommand>(startEntity);
@@ -155,10 +156,8 @@ public class LobbyManager : MonoBehaviour
     public void PopulateLobbyList(ScrollView scroll)
     {
         scroll.Clear();
-
         var lobbies = _discovery.DiscoveredLobbies;
         if (lobbies == null) return;
-
         foreach (var lobby in lobbies)
         {
             CreateLobbyItem(scroll, lobby);
@@ -170,11 +169,9 @@ public class LobbyManager : MonoBehaviour
         scroll.Clear();
         var serverWorld = GetServerWorld();
         if (serverWorld == null) return;
-
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
         if (query.IsEmptyIgnoreFilter) return;
-
         var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
         for (int i = 0; i < buffer.Length; i++)
         {
@@ -187,7 +184,6 @@ public class LobbyManager : MonoBehaviour
     {
         var item = new VisualElement();
         item.AddToClassList("lobby-item");
-
         var nameLabel = new Label(info.name);
         var playersLabel = new Label($"{info.currentPlayers}/{info.maxPlayers}");
         var typeLabel = new Label(info.isOpen ? "Открытое" : "Пароль");
@@ -195,12 +191,10 @@ public class LobbyManager : MonoBehaviour
         {
             text = "Join"
         };
-
         item.Add(nameLabel);
         item.Add(playersLabel);
         item.Add(typeLabel);
         item.Add(joinBtn);
-
         scroll.Add(item);
         return item;
     }
@@ -211,11 +205,9 @@ public class LobbyManager : MonoBehaviour
     {
         var item = new VisualElement();
         item.AddToClassList("player-item");
-
         var nameLabel = new Label(name);
         var pingLabel = new Label($"{GetPing(id)} мс");
         var kickBtn = new Button(() => KickPlayer(id)) { text = "Kick" };
-
         item.Add(nameLabel);
         item.Add(pingLabel);
         item.Add(kickBtn);
@@ -230,7 +222,6 @@ public class LobbyManager : MonoBehaviour
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
         using var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
-
         foreach (var player in players)
         {
             if (player.ConnectionId == id)

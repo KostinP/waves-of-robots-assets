@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.NetCode;
 using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+using Unity.Collections;  // For FixedString
 
 public class UIScreenManager
 {
@@ -72,8 +74,13 @@ public class UIScreenManager
     {
         // ✅ Используем локальный доступ через _controller
         var lobbyData = _controller.LobbySetupManager.GetLobbyData();
-        var playerData = _controller.CharacterSelectionManager.GetPlayerData();
-
+        var playerName = _controller.LobbySetupManager.GetPlayerName();  // Assuming you add this method
+        var selectedCharacter = _controller.CharacterSelectionManager.GetSelectedCharacter();
+        var playerData = new PlayerData
+        {
+            name = new FixedString128Bytes(playerName),
+            selectedCharacter = selectedCharacter
+        };
         UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
     }
 

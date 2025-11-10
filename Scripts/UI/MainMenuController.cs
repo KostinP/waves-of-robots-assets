@@ -45,6 +45,50 @@ public class MainMenuController : MonoBehaviour
     }
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
 
+    public void OnJoinedAsClient()
+    {
+        ShowScreen("lobby_settings_screen");
+        SetupClientModeUI();
+    }
+
+    public void SetupHostModeUI()
+    {
+        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
+        if (lobbySettingsScreen == null) return;
+
+        // Показываем все элементы для хоста
+        var btnStartGame = lobbySettingsScreen.Q<Button>("btnStartGame");
+        var btnDisbandLobby = lobbySettingsScreen.Q<Button>("btnDisbandLobby");
+        var lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
+        var playerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
+
+        if (btnStartGame != null) btnStartGame.style.display = DisplayStyle.Flex;
+        if (btnDisbandLobby != null) btnDisbandLobby.style.display = DisplayStyle.Flex;
+        if (lobbyNameField != null) lobbyNameField.SetEnabled(true);
+        if (playerCountSlider != null) playerCountSlider.SetEnabled(true);
+
+        Debug.Log("UI set to host mode - all controls enabled");
+    }
+
+    private void SetupClientModeUI()
+    {
+        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
+        if (lobbySettingsScreen == null) return;
+
+        // Скрываем элементы, которые недоступны клиентам
+        var btnStartGame = lobbySettingsScreen.Q<Button>("btnStartGame");
+        var btnDisbandLobby = lobbySettingsScreen.Q<Button>("btnDisbandLobby");
+        var lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
+        var playerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
+
+        if (btnStartGame != null) btnStartGame.style.display = DisplayStyle.None;
+        if (btnDisbandLobby != null) btnDisbandLobby.style.display = DisplayStyle.None;
+        if (lobbyNameField != null) lobbyNameField.SetEnabled(false);
+        if (playerCountSlider != null) playerCountSlider.SetEnabled(false);
+
+        Debug.Log("UI set to client mode - host controls disabled");
+    }
+
     private void OnDestroy()
     {
         _inputManager?.Cleanup();

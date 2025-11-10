@@ -136,10 +136,19 @@ public class UIScreenManager
         typeLabel.AddToClassList("lobby-type");
 
         var joinBtn = new Button(() => {
-            Debug.Log($"Joining lobby: {info.name} at {info.ip}:{info.port}");
-            UIManager.Instance.LobbyManager.JoinLobby(info,
-                SettingsManager.Instance.CurrentSettings.playerName,
-                info.password);
+            if (info.isOpen || string.IsNullOrEmpty(info.password))
+            {
+                // Сначала переключаем экран, затем присоединяемся
+                _controller.OnJoinedAsClient(); // ← Новый метод
+                UIManager.Instance.LobbyManager.JoinLobby(info,
+                    SettingsManager.Instance.CurrentSettings.playerName,
+                    info.password);
+            }
+            else
+            {
+                // Вызываем метод из LobbyManager вместо несуществующего локального метода
+                UIManager.Instance.LobbyManager.ShowPasswordPrompt(info);
+            }
         })
         {
             text = "Join"

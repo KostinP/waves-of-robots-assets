@@ -600,3 +600,48 @@ RadioButton .unity-radio-button__text {
 /* Dynamic items */
 .lobby-item.empty { opacity: 0.5; }
 .kick-btn { background-color: rgba(255,80,80,0.3); }
+
+
+
+
+
+
+
+/* Lobby list styles */
+.lobby-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.lobby-name {
+    width: 200px;
+    color: white;
+}
+
+.lobby-players {
+    width: 80px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.lobby-type {
+    width: 120px;
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+.join-button {
+    width: 80px;
+    height: 30px;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.no-lobbies-label {
+    color: #888;
+    font-size: 16px;
+    -unity-text-align: middle-center;
+    padding: 20px;
+}

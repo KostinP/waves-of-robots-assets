@@ -9,7 +9,6 @@ using Unity.Collections;
 using System.Net;
 using System.Net.Sockets;
 
-// Добавьте эту структуру в начало файла, после using statements
 public struct ConnectToServerCommand : IComponentData
 {
     public FixedString128Bytes ServerIP;
@@ -116,7 +115,14 @@ public class LobbyManager : MonoBehaviour
         _discovery.StartHosting(lobbyInfo);
 
         UIManager.Instance.OnLobbyListUpdated();
-        FindObjectOfType<MainMenuController>()?.OnLobbyCreated();
+
+        // Переключаем экран и настраиваем UI для хоста
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        if (mainMenuController != null)
+        {
+            mainMenuController.ShowScreen("lobby_settings_screen");
+            mainMenuController.SetupHostModeUI();
+        }
 
         Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
     }
@@ -129,12 +135,6 @@ public class LobbyManager : MonoBehaviour
         {
             var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
             var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
-        }
-#else
-        // В билде создаем только сервер
-        if (GetServerWorld() == null)
-        {
-            ClientServerBootstrap.CreateServerWorld("ServerWorld");
         }
 #endif
     }
@@ -164,53 +164,27 @@ public class LobbyManager : MonoBehaviour
     {
         Debug.Log($"Joining lobby: {lobbyInfo.name} at {lobbyInfo.ip}:{lobbyInfo.port}");
 
-        // Создаем клиентский мир
-        CreateClient();
+        // Сохраняем информацию о подключении
+        PlayerPrefs.SetString("JoiningLobbyIP", lobbyInfo.ip);
+        PlayerPrefs.SetInt("JoiningLobbyPort", lobbyInfo.port);
+        PlayerPrefs.SetString("JoiningPlayerName", playerName);
+        PlayerPrefs.Save();
 
-        var clientWorld = GetClientWorld();
-        if (clientWorld == null)
+        // Переключаемся на экран лобби
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        if (mainMenuController != null)
         {
-            Debug.LogError("Failed to create client world!");
-            return;
+            mainMenuController.OnJoinedAsClient(); // Используем существующий метод
         }
-
-        var entityManager = clientWorld.EntityManager;
-
-        // Упрощенный подход к подключению - создаем сущность с компонентом NetworkStreamConnection
-        var connectionEntity = entityManager.CreateEntity();
-
-        // Добавляем компоненты для подключения
-        entityManager.AddComponent<NetworkStreamConnection>(connectionEntity);
-        entityManager.AddComponent<NetworkStreamRequestConnect>(connectionEntity);
-
-        // Создаем команду подключения (альтернативный подход)
-        var connectEntity = entityManager.CreateEntity();
-        entityManager.AddComponentData(connectEntity, new ConnectToServerCommand
+        else
         {
-            ServerIP = new FixedString128Bytes(lobbyInfo.ip),
-            ServerPort = (ushort)lobbyInfo.port,
-            PlayerName = new FixedString128Bytes(playerName),
-            Password = new FixedString64Bytes(password)
-        });
-
-        // Отправляем команду присоединения к лобби
-        var joinCmd = entityManager.CreateEntity();
-        entityManager.AddComponentData(joinCmd, new JoinLobbyCommand
-        {
-            PlayerName = new FixedString128Bytes(playerName),
-            Password = new FixedString64Bytes(password),
-            ConnectionId = 0
-        });
-
-        Debug.Log($"Attempting to connect to {lobbyInfo.ip}:{lobbyInfo.port} as {playerName}");
-
-        // Переключаемся на сцену лобби
-        StartCoroutine(LoadLobbySceneWithDelay());
+            // Fallback: загружаем сцену лобби
+            SceneManager.LoadScene("LobbyScene");
+        }
     }
 
     private IEnumerator LoadLobbySceneWithDelay()
     {
-        // Даем время на установку подключения
         yield return new WaitForSeconds(1f);
 
         try
@@ -225,7 +199,6 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                // Загружаем первую доступную сцену
                 SceneManager.LoadScene(0);
             }
         }
@@ -273,7 +246,6 @@ public class LobbyManager : MonoBehaviour
         var startEntity = em.CreateEntity();
         em.AddComponent<StartGameCommand>(startEntity);
 
-        // Загружаем игровую сцену
         StartCoroutine(LoadGameSceneWithDelay());
     }
 
@@ -374,7 +346,6 @@ public class LobbyManager : MonoBehaviour
             }
             else
             {
-                // Запрос пароля для закрытого лобби
                 ShowPasswordPrompt(info);
             }
         })
@@ -392,22 +363,28 @@ public class LobbyManager : MonoBehaviour
         return item;
     }
 
-    private void ShowPasswordPrompt(LobbyInfo lobbyInfo)
+    public void ShowPasswordPrompt(LobbyInfo lobbyInfo)
     {
-        // Упрощенная реализация запроса пароля
         string password = "";
 
 #if UNITY_EDITOR
         // В редакторе используем системный диалог
         //password = UnityEditor.EditorUtility.InputDialog("Password Required", "Enter lobby password:", "");
 #else
-        // В билде используем упрощенный подход - временный пароль
+        // В билде используем упрощенный подход
         Debug.Log("Password protected lobby - using temporary password '123'");
         password = "123";
 #endif
 
         if (!string.IsNullOrEmpty(password))
         {
+            // Переключаем экран и присоединяемся
+            var mainMenuController = FindObjectOfType<MainMenuController>();
+            if (mainMenuController != null)
+            {
+                mainMenuController.OnJoinedAsClient();
+            }
+
             JoinLobby(lobbyInfo, SettingsManager.Instance.CurrentSettings.playerName, password);
         }
     }
@@ -464,7 +441,6 @@ public class LobbyManager : MonoBehaviour
                 world.Dispose();
     }
 
-    // Метод для проверки статуса подключения
     public bool IsConnectedToServer()
     {
         var clientWorld = GetClientWorld();

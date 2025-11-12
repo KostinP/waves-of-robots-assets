@@ -167,7 +167,8 @@ public class UIScreenManager
     private void OnCreateLobby()
     {
         var lobbyData = _controller.LobbySetupManager.GetLobbyData();
-        var playerName = _controller.LobbySetupManager.GetPlayerName();
+        // Имя игрока берём из SettingsManager — игрок не может менять параметры игры при подключении
+        var playerName = SettingsManager.Instance != null ? SettingsManager.Instance.CurrentSettings.playerName : "Player";
         var selectedCharacter = _controller.CharacterSelectionManager.GetSelectedCharacter();
         var playerData = new PlayerData
         {

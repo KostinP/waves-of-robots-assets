@@ -9,28 +9,18 @@ using Unity.Collections;
 using System.Net;
 using System.Net.Sockets;
 
-public struct ConnectToServerCommand : IComponentData
-{
-    public FixedString128Bytes ServerIP;
-    public ushort ServerPort;
-    public FixedString128Bytes PlayerName;
-    public FixedString64Bytes Password;
-}
-
-public struct LobbyData
-{
-    public string name;
-    public string password;
-    public int maxPlayers;
-    public bool isOpen;
-}
-
+/// <summary>
+/// Управляет локальным лобби: создает серверный мир, запускает discovery broadcast через LobbyDiscovery,
+/// отслеживает текущее число игроков и — при достижении maxPlayers — помечает лобби скрытым и стартует игру.
+/// </summary>
 public class LobbyManager : MonoBehaviour
 {
     private LobbyDiscovery _discovery;
     private LobbyData _currentLobby;
     private Dictionary<ulong, PlayerData> _players = new();
     private bool _gameStarted = false;
+    private LobbyInfo _currentLobbyInfo;
+    private Coroutine _lobbyMonitorCoroutine;
 
     private void Start()
     {
@@ -62,11 +52,8 @@ public class LobbyManager : MonoBehaviour
     {
         _currentLobby = data;
 
-        // Создаем серверный мир если его нет
         if (GetServerWorld() == null)
-        {
             CreateServer();
-        }
 
         var serverWorld = GetServerWorld();
         if (serverWorld == null)
@@ -77,7 +64,6 @@ public class LobbyManager : MonoBehaviour
 
         var em = serverWorld.EntityManager;
 
-        // Очищаем старые лобби данные
         var oldQuery = em.CreateEntityQuery(typeof(LobbyDataComponent));
         if (!oldQuery.IsEmptyIgnoreFilter)
             em.DestroyEntity(oldQuery.GetSingletonEntity());
@@ -100,8 +86,7 @@ public class LobbyManager : MonoBehaviour
             ConnectionId = 0
         });
 
-        // Запускаем широковещание
-        var lobbyInfo = new LobbyInfo
+        _currentLobbyInfo = new LobbyInfo
         {
             name = _currentLobby.name,
             currentPlayers = 1,
@@ -109,14 +94,17 @@ public class LobbyManager : MonoBehaviour
             isOpen = _currentLobby.isOpen,
             password = _currentLobby.password,
             ip = GetLocalIPAddress(),
-            port = _discovery.gamePort
+            port = _discovery.gamePort,
+            uniqueId = _discovery.UniqueID
         };
 
-        _discovery.StartHosting(lobbyInfo);
+        _discovery.StartHosting(_currentLobbyInfo);
+
+        if (_lobbyMonitorCoroutine != null) StopCoroutine(_lobbyMonitorCoroutine);
+        _lobbyMonitorCoroutine = StartCoroutine(LobbyBroadcastAndMonitorLoop());
 
         UIManager.Instance.OnLobbyListUpdated();
 
-        // Переключаем экран и настраиваем UI для хоста
         var mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
         {
@@ -125,6 +113,36 @@ public class LobbyManager : MonoBehaviour
         }
 
         Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
+    }
+
+    private IEnumerator LobbyBroadcastAndMonitorLoop()
+    {
+        // Периодически обновляем поле currentPlayers и шлём broadcast
+        while (!_gameStarted)
+        {
+            int count = GetPlayerCount();
+            _currentLobbyInfo.currentPlayers = Mathf.Max(1, count); // >=1 (хост)
+            // Если стали меньше max — оставляем isOpen как есть (обычно true), если достигли — закрываем
+            if (_currentLobbyInfo.currentPlayers >= _currentLobbyInfo.maxPlayers)
+            {
+                // Пометим как закрытое — чтобы клиенты не пытались зайти
+                _currentLobbyInfo.isOpen = false;
+                _discovery.BroadcastLobby(_currentLobbyInfo); // одноразовое обновление со статусом закрыто
+                Debug.Log("Lobby full — broadcasting hide/closed and starting game.");
+                // Небольшая задержка, чтобы клиенты успели получить сообщение
+                yield return new WaitForSeconds(0.5f);
+                StartGame(); // автоматически стартуем игру
+                yield break;
+            }
+            else
+            {
+                // Обычная регулярная рассылка актуального состояния (имя/кол-во/порт)
+                _currentLobbyInfo.isOpen = _currentLobby.isOpen;
+                _discovery.BroadcastLobby(_currentLobbyInfo);
+            }
+
+            yield return new WaitForSeconds(1.0f);
+        }
     }
 
     private void CreateServer()
@@ -164,22 +182,47 @@ public class LobbyManager : MonoBehaviour
     {
         Debug.Log($"Joining lobby: {lobbyInfo.name} at {lobbyInfo.ip}:{lobbyInfo.port}");
 
-        // Сохраняем информацию о подключении
         PlayerPrefs.SetString("JoiningLobbyIP", lobbyInfo.ip);
         PlayerPrefs.SetInt("JoiningLobbyPort", lobbyInfo.port);
         PlayerPrefs.SetString("JoiningPlayerName", playerName);
         PlayerPrefs.Save();
 
-        // Переключаемся на экран лобби
         var mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
-        {
-            mainMenuController.OnJoinedAsClient(); // Используем существующий метод
-        }
+            mainMenuController.OnJoinedAsClient();
         else
-        {
-            // Fallback: загружаем сцену лобби
             SceneManager.LoadScene("LobbyScene");
+
+        // получаем строковое название оружия по индексу
+        string weaponName = GetWeaponNameFromIndex(SettingsManager.Instance.CurrentSettings.defaultWeaponIndex);
+
+        // отправляем JoinLobbyCommand
+        var clientWorld = GetClientWorld();
+        if (clientWorld != null)
+        {
+            var em = clientWorld.EntityManager;
+            var req = em.CreateEntity();
+            em.AddComponentData(req, new JoinLobbyCommand
+            {
+                PlayerName = new FixedString128Bytes(playerName),
+                Weapon = new FixedString64Bytes(weaponName),
+                Password = new FixedString64Bytes(password ?? "")
+            });
+            em.AddComponentData(req, new SendRpcCommandRequest { TargetConnection = Entity.Null });
+        }
+
+        UIManager.Instance.OnLobbyListUpdated();
+    }
+
+    private string GetWeaponNameFromIndex(int index)
+    {
+        switch (index)
+        {
+            case 0: return "Termit\"Flamethrower\"";
+            case 1: return "Titan \"Autocannon\"";
+            case 2: return "Volt \"Stun Gun\"";
+            case 3: return "Vikhr \"Twin Machine Gun\"";
+            default: return $"Weapon{index}";
         }
     }
 
@@ -233,18 +276,28 @@ public class LobbyManager : MonoBehaviour
         _discovery.StopHosting();
         _discovery.ClearLobbies();
         ShutdownAllNetCodeWorlds();
+
+        if (_lobbyMonitorCoroutine != null)
+        {
+            StopCoroutine(_lobbyMonitorCoroutine);
+            _lobbyMonitorCoroutine = null;
+        }
+
         SceneManager.LoadScene("MainMenu");
     }
 
     public void StartGame()
     {
+        if (_gameStarted) return;
         _gameStarted = true;
+        // Остановим broadcasting — discovery сам прекратит, когда мы вызовем StopHosting
         _discovery.StopHosting();
+
         var serverWorld = GetServerWorld();
         if (serverWorld == null) return;
         var em = serverWorld.EntityManager;
         var startEntity = em.CreateEntity();
-        em.AddComponent<StartGameCommand>(startEntity);
+        em.AddComponentData(startEntity, new StartGameCommand { });
 
         StartCoroutine(LoadGameSceneWithDelay());
     }
@@ -275,10 +328,10 @@ public class LobbyManager : MonoBehaviour
     private int GetPlayerCount()
     {
         var serverWorld = GetServerWorld();
-        if (serverWorld == null) return 0;
+        if (serverWorld == null) return 1; // хотя бы хост
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(typeof(LobbyPlayerBuffer));
-        if (query.IsEmptyIgnoreFilter) return 0;
+        if (query.IsEmptyIgnoreFilter) return 1;
         return em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity()).Length;
     }
 
@@ -368,17 +421,14 @@ public class LobbyManager : MonoBehaviour
         string password = "";
 
 #if UNITY_EDITOR
-        // В редакторе используем системный диалог
-        //password = UnityEditor.EditorUtility.InputDialog("Password Required", "Enter lobby password:", "");
+        // В редакторе используем системный диалог — оставляем упрощение
 #else
-        // В билде используем упрощенный подход
         Debug.Log("Password protected lobby - using temporary password '123'");
         password = "123";
 #endif
 
         if (!string.IsNullOrEmpty(password))
         {
-            // Переключаем экран и присоединяемся
             var mainMenuController = FindObjectOfType<MainMenuController>();
             if (mainMenuController != null)
             {

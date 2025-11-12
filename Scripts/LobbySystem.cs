@@ -3,67 +3,69 @@ using Unity.NetCode;
 using Unity.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Серверная система управления лобби (приём Join/Kick).
+/// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct LobbySystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<NetworkId>();
+        state.RequireForUpdate<LobbyDataComponent>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
-
-        if (!SystemAPI.HasSingleton<LobbyDataComponent>())
-        {
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
-            return;
-        }
+        var em = state.EntityManager;
 
         var lobbyEntity = SystemAPI.GetSingletonEntity<LobbyDataComponent>();
-        var lobbyBuffer = state.EntityManager.GetBuffer<LobbyPlayerBuffer>(lobbyEntity);
-        var lobbyData = state.EntityManager.GetComponentData<LobbyDataComponent>(lobbyEntity);
+        var lobbyBuffer = em.GetBuffer<LobbyPlayerBuffer>(lobbyEntity);
+        var lobbyData = em.GetComponentData<LobbyDataComponent>(lobbyEntity);
 
-        // JoinLobbyCommands
-        foreach (var (joinCmd, entity) in SystemAPI.Query<RefRO<JoinLobbyCommand>>().WithEntityAccess())
+        // 🔹 Обработка команд JoinLobbyCommand (если остались старые — удаляем)
+        foreach (var (joinCmd, req, entity) in SystemAPI
+                     .Query<JoinLobbyCommand, ReceiveRpcCommandRequest>()
+                     .WithEntityAccess())
         {
-            // сравниваем FixedString с FixedString
-            if (joinCmd.ValueRO.Password.Equals(lobbyData.Password) && lobbyBuffer.Length < lobbyData.MaxPlayers)
-            {
-                lobbyBuffer.Add(new LobbyPlayerBuffer { PlayerName = joinCmd.ValueRO.PlayerName, ConnectionId = joinCmd.ValueRO.ConnectionId });
+            var netId = em.GetComponentData<NetworkId>(req.SourceConnection).Value;
+            var connId = (ulong)netId;
 
-                var spawnEntity = ecb.CreateEntity();
-                ecb.AddComponent(spawnEntity, new SpawnPlayerCommand { ConnectionId = joinCmd.ValueRO.ConnectionId });
+            if ((lobbyData.Password.Length == 0 || lobbyData.Password.Equals(joinCmd.Password))
+                && lobbyBuffer.Length < lobbyData.MaxPlayers)
+            {
+                lobbyBuffer.Add(new LobbyPlayerBuffer
+                {
+                    PlayerName = joinCmd.PlayerName,
+                    ConnectionId = connId
+                });
+
+                UnityEngine.Debug.Log($"[Server] Added player {joinCmd.PlayerName} (Conn={connId})");
+
+                // Создаём сущность для SpawnPlayerCommand
+                var spawn = ecb.CreateEntity();
+                ecb.AddComponent(spawn, new SpawnPlayerCommand { ConnectionId = connId });
             }
             else
             {
-                // На отказ: разрушаем сущность подключения с тем же NetworkId
-                // Находим сущность с NetworkId == ConnectionId и удаляем её
-                var connQuery = state.EntityManager.CreateEntityQuery(
-                    ComponentType.ReadOnly<NetworkId>());
-
-                using (var entities = connQuery.ToEntityArray(Allocator.Temp))
+                // Отказ — удаляем соединение
+                var connQuery = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
+                using var entities = connQuery.ToEntityArray(Allocator.Temp);
+                foreach (var e in entities)
                 {
-                    for (int i = 0; i < entities.Length; i++)
+                    if ((ulong)em.GetComponentData<NetworkId>(e).Value == connId)
                     {
-                        var e = entities[i];
-                        var nid = state.EntityManager.GetComponentData<NetworkId>(e).Value;
-                        if ((ulong)nid == joinCmd.ValueRO.ConnectionId)
-                        {
-                            // удаляем сущность подключения
-                            state.EntityManager.DestroyEntity(e);
-                            break;
-                        }
+                        em.DestroyEntity(e);
+                        break;
                     }
                 }
             }
+
             ecb.DestroyEntity(entity);
         }
 
-        // KickPlayerCommands
+        // 🔹 Обработка KickPlayerCommand
         foreach (var (kickCmd, entity) in SystemAPI.Query<RefRO<KickPlayerCommand>>().WithEntityAccess())
         {
             for (int i = 0; i < lobbyBuffer.Length; i++)
@@ -75,26 +77,21 @@ public partial struct LobbySystem : ISystem
                 }
             }
 
-            // Найдём и удалим сущность подключения
-            var connQuery = state.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
-            using (var entities = connQuery.ToEntityArray(Allocator.Temp))
+            var connQuery = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
+            using var entities = connQuery.ToEntityArray(Allocator.Temp);
+            foreach (var e in entities)
             {
-                for (int i = 0; i < entities.Length; i++)
+                if ((ulong)em.GetComponentData<NetworkId>(e).Value == kickCmd.ValueRO.ConnectionId)
                 {
-                    var e = entities[i];
-                    var nid = state.EntityManager.GetComponentData<NetworkId>(e).Value;
-                    if ((ulong)nid == kickCmd.ValueRO.ConnectionId)
-                    {
-                        state.EntityManager.DestroyEntity(e);
-                        break;
-                    }
+                    em.DestroyEntity(e);
+                    break;
                 }
             }
 
             ecb.DestroyEntity(entity);
         }
 
-        ecb.Playback(state.EntityManager);
+        ecb.Playback(em);
         ecb.Dispose();
     }
 }

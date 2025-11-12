@@ -8,19 +8,9 @@ using System;
 using Unity.NetCode;
 using System.Collections;
 
-[System.Serializable]
-public struct LobbyInfo
-{
-    public string name;
-    public int currentPlayers;
-    public int maxPlayers;
-    public bool isOpen;
-    public string password;
-    public string ip;
-    public int port;
-    public string uniqueId;
-}
-
+/// <summary>
+/// Локальное LAN-обнаружение лобби через UDP Broadcast.
+/// </summary>
 public class LobbyDiscovery : MonoBehaviour
 {
     public static LobbyDiscovery Instance { get; private set; }
@@ -28,17 +18,20 @@ public class LobbyDiscovery : MonoBehaviour
     public int broadcastPort = 8888;
     public int gamePort = 7777;
     public float broadcastInterval = 2f;
+
     private UdpClient udpClient;
     private IPEndPoint broadcastEndPoint;
     private Thread listenThread;
     public Action<List<LobbyInfo>> OnLobbiesUpdated;
-    public List<LobbyInfo> DiscoveredLobbies = new List<LobbyInfo>();
+    public List<LobbyInfo> DiscoveredLobbies = new();
 
     private string uniqueId;
     private bool isInitialized = false;
     private bool isHost = false;
     private LobbyInfo currentLobbyInfo;
     private bool _needsLobbyUpdate = false;
+
+    public string UniqueID => uniqueId;
 
     private void Awake()
     {
@@ -49,16 +42,12 @@ public class LobbyDiscovery : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        uniqueId = System.Guid.NewGuid().ToString().Substring(0, 8);
+        uniqueId = Guid.NewGuid().ToString().Substring(0, 8);
     }
 
-    void Start()
-    {
-        StartCoroutine(StartDiscovery());
-    }
+    private void Start() => StartCoroutine(StartDiscovery());
 
-    void Update()
+    private void Update()
     {
         if (_needsLobbyUpdate)
         {
@@ -67,10 +56,9 @@ public class LobbyDiscovery : MonoBehaviour
         }
     }
 
-    IEnumerator StartDiscovery()
+    private IEnumerator StartDiscovery()
     {
         yield return new WaitForSeconds(1f);
-
         if (isInitialized) yield break;
 
         try
@@ -78,84 +66,67 @@ public class LobbyDiscovery : MonoBehaviour
             udpClient = new UdpClient();
             udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, broadcastPort));
-
             udpClient.EnableBroadcast = true;
+
             broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
 
-            listenThread = new Thread(ListenForBroadcasts);
-            listenThread.IsBackground = true;
+            listenThread = new Thread(ListenForBroadcasts) { IsBackground = true };
             listenThread.Start();
-
             StartCoroutine(SendDiscoveryRequest());
 
             isInitialized = true;
-            Debug.Log($"LobbyDiscovery initialized. Listening on port {broadcastPort}, UniqueID: {uniqueId}");
+            Debug.Log($"LobbyDiscovery initialized (port {broadcastPort}, ID={uniqueId})");
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to initialize LobbyDiscovery: {e.Message}");
+            Debug.LogError($"LobbyDiscovery init failed: {e.Message}");
         }
     }
 
-    void ListenForBroadcasts()
+    private void ListenForBroadcasts()
     {
-        IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+        var remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
         while (true)
         {
             try
             {
-                byte[] data = udpClient.Receive(ref remoteEndPoint);
-                string message = Encoding.UTF8.GetString(data);
+                var data = udpClient.Receive(ref remoteEndPoint);
+                var msg = Encoding.UTF8.GetString(data);
 
-                if (message.StartsWith("LOBBY:"))
+                if (msg.StartsWith("LOBBY:"))
                 {
-                    var info = JsonUtility.FromJson<LobbyInfo>(message.Substring(6));
-
-                    if (info.uniqueId == uniqueId)
-                    {
-                        continue;
-                    }
-
+                    var info = JsonUtility.FromJson<LobbyInfo>(msg.Substring(6));
+                    if (info.uniqueId == uniqueId) continue; // 🔹 игнорируем свои
                     info.ip = remoteEndPoint.Address.ToString();
                     if (info.port == 0) info.port = gamePort;
-
                     UpdateLobbyList(info);
-
-                    // Обновляем UI в главном потоке
                     _needsLobbyUpdate = true;
                 }
-                else if (message == "DISCOVER")
+                else if (msg == "DISCOVER" && isHost)
                 {
-                    if (isHost)
-                    {
-                        BroadcastLobby(currentLobbyInfo);
-                    }
+                    BroadcastLobby(currentLobbyInfo);
                 }
             }
             catch (Exception e)
             {
-                if (e is ThreadAbortException || e is ObjectDisposedException)
+                if (e is ThreadAbortException or ObjectDisposedException)
                     break;
-                Debug.LogWarning($"Exception in ListenForBroadcasts: {e.Message}");
+                Debug.LogWarning($"Listen error: {e.Message}");
             }
         }
     }
 
-    void UpdateLobbyList(LobbyInfo newLobby)
+    private void UpdateLobbyList(LobbyInfo newLobby)
     {
         lock (DiscoveredLobbies)
         {
             DiscoveredLobbies.RemoveAll(l => l.uniqueId == newLobby.uniqueId);
-
             if (newLobby.isOpen || string.IsNullOrEmpty(newLobby.password))
-            {
                 DiscoveredLobbies.Add(newLobby);
-                Debug.Log($"Discovered lobby: {newLobby.name} from {newLobby.ip}:{newLobby.port}");
-            }
         }
     }
 
-    IEnumerator SendDiscoveryRequest()
+    private IEnumerator SendDiscoveryRequest()
     {
         while (true)
         {
@@ -165,10 +136,7 @@ public class LobbyDiscovery : MonoBehaviour
                 {
                     udpClient.Send(Encoding.UTF8.GetBytes("DISCOVER"), 7, broadcastEndPoint);
                 }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"Failed to send discovery: {e.Message}");
-                }
+                catch { }
             }
             yield return new WaitForSeconds(3f);
         }
@@ -182,30 +150,24 @@ public class LobbyDiscovery : MonoBehaviour
         currentLobbyInfo.port = gamePort;
 
         Debug.Log($"Started hosting lobby: {info.name} on port {gamePort}");
-
         BroadcastLobby(currentLobbyInfo);
         StartCoroutine(HostBroadcastLoop());
     }
 
-    public void StopHosting()
-    {
-        isHost = false;
-        Debug.Log("Stopped hosting lobby");
-    }
+    public void StopHosting() => isHost = false;
 
-    IEnumerator HostBroadcastLoop()
+    private IEnumerator HostBroadcastLoop()
     {
         while (isHost)
         {
             BroadcastLobby(currentLobbyInfo);
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(broadcastInterval);
         }
     }
 
     public void BroadcastLobby(LobbyInfo info)
     {
         if (udpClient == null || !isHost) return;
-
         try
         {
             string message = "LOBBY:" + JsonUtility.ToJson(info);
@@ -214,30 +176,24 @@ public class LobbyDiscovery : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"Failed to broadcast lobby: {e.Message}");
+            Debug.LogWarning($"Broadcast failed: {e.Message}");
         }
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         if (listenThread != null && listenThread.IsAlive)
-        {
             listenThread.Abort();
-        }
 
         udpClient?.Close();
         udpClient = null;
-
-        if (Instance == this)
-            Instance = null;
+        if (Instance == this) Instance = null;
     }
 
     public List<LobbyInfo> GetDiscoveredLobbies()
     {
         lock (DiscoveredLobbies)
-        {
             return new List<LobbyInfo>(DiscoveredLobbies);
-        }
     }
 
     public void ClearLobbies()
@@ -247,10 +203,5 @@ public class LobbyDiscovery : MonoBehaviour
             DiscoveredLobbies.Clear();
             _needsLobbyUpdate = true;
         }
-    }
-
-    public void RefreshLobbyListUI()
-    {
-        _needsLobbyUpdate = true;
     }
 }

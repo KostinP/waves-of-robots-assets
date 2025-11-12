@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class UILobbySetupManager
 {
@@ -15,7 +17,7 @@ public class UILobbySetupManager
     private RadioButton _infinityRadio;
     private RadioButton _radioOpen;
     private RadioButton _radioClosed;
-    private TextField _playerNameField;
+    private TextField _lobbyNameField; // <-- раньше playerNameField — теперь это название лобби
     private TextField _lobbyPassword;
     private Button _togglePasswordBtn;
     private Button _randomNameBtn;
@@ -36,7 +38,7 @@ public class UILobbySetupManager
         SetupPasswordField();
         SetupTextFields();
         SetupRandomNameButton();
-        Debug.Log("UILobbySetupManager initialized");
+        Debug.Log("UILobbySetupManager initialized (lobby-name semantics)");
     }
 
     private void FindUIElements()
@@ -49,7 +51,7 @@ public class UILobbySetupManager
         _infinityRadio = _root.Q<RadioButton>("infinityRadio");
         _radioOpen = _root.Q<RadioButton>("radioOpen");
         _radioClosed = _root.Q<RadioButton>("radioClosed");
-        _playerNameField = _root.Q<TextField>("playerNameField");
+        _lobbyNameField = _root.Q<TextField>("playerNameField"); // NOTE: в UXML всё ещё name="playerNameField", но семантика — lobby name
         _lobbyPassword = _root.Q<TextField>("lobbyPassword");
         _togglePasswordBtn = _root.Q<Button>("togglePasswordVisibility");
         _randomNameBtn = _root.Q<Button>("randomNameBtn");
@@ -57,11 +59,11 @@ public class UILobbySetupManager
 
     private void SetupTextFields()
     {
-        if (_playerNameField != null)
+        if (_lobbyNameField != null)
         {
-            _playerNameField.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_playerNameField, true));
-            _playerNameField.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_playerNameField, false));
-            SetupTextFieldStyle(_playerNameField);
+            _lobbyNameField.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_lobbyNameField, true));
+            _lobbyNameField.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_lobbyNameField, false));
+            SetupTextFieldStyle(_lobbyNameField);
         }
 
         if (_lobbyPassword != null)
@@ -101,18 +103,18 @@ public class UILobbySetupManager
 
     private void OnRandomNameClicked()
     {
-        if (_playerNameField != null)
+        if (_lobbyNameField != null)
         {
-            _playerNameField.value = GenerateRandomName();
+            _lobbyNameField.value = GenerateRandomLobbyName();
         }
     }
 
-    private string GenerateRandomName()
+    private string GenerateRandomLobbyName()
     {
-        // Простая логика генерации случайного имени
-        string[] prefixes = { "Cool", "Epic", "Super", "Mega", "Ultra" };
-        string[] suffixes = { "Player", "Gamer", "Hero", "Warrior", "Master" };
-        return prefixes[Random.Range(0, prefixes.Length)] + suffixes[Random.Range(0, suffixes.Length)] + Random.Range(100, 999).ToString();
+        // Генерация названия лобби (короткое и читаемое)
+        string[] prefixes = { "Alpha", "Bravo", "Gamma", "Delta", "Echo", "Orbit", "Neon" };
+        string[] suffixes = { "Room", "Lobby", "Match", "Arena", "Zone" };
+        return prefixes[Random.Range(0, prefixes.Length)] + " " + suffixes[Random.Range(0, suffixes.Length)] + "-" + Random.Range(1, 999).ToString();
     }
 
     #region Sliders
@@ -341,15 +343,16 @@ public class UILobbySetupManager
     {
         return new LobbyData
         {
-            name = _playerNameField?.value ?? "Default Lobby",
-            password = _radioClosed.value ? _lobbyPassword?.value ?? "" : "",
-            maxPlayers = Mathf.RoundToInt(_playerCountSlider.value),
-            isOpen = _radioOpen.value
+            name = _lobbyNameField?.value ?? "Default Lobby",
+            password = _radioClosed != null && _radioClosed.value ? _lobbyPassword?.value ?? "" : "",
+            maxPlayers = Mathf.RoundToInt(_playerCountSlider != null ? _playerCountSlider.value : 4),
+            isOpen = _radioOpen != null ? _radioOpen.value : true
         };
     }
 
-    public string GetPlayerName()
+    // Возвращает название лобби (ранее поле использовалось как player name)
+    public string GetLobbyName()
     {
-        return _playerNameField?.value ?? "Default Player";
+        return _lobbyNameField?.value ?? "Default Lobby";
     }
 }

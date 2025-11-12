@@ -33,10 +33,10 @@
                         </ui:VisualElement>
                         <ui:VisualElement class="panel-content">
                             <ui:VisualElement class="form-section">
-                                <ui:Label text="#player_name" class="section-label" />
+                                <ui:Label text="#lobby_name" class="section-label" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
-                                    <ui:Button text="#random_name" name="randomNameBtn" class="random-button" />
-                                    <ui:TextField name="playerNameField" placeholder-text="#enter_player_name" class="text-input transparent-bg" style="flex-grow: 1;" />
+                                    <ui:Button text="#random_lobby_name" name="randomNameBtn" class="random-button" />
+                                    <ui:TextField name="playerNameField" placeholder-text="#enter_lobby_name" class="text-input transparent-bg" style="flex-grow: 1;" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:VisualElement class="form-section">

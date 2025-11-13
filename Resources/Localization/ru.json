@@ -1,6 +1,6 @@
 ﻿{
     "game_title": "waves of ROBOTS",
-    "my_netcode_game": "Моя Сетевая Игра",
+    "single_player": "Одиночная игра",
     "create_lobby": "Начать игру",
     "browse_lobbies": "Поиск лобби",
     "statistics": "Статистика",
@@ -41,7 +41,7 @@
     "lobby_settings": "Настройки лобби",
     "disband_lobby": "Распустить лобби",
     "card_title": "Выберите 1 карту",
-    "card_subtitle": "Один выбор  – бесконечные последствия",
+    "card_subtitle": "Один выбор – бесконечные последствия",
     "upgrade": "Улучшение",
     "current_player_name": "Имя игрока",
     "random": "Случайное",

@@ -14,23 +14,7 @@ public struct PlayerComponent : IComponentData
     [GhostField] public int Ping;
 }
 
-[GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
-public struct PlayerInputComponent : IInputComponentData
-{
-    public bool IsClicked;
-    public float2 MouseClickPosition;
-}
-
-public struct StartGameCommand : IComponentData
-{
-}
-
 public struct KickPlayerCommand : IComponentData
-{
-    public ulong ConnectionId;
-}
-
-public struct SpawnPlayerCommand : IComponentData
 {
     public ulong ConnectionId;
 }
@@ -47,11 +31,6 @@ public struct LobbyPlayerBuffer : IBufferElementData
 {
     public FixedString128Bytes PlayerName;
     public ulong ConnectionId;
-}
-
-public struct PlayerPrefabComponent : IComponentData
-{
-    public Entity Prefab;
 }
 
 /// <summary>
@@ -75,6 +54,23 @@ public struct LobbyInfo
     }
 }
 
+public struct LobbyData
+{
+    public string name;
+    public string password;
+    public int maxPlayers;
+    public bool isOpen;
+}
+
+/// <summary>
+/// RPC-команда от клиента: присоединение к лобби.
+/// </summary>
+public struct JoinLobbyCommand : IRpcCommand
+{
+    public FixedString128Bytes PlayerName;
+    public FixedString64Bytes Weapon;
+    public FixedString64Bytes Password;
+}
 
 public struct ConnectToServerCommand : IComponentData
 {
@@ -82,14 +78,6 @@ public struct ConnectToServerCommand : IComponentData
     public ushort ServerPort;
     public FixedString128Bytes PlayerName;
     public FixedString64Bytes Password;
-}
-
-public struct LobbyData
-{
-    public string name;
-    public string password;
-    public int maxPlayers;
-    public bool isOpen;
 }
 
 public struct NetworkStreamRequestConnect : IComponentData
@@ -101,14 +89,4 @@ public struct PlayerData
 {
     public FixedString128Bytes name;
     public string selectedCharacter; // "Vacuum", "Toaster", "GPT"
-}
-
-/// <summary>
-/// RPC-команда от клиента: присоединение к лобби.
-/// </summary>
-public struct JoinLobbyCommand : IRpcCommand
-{
-    public FixedString128Bytes PlayerName;
-    public FixedString64Bytes Weapon;
-    public FixedString64Bytes Password;
 }

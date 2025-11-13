@@ -4,7 +4,7 @@
 Файл: ./Resources/Localization/ru.json
 ﻿{
     "game_title": "waves of ROBOTS",
-    "my_netcode_game": "Моя Сетевая Игра",
+    "single_player": "Одиночная игра",
     "create_lobby": "Начать игру",
     "browse_lobbies": "Поиск лобби",
     "statistics": "Статистика",
@@ -42,17 +42,14 @@
     "weapon": "Оружие",
     "ping": "Пинг",
     "kick": "Выгнать",
-
     "lobby_settings": "Настройки лобби",
     "disband_lobby": "Распустить лобби",
     "card_title": "Выберите 1 карту",
-    "card_subtitle": "Один выбор  – бесконечные последствия",
+    "card_subtitle": "Один выбор – бесконечные последствия",
     "upgrade": "Улучшение",
-
     "current_player_name": "Имя игрока",
     "random": "Случайное",
     "default_arm": "Оружие по умолчанию",
-
     "common_gun1": "Огнемёт \"Термит\"",
     "common_gun2": "Автопушка \"Титан\"",
     "common_gun3": "Электрошокер \"Вольт\"",
@@ -62,7 +59,6 @@
     "rare_gun3": "Ледяной луч \"Крио\"",
     "legendary_gun1": "Плазменный веер \"Аркан\"",
     "legendary_gun2": "Гравитационная пушка \"Небула\"",
-
     "music_volume": "Громкость музыки",
     "sound_volume": "Громкость звуков",
     "default_difficulty": "Сложность по умолчанию",
@@ -71,7 +67,6 @@
     "language": "Язык интерфейса",
     "save_button": "Сохранить",
     "cancel_button": "Отменить",
-
     "lobby_name_label": "Название лобби",
     "player_count_label": "Количество игроков",
     "type_label": "Тип",
@@ -83,14 +78,11 @@
     "difficulty_label": "Сложность",
     "wave_count_label": "Количество волн",
     "lobby_settings_label": "Настройки лобби",
-
     "leave_game": "Покинуть игру"
 }
-
 Файл: ./Resources/Localization/en.json
 ﻿{
     "game_title": "waves of ROBOTS",
-    "my_netcode_game": "My Netcode Game",
     "single_player": "Single Player",
     "create_lobby": "Start Game",
     "browse_lobbies": "Browse Lobbies",
@@ -99,6 +91,7 @@
     "lobby_name": "Lobby name",
     "max_players": "Max players",
     "create": "Create",
+    "refresh_lobby_list": "Refresh",
     "back": "Back",
     "available_lobbies": "Available lobbies",
     "start_game": "Start Game",
@@ -126,7 +119,6 @@
     "players_header": "Players",
     "player_name": "Players",
     "weapon": "Weapon",
-
     "ping": "Ping",
     "kick": "Kick",
     "lobby_settings": "Lobby Settings",
@@ -134,30 +126,26 @@
     "card_title": "Select 1 card",
     "card_subtitle": "One choice — endless consequences",
     "upgrade": "Upgrade",
-
     "current_player_name": "Player name",
     "random": "Random",
     "default_arm": "Default arm",
-
-    "common_gun1": "Termit\"Flamethrower\"",
-    "common_gun2": "Titan \"Autocannon\"",
-    "common_gun3": "Volt \"Stun Gun\"",
-    "common_gun4": "Vikhr \"Twin Machine Gun\"",
-    "rare_gun1": "Phantom \"Laser Drone\"",
-    "rare_gun2": "Hydra \"Missile Pod\"",
-    "rare_gun3": "Krio \"Ice Ray\"",
-    "legendary_gun1": "Arcane \"Plasma Caster\"",
-    "legendary_gun2": "Nebula \"Gravity Gun\"",
-
+    "common_gun1": "Termit Flamethrower",
+    "common_gun2": "Titan Autocannon",
+    "common_gun3": "Volt Stun Gun",
+    "common_gun4": "Vikhr Twin Machine Gun",
+    "rare_gun1": "Phantom Laser Drone",
+    "rare_gun2": "Hydra Missile Pod",
+    "rare_gun3": "Krio Ice Ray",
+    "legendary_gun1": "Arcane Plasma Caster",
+    "legendary_gun2": "Nebula Gravity Gun",
     "music_volume": "Music volume",
     "sound_volume": "Sound volume",
     "default_difficulty": "Default difficulty",
     "screen_resolution": "Screen resolution",
     "screen_quality": "Screen quality",
-    "language": "language",
+    "language": "Language",
     "save_button": "Save",
     "cancel_button": "Cancel",
-
     "lobby_name_label": "Lobby name",
     "player_count_label": "Player count",
     "type_label": "Type",
@@ -169,14 +157,1243 @@
     "difficulty_label": "Difficulty",
     "wave_count_label": "Wave count",
     "lobby_settings_label": "Lobby Settings",
-
     "leave_game": "Leave game"
 }
-
 Обработка директории: ./Scripts
 ==========================================
 
-Файл: ./Scripts/UI/UILobbySetupManager.cs
+Файл: ./Scripts/PlayerFeature/UI/PauseMenuController.cs
+﻿using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
+
+public class PauseMenuController : MonoBehaviour
+{
+    private VisualElement _root;
+    private bool _paused = false;
+
+    void Start()
+    {
+        _root = GetComponent<UIDocument>().rootVisualElement;
+        _root.style.display = DisplayStyle.None;
+
+        _root.Q<Button>("btnResume").clicked += Resume;
+        _root.Q<Button>("btnLeaveGame").clicked += LeaveGame;
+    }
+
+    void Update()
+    {
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            TogglePause();
+    }
+
+    void TogglePause()
+    {
+        _paused = !_paused;
+        _root.style.display = _paused ? DisplayStyle.Flex : DisplayStyle.None;
+        Time.timeScale = _paused ? 0f : 1f;
+        AudioListener.pause = _paused;
+    }
+
+    void Resume() => TogglePause();
+
+    void LeaveGame()
+    {
+        TogglePause();
+        UIManager.Instance.LeaveGame();
+    }
+}
+Файл: ./Scripts/PlayerFeature/UI/SceneUIController.cs
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class SceneUIController : MonoBehaviour
+{
+    void Start()
+    {
+        SceneManager.LoadSceneAsync("HUDScene", LoadSceneMode.Additive);
+        SceneManager.LoadSceneAsync("PauseMenuScene", LoadSceneMode.Additive);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "HUDScene")
+        {
+            var hudRoot = GameObject.Find("HUDRoot")?.GetComponent<HUDController>();
+            UIManager.Instance.SetHUDController(hudRoot);
+        }
+        else if (scene.name == "PauseMenuScene")
+        {
+            var pauseRoot = GameObject.Find("PauseMenuRoot")?.GetComponent<PauseMenuController>();
+            UIManager.Instance.SetPauseController(pauseRoot);
+        }
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        var hudScene = SceneManager.GetSceneByName("HUDScene");
+        if (hudScene.isLoaded) SceneManager.UnloadSceneAsync("HUDScene");
+
+        var pauseScene = SceneManager.GetSceneByName("PauseMenuScene");
+        if (pauseScene.isLoaded) SceneManager.UnloadSceneAsync("PauseMenuScene");
+    }
+}
+Файл: ./Scripts/PlayerFeature/UI/HUDController.cs
+﻿using UnityEngine;
+using UnityEngine.UIElements;
+using Unity.Entities;
+using Unity.Collections;
+using Unity.NetCode;
+using System.Linq;
+
+public class HUDController : MonoBehaviour
+{
+    private VisualElement _hudRoot;
+    private VisualElement _playersContainer;
+
+    void Start()
+    {
+        _hudRoot = GetComponent<UIDocument>().rootVisualElement;
+        _playersContainer = _hudRoot.Q<VisualElement>("hud__players");
+        InvokeRepeating(nameof(UpdatePlayerList), 0f, 1f);
+    }
+
+    public void UpdatePlayerList()
+    {
+        _playersContainer.Clear();
+        var clientWorld = World.All.FirstOrDefault(w => w.IsClient());
+        if (clientWorld == null) return;
+
+        var em = clientWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
+        var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            string name = p.Name.ToString();
+            string ping = p.Ping.ToString() + "мс";
+            CreatePlayerHUD(_playersContainer, name, ping);
+        }
+        players.Dispose();
+    }
+
+    private void CreatePlayerHUD(VisualElement container, string name, string ping)
+    {
+        var player = new VisualElement { pickingMode = PickingMode.Ignore };
+        player.AddToClassList("hud__player");
+        var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+        icon.AddToClassList("hud__player-icon");
+        icon.AddToClassList("mic");
+        var nameLabel = new Label(name) { pickingMode = PickingMode.Ignore };
+        nameLabel.AddToClassList("hud__player-name");
+        var pingLabel = new Label(ping) { pickingMode = PickingMode.Ignore };
+        pingLabel.AddToClassList("hud__player-ping");
+        float pingValue = float.Parse(ping.Replace("мс", ""));
+        if (pingValue < 50) pingLabel.AddToClassList("good");
+        else if (pingValue < 150) pingLabel.AddToClassList("medium");
+        else pingLabel.AddToClassList("bad");
+        player.Add(icon); player.Add(nameLabel); player.Add(pingLabel);
+        container.Add(player);
+    }
+}
+Файл: ./Scripts/PlayerFeature/Network/SpawnSystem.cs
+﻿using Unity.Entities;
+using Unity.NetCode;
+using Unity.Mathematics;
+using Unity.Transforms;
+using Unity.Collections;
+
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+public partial struct SpawnSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<NetworkId>();
+    }
+
+    public void OnUpdate(ref SystemState state)
+    {
+        var ecb = new EntityCommandBuffer(Allocator.Temp);
+
+        var prefabEntity = SystemAPI.QueryBuilder()
+            .WithAll<PlayerPrefabComponent>()
+            .Build()
+            .TryGetSingleton(out PlayerPrefabComponent prefabData)
+            ? prefabData.Prefab
+            : Entity.Null;
+
+        foreach (var (spawnCmd, entity) in SystemAPI.Query<RefRO<SpawnPlayerCommand>>().WithEntityAccess())
+        {
+            if (prefabEntity == Entity.Null)
+                continue;
+
+            var playerEntity = ecb.Instantiate(prefabEntity);
+            ecb.SetComponent(playerEntity, LocalTransform.FromPosition(float3.zero));
+            ecb.AddComponent(playerEntity, new PlayerComponent
+            {
+                Name = new FixedString128Bytes("Player"),
+                ConnectionId = spawnCmd.ValueRO.ConnectionId,
+                Ping = 0
+            });
+            ecb.AddComponent(playerEntity, new GhostOwner());
+            ecb.DestroyEntity(entity);
+        }
+
+        ecb.Playback(state.EntityManager);
+    }
+}
+
+Файл: ./Scripts/PlayerFeature/Movement/InputSystem.cs
+﻿// Assets/Scripts/InputSystem.cs
+using Unity.Entities;
+using UnityEngine.InputSystem;
+using Unity.Mathematics;
+
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+public partial struct InputSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            var mousePos = Mouse.current.position.ReadValue();
+            foreach (var input in SystemAPI.Query<RefRW<PlayerInputComponent>>())
+            {
+                input.ValueRW.IsClicked = true;
+                input.ValueRW.MouseClickPosition = new float2(mousePos.x, mousePos.y);
+            }
+        }
+    }
+}
+Файл: ./Scripts/PlayerFeature/Movement/NavMeshMovementSystem.cs
+﻿// Assets/Scripts/NavMeshMovementSystem.cs
+using Unity.Entities;
+using Unity.NetCode;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine.AI;
+using UnityEngine; // Для Camera и Physics
+
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+public partial struct NavMeshMovementSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (transform, input) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerInputComponent>>())
+        {
+            if (input.ValueRO.IsClicked)
+            {
+                var ray = Camera.main.ScreenPointToRay(new Vector3(input.ValueRO.MouseClickPosition.x, input.ValueRO.MouseClickPosition.y, 0));
+                if (Physics.Raycast(ray, out var hit))
+                {
+                    var path = new NavMeshPath();
+                    NavMesh.CalculatePath(transform.ValueRO.Position, hit.point, NavMesh.AllAreas, path);
+                    // Implement path following in a component, here simplified lerp
+                    transform.ValueRW.Position = math.lerp(transform.ValueRO.Position, hit.point, 0.1f);
+                }
+            }
+        }
+    }
+}
+Файл: ./Scripts/PlayerFeature/Movement/PlayerMovementSystem.cs
+﻿using Unity.Entities;
+using Unity.NetCode;
+using Unity.Mathematics;
+using Unity.Transforms;
+using Unity.Collections;
+
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
+public partial struct PlayerMovementSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (transform, input) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerInputComponent>>())
+        {
+            if (input.ValueRO.IsClicked)
+            {
+                // movement placeholder
+                transform.ValueRW.Position += new float3(0, 0, 1) * SystemAPI.Time.DeltaTime;
+            }
+        }
+    }
+}
+
+Файл: ./Scripts/PlayerFeature/Visual/PlayerPrefabBaker.cs
+﻿using Unity.Entities;
+using UnityEngine;
+using Unity.Transforms;
+
+public class PlayerPrefabAuthoring : MonoBehaviour { }
+
+public class PlayerPrefabBaker : Baker<PlayerPrefabAuthoring>
+{
+    public override void Bake(PlayerPrefabAuthoring authoring)
+    {
+        // Создаём сущность-префаб игрока
+        var prefabEntity = CreateAdditionalEntity(TransformUsageFlags.None);
+
+        // Копируем все компоненты с игрока
+        AddComponent(prefabEntity, LocalTransform.FromPosition(Vector3.zero));
+        AddComponent(prefabEntity, new PlayerComponent
+        {
+            Name = new Unity.Collections.FixedString128Bytes("Player"),
+            ConnectionId = 0,
+            Ping = 0
+        });
+
+        // Сохраняем префаб в singleton
+        var holderEntity = GetEntity(TransformUsageFlags.None);
+        AddComponent(holderEntity, new PlayerPrefabComponent { Prefab = prefabEntity });
+    }
+}
+Файл: ./Scripts/PlayerFeature/Visual/PlayerAuthoring.cs
+﻿using UnityEngine;
+using Unity.Entities;
+using Unity.NetCode;
+using Unity.Transforms;
+
+public class PlayerAuthoring : MonoBehaviour
+{
+    // Поставь этот скрипт на prefab игрока
+}
+
+public class PlayerBaker : Baker<PlayerAuthoring>
+{
+    public override void Bake(PlayerAuthoring authoring)
+    {
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+        // Добавляем компоненты ИГРОКА
+        AddComponent(entity, LocalTransform.FromPosition(Vector3.zero));
+        AddComponent(entity, new PlayerComponent
+        {
+            Name = new Unity.Collections.FixedString128Bytes("Player"),
+            ConnectionId = 0,
+            Ping = 0
+        });
+
+        // ❌ НЕ ДОБАВЛЯЙ PlayerPrefabComponent на игрока!
+        // AddComponent<PlayerPrefabComponent>(entity); // УДАЛИ ЭТУ СТРОКУ
+    }
+}
+
+Файл: ./Scripts/PlayerFeature/Data/ECSGameData.cs
+﻿// Assets/Scripts/ECSComponents.cs
+using Unity.Entities;
+using Unity.NetCode;
+using Unity.Mathematics;
+using Unity.Collections;
+using Unity.Networking.Transport;
+using System;
+
+[GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
+public struct PlayerInputComponent : IInputComponentData
+{
+    public bool IsClicked;
+    public float2 MouseClickPosition;
+}
+
+public struct StartGameCommand : IComponentData
+{
+}
+
+public struct SpawnPlayerCommand : IComponentData
+{
+    public ulong ConnectionId;
+}
+
+public struct PlayerPrefabComponent : IComponentData
+{
+    public Entity Prefab;
+}
+Файл: ./Scripts/Core/UI/UIManager.cs
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.NetCode;
+using UnityEngine.InputSystem;
+using System;
+using System.Collections;
+
+public class UIManager : MonoBehaviour
+{
+    public static UIManager Instance { get; private set; }
+
+    [SerializeField] private InputActionAsset inputActions;
+    public InputActionAsset InputActions => inputActions;
+
+    public LobbyManager LobbyManager { get; private set; }
+
+    private MainMenuController _mainMenuController;
+    private HUDController _hudController;
+    private PauseMenuController _pauseController;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            LobbyManager = GetComponent<LobbyManager>() ?? gameObject.AddComponent<LobbyManager>();
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "MainMenuScene")
+        {
+            _mainMenuController = FindObjectOfType<MainMenuController>();
+        }
+        else if (scene.name == "GameCoreScene")
+        {
+            // HUD и Pause загружаются в SceneUIController
+        }
+    }
+
+    public void SetHUDController(HUDController controller) => _hudController = controller;
+    public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
+
+    public void OnPlayerJoined(int connectionId, string name)
+    {
+        OnPlayersUpdated();
+    }
+
+    public void OnPlayerLeft(int connectionId)
+    {
+        OnPlayersUpdated();
+    }
+
+    public void OnPlayersUpdated()
+    {
+        _mainMenuController?.UpdatePlayerList();
+        _hudController?.UpdatePlayerList();
+    }
+
+    public void OnLobbyListUpdated()
+    {
+        _mainMenuController?.OnLobbyListUpdated();
+    }
+
+    public void OnLobbyCreated()
+    {
+        _mainMenuController?.OnLobbyCreated();
+    }
+
+    public void OnJoinedAsClient()
+    {
+        _mainMenuController?.OnJoinedAsClient();
+    }
+
+    public void StartGame()
+    {
+        LobbyManager.StartGame();
+        SceneManager.LoadScene("GameCoreScene");
+    }
+
+    public void LeaveGame()
+    {
+        try
+        {
+            // Останавливаем все сетевые активности
+            var lobbyManager = FindObjectOfType<LobbyManager>();
+            if (lobbyManager != null)
+            {
+                // ФИКС: Используем DisbandLobby вместо прямого вызова
+                lobbyManager.DisbandLobby();
+            }
+            else
+            {
+                Debug.LogWarning("LobbyManager not found, proceeding without disband");
+                // Если менеджера нет, просто загружаем меню
+                LoadMainMenuDirectly();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error leaving game: {e.Message}");
+            LoadMainMenuDirectly();
+        }
+    }
+
+    public string GetCurrentScreen()
+    {
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        return mainMenuController?.GetCurrentScreen() ?? "unknown";
+    }
+
+    private void LoadMainMenuDirectly()
+    {
+        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            SceneManager.LoadScene(0);
+        }
+    }
+
+    public void ShowMainMenuScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
+    }
+
+    public void ShowLobbyListScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
+        OnLobbyListUpdated();
+    }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("UIManager: Returning to lobby list");
+
+        try
+        {
+            // Используем _mainMenuController
+            if (_mainMenuController != null)
+            {
+                _mainMenuController.ReturnToLobbyList();
+            }
+            else
+            {
+                // Если контроллер не найден, пытаемся найти его
+                _mainMenuController = FindObjectOfType<MainMenuController>();
+                _mainMenuController?.ReturnToLobbyList();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
+        }
+    }
+
+    private IEnumerator DelayedLobbyUpdate()
+    {
+        yield return new WaitForSeconds(0.5f);
+        OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+}
+Файл: ./Scripts/Core/UI/LocalizationManager.cs
+// Assets/Scripts/UI/LocalizationManager.cs
+using UnityEngine;
+using UnityEngine.UIElements;
+using System.Collections.Generic;
+using System;
+using System.Collections;
+
+public class LocalizationManager : MonoBehaviour
+{
+    public static LocalizationManager Instance { get; private set; }
+
+    public event Action OnLanguageChanged;
+
+    [SerializeField] private SystemLanguage _defaultLanguage = SystemLanguage.English;
+
+    private Dictionary<string, string> _currentLocalization = new Dictionary<string, string>();
+    private UIDocument _uiDocument;
+    private SystemLanguage _currentLanguage;
+    private VisualElement _rootVisualElement;
+
+    // Кэш для всех UIDocument'ов в сцене
+    private List<UIDocument> _allUiDocuments = new List<UIDocument>();
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            _uiDocument = GetComponent<UIDocument>();
+            
+            // Находим все UIDocument'ы в сцене
+            RefreshUiDocuments();
+            
+            // Подписываемся на событие изменения настроек
+            if (SettingsManager.Instance != null)
+            {
+                SettingsManager.Instance.OnSettingsChanged += OnSettingsChanged;
+            }
+            
+            Debug.Log("LocalizationManager initialized");
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void Start()
+    {
+        // Получаем root visual element
+        if (_uiDocument != null)
+        {
+            _rootVisualElement = _uiDocument.rootVisualElement;
+        }
+
+        // Загружаем язык из настроек или используем системный
+        if (SettingsManager.IsReady())
+        {
+            LoadLanguage(SettingsManager.Instance.CurrentSettings.language, false);
+        }
+        else
+        {
+            DetectAndLoadLanguage();
+        }
+    }
+
+    // Обновляем список всех UIDocument'ов
+    private void RefreshUiDocuments()
+    {
+        _allUiDocuments.Clear();
+        _allUiDocuments.AddRange(FindObjectsOfType<UIDocument>());
+        Debug.Log($"Found {_allUiDocuments.Count} UI documents in scene");
+    }
+
+    private void OnSettingsChanged(GameSettings newSettings)
+    {
+        // При изменении настроек меняем язык
+        if (newSettings.language != _currentLanguage)
+        {
+            LoadLanguage(newSettings.language, true);
+        }
+    }
+
+    private void DetectAndLoadLanguage()
+    {
+        SystemLanguage systemLanguage = Application.systemLanguage;
+
+        if (systemLanguage == SystemLanguage.Russian || systemLanguage == SystemLanguage.English)
+        {
+            LoadLanguage(systemLanguage, false);
+        }
+        else
+        {
+            LoadLanguage(_defaultLanguage, false);
+        }
+    }
+
+    public void LoadLanguage(SystemLanguage language, bool forceUpdate = true)
+    {
+        Debug.Log($"Loading language: {language}, forceUpdate: {forceUpdate}");
+        
+        // Если язык не изменился, выходим
+        if (_currentLanguage == language && !forceUpdate)
+            return;
+
+        _currentLanguage = language;
+        string langCode = GetLanguageCode(language);
+        var localizationFile = Resources.Load<TextAsset>($"Localization/{langCode}");
+
+        if (localizationFile == null)
+        {
+            Debug.LogWarning($"Localization file for {language} not found, using default");
+            localizationFile = Resources.Load<TextAsset>($"Localization/en");
+        }
+
+        if (localizationFile != null)
+        {
+            ParseLocalizationFile(localizationFile.text);
+            
+            // Всегда обновляем UI при смене языка
+            UpdateAllUIElements();
+
+            // Вызываем событие об изменении языка
+            OnLanguageChanged?.Invoke();
+            
+            Debug.Log($"Language changed to: {language}, UI updated");
+        }
+        else
+        {
+            Debug.LogError("Default localization file not found!");
+        }
+    }
+
+    public void SwitchLanguage()
+    {
+        var newLanguage = _currentLanguage == SystemLanguage.English ?
+            SystemLanguage.Russian : SystemLanguage.English;
+        LoadLanguage(newLanguage, true);
+    }
+
+    private string GetLanguageCode(SystemLanguage language)
+    {
+        return language == SystemLanguage.Russian ? "ru" : "en";
+    }
+
+    private void ParseLocalizationFile(string content)
+    {
+        _currentLocalization.Clear();
+
+        try
+        {
+            var lines = content.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.Trim().StartsWith("\"") && line.Contains(":"))
+                {
+                    var parts = line.Split(new[] { ':' }, 2);
+                    if (parts.Length == 2)
+                    {
+                        var key = parts[0].Trim().Trim('"', ' ', '\t');
+                        var value = parts[1].Trim().Trim('"', ',', ' ', '\t');
+                        _currentLocalization[key] = value;
+                    }
+                }
+            }
+            Debug.Log($"Parsed {_currentLocalization.Count} localization entries");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error parsing localization file: {e.Message}");
+        }
+    }
+
+    public string GetLocalizedText(string key)
+    {
+        if (_currentLocalization.ContainsKey(key))
+            return _currentLocalization[key];
+        
+        Debug.LogWarning($"Localization key not found: {key}");
+        return $"#{key}";
+    }
+
+    public void UpdateAllUIElements()
+    {
+        Debug.Log("Updating ALL UI elements with new language");
+        
+        // Обновляем все UIDocument'ы в сцене
+        foreach (var uiDoc in _allUiDocuments)
+        {
+            if (uiDoc != null && uiDoc.rootVisualElement != null)
+            {
+                UpdateElementsWithPrefix(uiDoc.rootVisualElement, "#");
+            }
+        }
+        
+        Debug.Log($"Updated {_allUiDocuments.Count} UI documents");
+    }
+
+    private void UpdateElementsWithPrefix(VisualElement root, string prefix)
+    {
+        if (root == null) return;
+
+        int updatedCount = 0;
+
+        // ── LABELS ─────────────────────────────────────
+        root.Query<Label>().ForEach(label =>
+        {
+            if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
+            {
+                string key = label.text.Substring(prefix.Length);
+                string localized = GetLocalizedText(key);
+                if (label.text != localized)
+                {
+                    label.text = localized;
+                    updatedCount++;
+                }
+            }
+        });
+
+        // ── BUTTONS ────────────────────────────────────
+        root.Query<Button>().ForEach(button =>
+        {
+            if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
+            {
+                string key = button.text.Substring(prefix.Length);
+                string localized = GetLocalizedText(key);
+                if (button.text != localized)
+                {
+                    button.text = localized;
+                    updatedCount++;
+                }
+            }
+        });
+
+        // ── TEXTFIELDS (label) ─────────────────────────
+        root.Query<TextField>().ForEach(textField =>
+        {
+            if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
+            {
+                string key = textField.label.Substring(prefix.Length);
+                string localized = GetLocalizedText(key);
+                if (textField.label != localized)
+                {
+                    textField.label = localized;
+                    updatedCount++;
+                }
+            }
+        });
+
+        // ── TEXTFIELDS (placeholder) ───────────────────
+        root.Query<TextField>().ForEach(textField =>
+        {
+            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder") 
+                           ?? textField.Q<Label>(className: "unity-text-field__placeholder");
+            
+            if (placeholder != null && !string.IsNullOrEmpty(placeholder.text) && placeholder.text.StartsWith(prefix))
+            {
+                string key = placeholder.text.Substring(prefix.Length);
+                string localized = GetLocalizedText(key);
+                if (placeholder.text != localized)
+                {
+                    placeholder.text = localized;
+                    updatedCount++;
+                }
+            }
+        });
+
+        // ── INTEGERFIELD ───────────────────────────────
+        root.Query<IntegerField>().ForEach(field =>
+        {
+            if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
+            {
+                string key = field.label.Substring(prefix.Length);
+                string localized = GetLocalizedText(key);
+                if (field.label != localized)
+                {
+                    field.label = localized;
+                    updatedCount++;
+                }
+            }
+        });
+
+        // ── Рекурсия по детям ──────────────────────────
+        foreach (VisualElement child in root.Children())
+            UpdateElementsWithPrefix(child, prefix);
+
+        if (updatedCount > 0)
+        {
+            Debug.Log($"Updated {updatedCount} elements in {root.name}");
+        }
+    }
+
+    public SystemLanguage GetCurrentLanguage()
+    {
+        return _currentLanguage;
+    }
+
+    // Метод для принудительного обновления при смене сцены
+    public void RefreshForNewScene()
+    {
+        RefreshUiDocuments();
+        UpdateAllUIElements();
+    }
+
+    private void OnDestroy()
+    {
+        // Отписываемся от события
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.OnSettingsChanged -= OnSettingsChanged;
+        }
+    }
+}
+Файл: ./Scripts/Core/UI/UIResponsiveManager.cs
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class UIResponsiveManager
+{
+    private readonly VisualElement _root;
+    private readonly float[] _breakpoints = { 768f, 1280f, 1920f, 2560f, 3840f };
+
+    public UIResponsiveManager(VisualElement root)
+    {
+        _root = root;
+        Initialize();
+    }
+
+    private void Initialize()
+    {
+        _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+        Debug.Log("Responsive UI manager initialized");
+        HideScrollers();
+        Debug.Log("Responsive UI manager hide scrollers");
+    }
+
+    private void HideScrollers()
+    {
+        _root.Q<ScrollView>().verticalScrollerVisibility = ScrollerVisibility.Hidden;
+        _root.Q<ScrollView>().horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+    }
+
+    private void OnGeometryChanged(GeometryChangedEvent evt)
+    {
+        UpdateResponsiveClasses();
+    }
+
+    private void UpdateResponsiveClasses()
+    {
+        if (_root == null) return;
+
+        float width = _root.resolvedStyle.width;
+        if (float.IsNaN(width) || width <= 0) return;
+
+        _root.RemoveFromClassList("sm-screen");
+        _root.RemoveFromClassList("md-screen");
+        _root.RemoveFromClassList("lg-screen");
+        _root.RemoveFromClassList("xl-screen");
+        _root.RemoveFromClassList("xxl-screen");
+
+        // Добавляем нужный
+        if (width < _breakpoints[0])
+            _root.AddToClassList("sm-screen");
+        else if (width < _breakpoints[1])
+            _root.AddToClassList("md-screen");
+        else if (width < _breakpoints[2])
+            _root.AddToClassList("lg-screen");
+        else if (width < _breakpoints[3])
+            _root.AddToClassList("xl-screen");
+        else
+            _root.AddToClassList("xxl-screen");
+
+        Debug.Log($"Screen width: {width}px, Class: {GetCurrentBreakpoint(width)}");
+    }
+
+    private string GetCurrentBreakpoint(float width)
+    {
+        if (width < _breakpoints[0]) return "sm";
+        else if (width < _breakpoints[1]) return "md";
+        else if (width < _breakpoints[2]) return "lg";
+        else if (width < _breakpoints[3]) return "xl";
+        else return "xxl";
+    }
+
+    public void RefreshResponsiveUI()
+    {
+        UpdateResponsiveClasses();
+    }
+
+    public void Cleanup()
+    {
+        if (_root != null)
+        {
+            _root.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
+        }
+    }
+}
+Файл: ./Scripts/Core/GameSettings.cs
+// Assets/Scripts/GameSettings.cs
+using UnityEngine;
+using System;
+
+[Serializable]
+public class GameSettings
+{
+    // Аудио
+    public float musicVolume = 0.8f;
+    public float soundVolume = 0.8f;
+    // Графика
+    public int resolutionIndex = 0;
+    public int qualityLevel = 2;
+    public bool fullscreen = true;
+    // Геймплей
+    public string playerName = "Player";
+    public int defaultWeaponIndex = 0;
+    public string selectedCharacter = "Toaster";
+    // Язык
+    public SystemLanguage language = SystemLanguage.Russian;
+}
+Файл: ./Scripts/Core/UnityMainThreadDispatcher.cs
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+
+public class UnityMainThreadDispatcher : MonoBehaviour
+{
+    private static UnityMainThreadDispatcher _instance;
+    private readonly Queue<Action> _actions = new Queue<Action>();
+    private static readonly object _lockObject = new object();
+
+    public static UnityMainThreadDispatcher Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // ФИКС: Используем FindObjectOfType только в главном потоке
+                if (Application.isPlaying)
+                {
+                    _instance = FindObjectOfType<UnityMainThreadDispatcher>();
+                    if (_instance == null)
+                    {
+                        var obj = new GameObject("UnityMainThreadDispatcher");
+                        _instance = obj.AddComponent<UnityMainThreadDispatcher>();
+                        DontDestroyOnLoad(obj);
+                    }
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (_instance == null)
+        {
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (_instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void Enqueue(Action action)
+    {
+        if (action == null) return;
+
+        // ФИКС: Проверяем, находимся ли мы уже в главном потоке
+        if (Thread.CurrentThread.ManagedThreadId == 1) // Главный поток Unity обычно имеет ID = 1
+        {
+            action?.Invoke();
+        }
+        else
+        {
+            lock (_lockObject)
+            {
+                _actions.Enqueue(action);
+            }
+        }
+    }
+
+    private void Update()
+    {
+        lock (_lockObject)
+        {
+            while (_actions.Count > 0)
+            {
+                var action = _actions.Dequeue();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error in main thread action: {e}");
+                }
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
+        }
+    }
+}
+Файл: ./Scripts/Core/SceneLoaderSystem.cs
+﻿using Unity.Entities;
+using Unity.Scenes;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.Collections;
+
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]  // Only on server
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+public partial struct SceneLoaderSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        var query = SystemAPI.QueryBuilder().WithAll<StartGameCommand>().Build();
+        var entities = query.ToEntityArray(Allocator.Temp);
+        var count = entities.Length;
+
+        if (count > 1)
+        {
+            Debug.LogWarning($"Found {count} StartGameCommand instances! Destroying extras.");
+            for (int i = 1; i < count; i++)
+            {
+                state.EntityManager.DestroyEntity(entities[i]);
+            }
+        }
+
+        if (count == 0)
+        {
+            entities.Dispose();
+            return;
+        }
+
+        Debug.Log("SceneLoaderSystem: Loading game scenes...");
+
+        // Загружаем сцены (Additive) only once
+        if (!SceneManager.GetSceneByName("ArenaSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("ArenaSubscene", LoadSceneMode.Additive);
+        }
+        if (!SceneManager.GetSceneByName("EntitiesSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("EntitiesSubscene", LoadSceneMode.Additive);
+        }
+        if (!SceneManager.GetSceneByName("SystemsSubscene").isLoaded)
+        {
+            SceneManager.LoadSceneAsync("SystemsSubscene", LoadSceneMode.Additive);
+        }
+
+        // Уничтожаем оставшуюся команду
+        state.EntityManager.DestroyEntity(entities[0]);
+        entities.Dispose();
+
+        Debug.Log("Game scenes loading started");
+    }
+}
+Файл: ./Scripts/Core/StartupManager.cs
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class StartupManager : MonoBehaviour
+{
+    [SerializeField] private string managersScene = "ManagersScene";
+    [SerializeField] private string mainMenuScene = "MainMenuScene";
+
+    private void Start()
+    {
+        SceneManager.LoadSceneAsync(managersScene, LoadSceneMode.Additive).completed += _ => LoadMainMenu();
+    }
+
+    private void LoadMainMenu()
+    {
+        SceneManager.LoadSceneAsync(mainMenuScene, LoadSceneMode.Additive);
+    }
+}
+Файл: ./Scripts/Core/GameManager.cs
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    private static GameManager _instance;
+
+    [Header("Manager Prefabs")]
+    public GameObject settingsManagerPrefab;
+    public GameObject localizationManagerPrefab;
+    public GameObject uiManagerPrefab;
+
+    private void Awake()
+    {
+        if (_instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
+        InitializeManagers();
+    }
+
+    private void InitializeManagers()
+    {
+        CreateIfMissing<SettingsManager>(settingsManagerPrefab);
+        CreateIfMissing<LocalizationManager>(localizationManagerPrefab);
+        CreateIfMissing<UIManager>(uiManagerPrefab);
+    }
+
+    private void CreateIfMissing<T>(GameObject prefab) where T : MonoBehaviour
+    {
+        if (FindObjectOfType<T>() != null) return;
+
+        GameObject go;
+        if (prefab != null)
+        {
+            go = Instantiate(prefab);
+        }
+        else
+        {
+            go = new GameObject(typeof(T).Name);
+            go.AddComponent<T>();
+        }
+        DontDestroyOnLoad(go);
+    }
+}
+Файл: ./Scripts/Core/PlayerSpawnManager.cs
+﻿using Unity.Entities;
+using Unity.Transforms;
+using UnityEngine;
+using Unity.Collections;  // Для FixedString128Bytes
+
+public class PlayerSpawnManager : MonoBehaviour
+{
+    private Entity prefabEntity;
+    private EntityManager entityManager;
+
+    void Start()
+    {
+        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        // 1. Пытаемся найти из SubScene
+        var query = entityManager.CreateEntityQuery(typeof(PlayerPrefabComponent));
+        if (!query.IsEmptyIgnoreFilter)
+        {
+            var prefabComp = entityManager.GetComponentData<PlayerPrefabComponent>(query.GetSingletonEntity());
+            prefabEntity = prefabComp.Prefab;
+            Debug.Log("Player prefab loaded from SubScene.");
+            return;
+        }
+
+        // 2. Если SubScene не загружена — создаём вручную
+        Debug.Log("SubScene not loaded yet. Creating player prefab manually.");
+        prefabEntity = entityManager.CreateEntity();
+        entityManager.AddComponentData(prefabEntity, LocalTransform.FromPosition(Vector3.zero));
+        entityManager.AddComponentData(prefabEntity, new PlayerComponent
+        {
+            Name = new FixedString128Bytes("Player"),
+            ConnectionId = 0,
+            Ping = 0
+        });
+
+        // Singleton для совместимости
+        var singletonEntity = entityManager.CreateEntity();
+        entityManager.AddComponentData(singletonEntity, new PlayerPrefabComponent { Prefab = prefabEntity });
+    }
+
+    public void SpawnPlayer(ulong connectionId, Vector3 spawnPoint)
+    {
+        if (prefabEntity == Entity.Null)
+        {
+            Debug.LogError("Player prefab not initialized!");
+            return;
+        }
+
+        var playerEntity = entityManager.Instantiate(prefabEntity);
+        entityManager.SetComponentData(playerEntity, LocalTransform.FromPosition(spawnPoint));
+        entityManager.SetComponentData(playerEntity, new PlayerComponent
+        {
+            Name = new FixedString128Bytes("Player_" + connectionId),
+            ConnectionId = connectionId,
+            Ping = 0
+        });
+        Debug.Log($"Player spawned: ID={connectionId} at {spawnPoint}");
+    }
+}
+Файл: ./Scripts/MenuFeature/UI/UILobbySetupManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -536,7 +1753,7 @@ public class UILobbySetupManager
     }
 }
 
-Файл: ./Scripts/UI/UICharacterSelectionManager.cs
+Файл: ./Scripts/MenuFeature/UI/UICharacterSelectionManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -559,7 +1776,6 @@ public class UICharacterSelectionManager
     {
         FindCharacterElements();
         SetupCharacterSelection();
-        Debug.Log("UICharacterSelectionManager initialized");
     }
 
     private void FindCharacterElements()
@@ -571,41 +1787,29 @@ public class UICharacterSelectionManager
 
     private void SetupCharacterSelection()
     {
-        if (_charVacuum != null)
-            _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
-
-        if (_charToaster != null)
-            _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
-
-        if (_charGPT != null)
-            _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
+        _charVacuum?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
+        _charToaster?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
+        _charGPT?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
     }
 
     private void SelectCharacter(VisualElement selectedCharacter)
     {
-        // Снимаем выделение со всех персонажей
-        if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
-        if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
-        if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
+        _charVacuum?.RemoveFromClassList("selected");
+        _charToaster?.RemoveFromClassList("selected");
+        _charGPT?.RemoveFromClassList("selected");
 
-        // Выделяем выбранного персонажа
         selectedCharacter.AddToClassList("selected");
-        Debug.Log($"Selected character: {selectedCharacter.name}");
     }
 
     public string GetSelectedCharacter()
     {
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            return "Vacuum";
-        if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            return "Toaster";
-        if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            return "GPT";
-
+        if (_charVacuum?.ClassListContains("selected") == true) return "Vacuum";
+        if (_charToaster?.ClassListContains("selected") == true) return "Toaster";
+        if (_charGPT?.ClassListContains("selected") == true) return "GPT";
         return "None";
     }
 }
-Файл: ./Scripts/UI/UIInputManager.cs
+Файл: ./Scripts/MenuFeature/UI/UIInputManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -628,14 +1832,14 @@ public class UIInputManager
     private bool _settingsSubscribed = false;
     private bool _statsSubscribed = false;
     private UIScreenManager _screenManager;
-    private MainMenuController _controller; // Добавляем ссылку
+    private MainMenuController _controller;
 
     public UIInputManager(InputActionAsset inputActions, VisualElement root, MainMenuController controller)
     {
         _inputActions = inputActions;
         _root = root;
         _controller = controller;
-        _screenManager = new UIScreenManager(root, controller); // Передаём controller
+        _screenManager = new UIScreenManager(root, controller);
         Initialize();
     }
 
@@ -702,21 +1906,14 @@ public class UIInputManager
 
     public void Cleanup()
     {
-        if (_cancelSubscribed && _cancelAction != null)
-            _cancelAction.performed -= OnCancelPerformed;
-        if (_navigateSubscribed && _navigateAction != null)
-            _navigateAction.performed -= OnNavigatePerformed;
-        if (_submitSubscribed && _submitAction != null)
-            _submitAction.performed -= OnSubmitPerformed;
-        if (_tabSubscribed && _tabAction != null)
-            _tabAction.performed -= OnTabPerformed;
-        if (_settingsSubscribed && _openSettingsAction != null)
-            _openSettingsAction.performed -= OnOpenSettingsPerformed;
-        if (_statsSubscribed && _openStatisticsAction != null)
-            _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
-        // Сбрасываем флаги
-        _cancelSubscribed = _navigateSubscribed = _submitSubscribed =
-            _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
+        if (_cancelSubscribed && _cancelAction != null) _cancelAction.performed -= OnCancelPerformed;
+        if (_navigateSubscribed && _navigateAction != null) _navigateAction.performed -= OnNavigatePerformed;
+        if (_submitSubscribed && _submitAction != null) _submitAction.performed -= OnSubmitPerformed;
+        if (_tabSubscribed && _tabAction != null) _tabAction.performed -= OnTabPerformed;
+        if (_settingsSubscribed && _openSettingsAction != null) _openSettingsAction.performed -= OnOpenSettingsPerformed;
+        if (_statsSubscribed && _openStatisticsAction != null) _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
+
+        _cancelSubscribed = _navigateSubscribed = _submitSubscribed = _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
     }
 
     public void Enable()
@@ -727,7 +1924,6 @@ public class UIInputManager
 
     public void Disable() => _uiActionMap?.Disable();
 
-    #region Input Handlers
     private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed || _isTextFieldFocused) return;
@@ -771,9 +1967,7 @@ public class UIInputManager
         Debug.Log("Open Statistics");
         // _controller.ShowScreen("statistics_screen");
     }
-    #endregion
 
-    #region Navigation
     private void NavigateUI(int direction)
     {
         var elements = GetInteractiveElements();
@@ -783,7 +1977,10 @@ public class UIInputManager
         SetFocusToElement(elements[next]);
     }
 
-    private void NavigateHorizontal(int direction) { }
+    private void NavigateHorizontal(int direction)
+    {
+        // Implement horizontal navigation if needed
+    }
 
     private List<VisualElement> GetInteractiveElements()
     {
@@ -821,9 +2018,7 @@ public class UIInputManager
             _isSettingFocus = false;
         }
     }
-    #endregion
 
-    #region Button Handlers
     private void HandleButtonClick(Button btn)
     {
         switch (btn.name)
@@ -863,9 +2058,7 @@ public class UIInputManager
 
     private void OnStatistics() => Debug.Log("Statistics");
     private void OnQuit() => Debug.Log("Quit");
-    #endregion
 
-    #region Input Switch
     public void SwitchToPlayerInput()
     {
         _uiActionMap?.Disable();
@@ -879,679 +2072,8 @@ public class UIInputManager
         playerMap?.Disable();
         _uiActionMap?.Enable();
     }
-    #endregion
 }
-Файл: ./Scripts/UI/PauseMenuController.cs
-﻿// Assets/Scripts/UI/PauseMenuController.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.InputSystem;
-
-public class PauseMenuController : MonoBehaviour
-{
-    private VisualElement _root;
-    private bool _paused = false;
-
-    void Start()
-    {
-        _root = GetComponent<UIDocument>().rootVisualElement;
-        _root.style.display = DisplayStyle.None;
-
-        _root.Q<Button>("btnResume").clicked += Resume;
-        _root.Q<Button>("btnLeaveGame").clicked += LeaveGame;
-    }
-
-    void Update()
-    {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame) 
-            TogglePause();
-    }
-
-    void TogglePause()
-    {
-        _paused = !_paused;
-        _root.style.display = _paused ? DisplayStyle.Flex : DisplayStyle.None;
-        Time.timeScale = _paused ? 0f : 1f;
-        AudioListener.pause = _paused;
-    }
-
-    void Resume() => TogglePause();
-
-    void LeaveGame()
-    {
-        TogglePause();
-        UIManager.Instance.LeaveGame();
-    }
-}
-Файл: ./Scripts/UI/StartupManager.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public class StartupManager : MonoBehaviour
-{
-    [SerializeField] private string managersScene = "ManagersScene";
-    [SerializeField] private string mainMenuScene = "MainMenuScene";
-
-    private void Start()
-    {
-        // Загружаем менеджеры (они DontDestroyOnLoad)
-        SceneManager.LoadSceneAsync(managersScene, LoadSceneMode.Additive)
-            .completed += _ => LoadMainMenu();
-    }
-
-    private void LoadMainMenu()
-    {
-        SceneManager.LoadSceneAsync(mainMenuScene, LoadSceneMode.Additive);
-    }
-}
-Файл: ./Scripts/UI/SceneUIController.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public class SceneUIController : MonoBehaviour
-{
-    void Start()
-    {
-        // Загружаем UI сцены аддитивно
-        SceneManager.LoadSceneAsync("HUDScene", LoadSceneMode.Additive);
-        SceneManager.LoadSceneAsync("PauseMenuScene", LoadSceneMode.Additive);
-        
-        // Подписываемся на события
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "HUDScene")
-        {
-            var hudRoot = GameObject.Find("HUDRoot")?.GetComponent<HUDController>();
-            UIManager.Instance.SetHUDController(hudRoot);
-        }
-        else if (scene.name == "PauseMenuScene")
-        {
-            var pauseRoot = GameObject.Find("PauseMenuRoot")?.GetComponent<PauseMenuController>();
-            UIManager.Instance.SetPauseController(pauseRoot);
-        }
-    }
-
-    void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        // Выгружаем UI сцены при выходе, только если загружены
-        var hudScene = SceneManager.GetSceneByName("HUDScene");
-        if (hudScene.isLoaded) SceneManager.UnloadSceneAsync("HUDScene");
-
-        var pauseScene = SceneManager.GetSceneByName("PauseMenuScene");
-        if (pauseScene.isLoaded) SceneManager.UnloadSceneAsync("PauseMenuScene");
-    }
-}
-Файл: ./Scripts/UI/UIManager.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Unity.NetCode;
-using UnityEngine.InputSystem;
-using System;
-using System.Collections;
-
-public class UIManager : MonoBehaviour
-{
-    public static UIManager Instance { get; private set; }
-
-    [SerializeField] private InputActionAsset inputActions;
-    public InputActionAsset InputActions => inputActions;
-
-    public LobbyManager LobbyManager { get; private set; }
-
-    private MainMenuController _mainMenuController;
-    private HUDController _hudController;
-    private PauseMenuController _pauseController;
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LobbyManager = GetComponent<LobbyManager>() ?? gameObject.AddComponent<LobbyManager>();
-            SceneManager.sceneLoaded += OnSceneLoaded;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "MainMenuScene")
-        {
-            _mainMenuController = FindObjectOfType<MainMenuController>();
-        }
-        else if (scene.name == "GameCoreScene")
-        {
-            // HUD и Pause загружаются в SceneUIController
-        }
-    }
-
-    public void SetHUDController(HUDController controller) => _hudController = controller;
-    public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
-
-    // === События для UI ===
-    public void OnPlayerJoined(int connectionId, string name)
-    {
-        OnPlayersUpdated();
-    }
-
-    public void OnPlayerLeft(int connectionId)
-    {
-        OnPlayersUpdated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnPlayersUpdated()
-    {
-        _mainMenuController?.UpdatePlayerList();
-        _hudController?.UpdatePlayerList();
-    }
-
-    public void OnLobbyListUpdated()
-    {
-        _mainMenuController?.OnLobbyListUpdated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnLobbyCreated()
-    {
-        _mainMenuController?.OnLobbyCreated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnJoinedAsClient()
-    {
-        _mainMenuController?.OnJoinedAsClient();
-    }
-
-    public void StartGame()
-    {
-        LobbyManager.StartGame();
-        SceneManager.LoadScene("GameCoreScene");
-    }
-
-    public void LeaveGame()
-    {
-        Debug.Log("UIManager: Leaving game...");
-
-        try
-        {
-            // Останавливаем все сетевые активности
-            var lobbyManager = FindObjectOfType<LobbyManager>();
-            if (lobbyManager != null)
-            {
-                // ФИКС: Используем DisbandLobby вместо прямого вызова
-                lobbyManager.DisbandLobby();
-            }
-            else
-            {
-                Debug.LogWarning("LobbyManager not found, proceeding without disband");
-                // Если менеджера нет, просто загружаем меню
-                LoadMainMenuDirectly();
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error leaving game: {e.Message}");
-            LoadMainMenuDirectly();
-        }
-    }
-
-    public string GetCurrentScreen()
-    {
-        var mainMenuController = FindObjectOfType<MainMenuController>();
-        return mainMenuController?.GetCurrentScreen() ?? "unknown";
-    }
-
-    private void LoadMainMenuDirectly()
-    {
-        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
-        {
-            SceneManager.LoadScene("MainMenu");
-        }
-        else
-        {
-            SceneManager.LoadScene(0); // Первая сцена
-        }
-    }
-
-    public void ShowMainMenuScreen()
-    {
-        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    public void ShowLobbyListScreen()
-    {
-        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
-        OnLobbyListUpdated();
-    }
-
-    public void ReturnToLobbyList()
-    {
-        Debug.Log("UIManager: Returning to lobby list");
-
-        try
-        {
-            // Используем _mainMenuController
-            if (_mainMenuController != null)
-            {
-                _mainMenuController.ReturnToLobbyList();
-            }
-            else
-            {
-                // Если контроллер не найден, пытаемся найти его
-                _mainMenuController = FindObjectOfType<MainMenuController>();
-                _mainMenuController?.ReturnToLobbyList();
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
-        }
-    }
-
-    private IEnumerator DelayedLobbyUpdate()
-    {
-        yield return new WaitForSeconds(0.5f);
-        OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
-    }
-
-
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-}
-Файл: ./Scripts/UI/LocalizationManager.cs
-// Assets/Scripts/UI/LocalizationManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using System.Collections.Generic;
-using System;
-using System.Collections;
-
-public class LocalizationManager : MonoBehaviour
-{
-    public static LocalizationManager Instance { get; private set; }
-
-    public event Action OnLanguageChanged;
-
-    [SerializeField] private SystemLanguage _defaultLanguage = SystemLanguage.English;
-
-    private Dictionary<string, string> _currentLocalization = new Dictionary<string, string>();
-    private UIDocument _uiDocument;
-    private SystemLanguage _currentLanguage;
-    private VisualElement _rootVisualElement;
-
-    // Кэш для всех UIDocument'ов в сцене
-    private List<UIDocument> _allUiDocuments = new List<UIDocument>();
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            _uiDocument = GetComponent<UIDocument>();
-            
-            // Находим все UIDocument'ы в сцене
-            RefreshUiDocuments();
-            
-            // Подписываемся на событие изменения настроек
-            if (SettingsManager.Instance != null)
-            {
-                SettingsManager.Instance.OnSettingsChanged += OnSettingsChanged;
-            }
-            
-            Debug.Log("LocalizationManager initialized");
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void Start()
-    {
-        // Получаем root visual element
-        if (_uiDocument != null)
-        {
-            _rootVisualElement = _uiDocument.rootVisualElement;
-        }
-
-        // Загружаем язык из настроек или используем системный
-        if (SettingsManager.IsReady())
-        {
-            LoadLanguage(SettingsManager.Instance.CurrentSettings.language, false);
-        }
-        else
-        {
-            DetectAndLoadLanguage();
-        }
-    }
-
-    // Обновляем список всех UIDocument'ов
-    private void RefreshUiDocuments()
-    {
-        _allUiDocuments.Clear();
-        _allUiDocuments.AddRange(FindObjectsOfType<UIDocument>());
-        Debug.Log($"Found {_allUiDocuments.Count} UI documents in scene");
-    }
-
-    private void OnSettingsChanged(GameSettings newSettings)
-    {
-        // При изменении настроек меняем язык
-        if (newSettings.language != _currentLanguage)
-        {
-            LoadLanguage(newSettings.language, true);
-        }
-    }
-
-    private void DetectAndLoadLanguage()
-    {
-        SystemLanguage systemLanguage = Application.systemLanguage;
-
-        if (systemLanguage == SystemLanguage.Russian || systemLanguage == SystemLanguage.English)
-        {
-            LoadLanguage(systemLanguage, false);
-        }
-        else
-        {
-            LoadLanguage(_defaultLanguage, false);
-        }
-    }
-
-    public void LoadLanguage(SystemLanguage language, bool forceUpdate = true)
-    {
-        Debug.Log($"Loading language: {language}, forceUpdate: {forceUpdate}");
-        
-        // Если язык не изменился, выходим
-        if (_currentLanguage == language && !forceUpdate)
-            return;
-
-        _currentLanguage = language;
-        string langCode = GetLanguageCode(language);
-        var localizationFile = Resources.Load<TextAsset>($"Localization/{langCode}");
-
-        if (localizationFile == null)
-        {
-            Debug.LogWarning($"Localization file for {language} not found, using default");
-            localizationFile = Resources.Load<TextAsset>($"Localization/en");
-        }
-
-        if (localizationFile != null)
-        {
-            ParseLocalizationFile(localizationFile.text);
-            
-            // Всегда обновляем UI при смене языка
-            UpdateAllUIElements();
-
-            // Вызываем событие об изменении языка
-            OnLanguageChanged?.Invoke();
-            
-            Debug.Log($"Language changed to: {language}, UI updated");
-        }
-        else
-        {
-            Debug.LogError("Default localization file not found!");
-        }
-    }
-
-    public void SwitchLanguage()
-    {
-        var newLanguage = _currentLanguage == SystemLanguage.English ?
-            SystemLanguage.Russian : SystemLanguage.English;
-        LoadLanguage(newLanguage, true);
-    }
-
-    private string GetLanguageCode(SystemLanguage language)
-    {
-        return language == SystemLanguage.Russian ? "ru" : "en";
-    }
-
-    private void ParseLocalizationFile(string content)
-    {
-        _currentLocalization.Clear();
-
-        try
-        {
-            var lines = content.Split('\n');
-            foreach (var line in lines)
-            {
-                if (line.Trim().StartsWith("\"") && line.Contains(":"))
-                {
-                    var parts = line.Split(new[] { ':' }, 2);
-                    if (parts.Length == 2)
-                    {
-                        var key = parts[0].Trim().Trim('"', ' ', '\t');
-                        var value = parts[1].Trim().Trim('"', ',', ' ', '\t');
-                        _currentLocalization[key] = value;
-                    }
-                }
-            }
-            Debug.Log($"Parsed {_currentLocalization.Count} localization entries");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error parsing localization file: {e.Message}");
-        }
-    }
-
-    public string GetLocalizedText(string key)
-    {
-        if (_currentLocalization.ContainsKey(key))
-            return _currentLocalization[key];
-        
-        Debug.LogWarning($"Localization key not found: {key}");
-        return $"#{key}";
-    }
-
-    public void UpdateAllUIElements()
-    {
-        Debug.Log("Updating ALL UI elements with new language");
-        
-        // Обновляем все UIDocument'ы в сцене
-        foreach (var uiDoc in _allUiDocuments)
-        {
-            if (uiDoc != null && uiDoc.rootVisualElement != null)
-            {
-                UpdateElementsWithPrefix(uiDoc.rootVisualElement, "#");
-            }
-        }
-        
-        Debug.Log($"Updated {_allUiDocuments.Count} UI documents");
-    }
-
-    private void UpdateElementsWithPrefix(VisualElement root, string prefix)
-    {
-        if (root == null) return;
-
-        int updatedCount = 0;
-
-        // ── LABELS ─────────────────────────────────────
-        root.Query<Label>().ForEach(label =>
-        {
-            if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
-            {
-                string key = label.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (label.text != localized)
-                {
-                    label.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── BUTTONS ────────────────────────────────────
-        root.Query<Button>().ForEach(button =>
-        {
-            if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
-            {
-                string key = button.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (button.text != localized)
-                {
-                    button.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── TEXTFIELDS (label) ─────────────────────────
-        root.Query<TextField>().ForEach(textField =>
-        {
-            if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
-            {
-                string key = textField.label.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (textField.label != localized)
-                {
-                    textField.label = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── TEXTFIELDS (placeholder) ───────────────────
-        root.Query<TextField>().ForEach(textField =>
-        {
-            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder") 
-                           ?? textField.Q<Label>(className: "unity-text-field__placeholder");
-            
-            if (placeholder != null && !string.IsNullOrEmpty(placeholder.text) && placeholder.text.StartsWith(prefix))
-            {
-                string key = placeholder.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (placeholder.text != localized)
-                {
-                    placeholder.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── INTEGERFIELD ───────────────────────────────
-        root.Query<IntegerField>().ForEach(field =>
-        {
-            if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
-            {
-                string key = field.label.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (field.label != localized)
-                {
-                    field.label = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── Рекурсия по детям ──────────────────────────
-        foreach (VisualElement child in root.Children())
-            UpdateElementsWithPrefix(child, prefix);
-
-        if (updatedCount > 0)
-        {
-            Debug.Log($"Updated {updatedCount} elements in {root.name}");
-        }
-    }
-
-    public SystemLanguage GetCurrentLanguage()
-    {
-        return _currentLanguage;
-    }
-
-    // Метод для принудительного обновления при смене сцены
-    public void RefreshForNewScene()
-    {
-        RefreshUiDocuments();
-        UpdateAllUIElements();
-    }
-
-    private void OnDestroy()
-    {
-        // Отписываемся от события
-        if (SettingsManager.Instance != null)
-        {
-            SettingsManager.Instance.OnSettingsChanged -= OnSettingsChanged;
-        }
-    }
-}
-Файл: ./Scripts/UI/HUDController.cs
-﻿// Assets/Scripts/HUDController.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using Unity.Entities;
-using Unity.Collections;
-using Unity.NetCode;
-using System.Linq;
-
-public class HUDController : MonoBehaviour
-{
-    private VisualElement _hudRoot;
-    private VisualElement _playersContainer;
-
-    void Start()
-    {
-        _hudRoot = GetComponent<UIDocument>().rootVisualElement;
-        _playersContainer = _hudRoot.Q<VisualElement>("hud__players");
-        InvokeRepeating(nameof(UpdatePlayerList), 0f, 1f);
-    }
-
-    public void UpdatePlayerList()
-    {
-        _playersContainer.Clear();
-        var clientWorld = World.All.FirstOrDefault(w => w.IsClient());
-        if (clientWorld == null) return;
-        
-        var em = clientWorld.EntityManager;
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
-        var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
-        
-        for (int i = 0; i < players.Length; i++)
-        {
-            var p = players[i];
-            string name = p.Name.ToString();
-            string ping = p.Ping.ToString() + "мс";
-            CreatePlayerHUD(_playersContainer, name, ping);
-        }
-        players.Dispose();
-    }
-
-    private void CreatePlayerHUD(VisualElement container, string name, string ping)
-    {
-        var player = new VisualElement();
-        player.AddToClassList("hud__player");
-        var icon = new VisualElement();
-        icon.AddToClassList("hud__player-icon");
-        icon.AddToClassList("mic");
-        var nameLabel = new Label(name);
-        nameLabel.AddToClassList("hud__player-name");
-        var pingLabel = new Label(ping);
-        pingLabel.AddToClassList("hud__player-ping");
-        float pingValue = float.Parse(ping.Replace("мс", ""));
-        if (pingValue < 50) pingLabel.AddToClassList("good");
-        else if (pingValue < 150) pingLabel.AddToClassList("medium");
-        else pingLabel.AddToClassList("bad");
-        player.Add(icon); player.Add(nameLabel); player.Add(pingLabel);
-        container.Add(player);
-    }
-}
-Файл: ./Scripts/UI/SettingsManager.cs
+Файл: ./Scripts/MenuFeature/UI/SettingsManager.cs
 // Assets/Scripts/UI/SettingsManager.cs
 using UnityEngine;
 using System;
@@ -1726,7 +2248,7 @@ public class SettingsManager : MonoBehaviour
         return Instance != null && Instance.CurrentSettings != null;
     }
 }
-Файл: ./Scripts/UI/UIScreenManager.cs
+Файл: ./Scripts/MenuFeature/UI/UIScreenManager.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
@@ -2031,7 +2553,7 @@ public class UIScreenManager
         }
     }
 }
-Файл: ./Scripts/UI/UISettingsManager.cs
+Файл: ./Scripts/MenuFeature/UI/UISettingsManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections;
@@ -2360,100 +2882,7 @@ public class UISettingsManager
             _btnCancelSettings.clicked -= OnCancelSettings;
     }
 }
-Файл: ./Scripts/UI/UIResponsiveManager.cs
-// Assets/Scripts/UI/UIResponsiveManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-
-public class UIResponsiveManager
-{
-    private readonly VisualElement _root;
-    private readonly float[] _breakpoints = { 768f, 1280f, 1920f, 2560f, 3840f };
-
-    public UIResponsiveManager(VisualElement root)
-    {
-        _root = root;
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-        // УБРАТЬ: UpdateResponsiveClasses(); — будет NaN
-        Debug.Log("Responsive UI manager initialized");
-        HideScrollers();
-        Debug.Log("Responsive UI manager hide scrollers");
-    }
-
-    private void HideScrollers()
-    {
-        _root.Q<ScrollView>().verticalScrollerVisibility = ScrollerVisibility.Hidden;
-        _root.Q<ScrollView>().horizontalScrollerVisibility = ScrollerVisibility.Hidden;
-    }
-
-    private void OnGeometryChanged(GeometryChangedEvent evt)
-    {
-        UpdateResponsiveClasses();
-    }
-
-    private void UpdateResponsiveClasses()
-    {
-        if (_root == null) return;
-
-        float width = _root.resolvedStyle.width;
-
-        // ЗАЩИТА ОТ NaN
-        if (float.IsNaN(width) || width <= 0)
-        {
-            // Отложим до первого валидного события
-            return;
-        }
-
-        // Удаляем все классы
-        _root.RemoveFromClassList("sm-screen");
-        _root.RemoveFromClassList("md-screen");
-        _root.RemoveFromClassList("lg-screen");
-        _root.RemoveFromClassList("xl-screen");
-        _root.RemoveFromClassList("xxl-screen");
-
-        // Добавляем нужный
-        if (width < _breakpoints[0])
-            _root.AddToClassList("sm-screen");
-        else if (width < _breakpoints[1])
-            _root.AddToClassList("md-screen");
-        else if (width < _breakpoints[2])
-            _root.AddToClassList("lg-screen");
-        else if (width < _breakpoints[3])
-            _root.AddToClassList("xl-screen");
-        else
-            _root.AddToClassList("xxl-screen");
-
-        Debug.Log($"Screen width: {width}px, Class: {GetCurrentBreakpoint(width)}");
-    }
-
-    private string GetCurrentBreakpoint(float width)
-    {
-        if (width < _breakpoints[0]) return "sm";
-        else if (width < _breakpoints[1]) return "md";
-        else if (width < _breakpoints[2]) return "lg";
-        else if (width < _breakpoints[3]) return "xl";
-        else return "xxl";
-    }
-
-    public void RefreshResponsiveUI()
-    {
-        UpdateResponsiveClasses();
-    }
-
-    public void Cleanup()
-    {
-        if (_root != null)
-        {
-            _root.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-        }
-    }
-}
-Файл: ./Scripts/UI/LobbySettingsManager.cs
+Файл: ./Scripts/MenuFeature/UI/LobbySettingsManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -2461,7 +2890,7 @@ public class LobbySettingsManager
 {
     private VisualElement _root;
 
-    // Элементы lobby_list_screen (источник)
+    // Source elements from lobby_list_screen
     private TextField _createLobbyName;
     private RadioButton _radioOpen;
     private RadioButton _radioClosed;
@@ -2474,7 +2903,7 @@ public class LobbySettingsManager
     private Slider _waveCountSlider;
     private Label _waveCountValue;
 
-    // Элементы lobby_settings_screen (приёмник)
+    // Target elements from lobby_settings_screen
     private TextField _lobbyNameField;
     private RadioButton _settingsRadioOpen;
     private RadioButton _settingsRadioClosed;
@@ -2496,7 +2925,6 @@ public class LobbySettingsManager
 
     private void InitializeElements()
     {
-        // lobby_list_screen (создание)
         var lobbyListScreen = _root.Q<VisualElement>("lobby_list_screen");
         _createLobbyName = lobbyListScreen.Q<TextField>("createLobbyName");
         _radioOpen = lobbyListScreen.Q<RadioButton>("radioOpen");
@@ -2510,7 +2938,6 @@ public class LobbySettingsManager
         _waveCountSlider = lobbyListScreen.Q<Slider>("waveCountSlider");
         _waveCountValue = lobbyListScreen.Q<Label>("waveCountValue");
 
-        // lobby_settings_screen (настройки)
         var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
         _lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
         _settingsRadioOpen = lobbySettingsScreen.Q<RadioButton>("radioOpen");
@@ -2527,13 +2954,12 @@ public class LobbySettingsManager
 
     private void SetupEventListeners()
     {
-        // Синхронизация при изменении формы создания
-        if (_createLobbyName != null) _createLobbyName.RegisterValueChangedCallback(evt => SyncLobbyName());
-        if (_radioOpen != null) _radioOpen.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_radioClosed != null) _radioClosed.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_lobbyPassword != null) _lobbyPassword.RegisterValueChangedCallback(evt => SyncPassword());
-        if (_playerCountSlider != null) _playerCountSlider.RegisterValueChangedCallback(evt => SyncPlayerCount());
-        if (_waveCountSlider != null) _waveCountSlider.RegisterValueChangedCallback(evt => SyncWaveCount());
+        _createLobbyName?.RegisterValueChangedCallback(evt => SyncLobbyName());
+        _radioOpen?.RegisterValueChangedCallback(evt => SyncLobbyType());
+        _radioClosed?.RegisterValueChangedCallback(evt => SyncLobbyType());
+        _lobbyPassword?.RegisterValueChangedCallback(evt => SyncPassword());
+        _playerCountSlider?.RegisterValueChangedCallback(evt => SyncPlayerCount());
+        _waveCountSlider?.RegisterValueChangedCallback(evt => SyncWaveCount());
     }
 
     public void SyncAllSettings()
@@ -2546,7 +2972,6 @@ public class LobbySettingsManager
         SyncWaveCount();
     }
 
-    #region Синхронизация
     private void SyncLobbyName()
     {
         if (_lobbyNameField != null && _createLobbyName != null)
@@ -2555,10 +2980,8 @@ public class LobbySettingsManager
 
     private void SyncLobbyType()
     {
-        if (_settingsRadioOpen != null && _radioOpen != null)
-            _settingsRadioOpen.SetValueWithoutNotify(_radioOpen.value);
-        if (_settingsRadioClosed != null && _radioClosed != null)
-            _settingsRadioClosed.SetValueWithoutNotify(_radioClosed.value);
+        _settingsRadioOpen?.SetValueWithoutNotify(_radioOpen?.value ?? false);
+        _settingsRadioClosed?.SetValueWithoutNotify(_radioClosed?.value ?? false);
     }
 
     private void SyncPassword()
@@ -2569,38 +2992,28 @@ public class LobbySettingsManager
 
     private void SyncPlayerCount()
     {
-        if (_settingsPlayerCountSlider != null && _playerCountSlider != null)
-            _settingsPlayerCountSlider.SetValueWithoutNotify(_playerCountSlider.value);
-        if (_settingsPlayerCountValue != null && _playerCountValue != null)
-            _settingsPlayerCountValue.text = _playerCountValue.text;
+        _settingsPlayerCountSlider?.SetValueWithoutNotify(_playerCountSlider?.value ?? 4);
+        _settingsPlayerCountValue.text = _playerCountValue?.text;
     }
 
     private void SyncCharacterSelection()
     {
-        // Убираем selected со всех
         _settingsCharVacuum?.RemoveFromClassList("selected");
         _settingsCharToaster?.RemoveFromClassList("selected");
         _settingsCharGPT?.RemoveFromClassList("selected");
 
-        // Добавляем selected к активному
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            _settingsCharVacuum?.AddToClassList("selected");
-        else if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            _settingsCharToaster?.AddToClassList("selected");
-        else if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            _settingsCharGPT?.AddToClassList("selected");
+        if (_charVacuum?.ClassListContains("selected") == true) _settingsCharVacuum?.AddToClassList("selected");
+        else if (_charToaster?.ClassListContains("selected") == true) _settingsCharToaster?.AddToClassList("selected");
+        else if (_charGPT?.ClassListContains("selected") == true) _settingsCharGPT?.AddToClassList("selected");
     }
 
     private void SyncWaveCount()
     {
-        if (_settingsWaveCountSlider != null && _waveCountSlider != null)
-            _settingsWaveCountSlider.SetValueWithoutNotify(_waveCountSlider.value);
-        if (_settingsWaveCountValue != null && _waveCountValue != null)
-            _settingsWaveCountValue.text = _waveCountValue.text;
+        _settingsWaveCountSlider?.SetValueWithoutNotify(_waveCountSlider?.value ?? 10);
+        _settingsWaveCountValue.text = _waveCountValue?.text;
     }
-    #endregion
 }
-Файл: ./Scripts/UI/MainMenuController.cs
+Файл: ./Scripts/MenuFeature/UI/MainMenuController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections;
@@ -2624,8 +3037,7 @@ public class MainMenuController : MonoBehaviour
         _root = uiDoc.rootVisualElement;
 
         _inputManager = new UIInputManager(UIManager.Instance.InputActions, _root, this);
-
-        _screenManager = new UIScreenManager(_root, this);  // ← this!
+        _screenManager = new UIScreenManager(_root, this);
         _lobbySetup = new UILobbySetupManager(_root, this);
         _charSelect = new UICharacterSelectionManager(_root);
         _settings = new UISettingsManager(_root, uiDoc, this);
@@ -2633,21 +3045,16 @@ public class MainMenuController : MonoBehaviour
         _inputManager.Enable();
         _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
 
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.RefreshForNewScene();
-            LocalizationManager.Instance.UpdateAllUIElements();
-        }
+        LocalizationManager.Instance?.RefreshForNewScene();
+        LocalizationManager.Instance?.UpdateAllUIElements();
     }
 
     public void ShowScreen(string screenName)
     {
         _screenManager.ShowScreen(screenName);
 
-        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
         if (screenName == UIScreenManager.LobbyListScreenName)
         {
-            // Даем кадр на отрисовку, затем обновляем
             StartCoroutine(DelayedLobbyRefresh());
         }
     }
@@ -2657,25 +3064,19 @@ public class MainMenuController : MonoBehaviour
         yield return new WaitForEndOfFrame();
         UIManager.Instance.OnLobbyListUpdated();
 
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     public void UpdatePlayerList()
     {
-        Debug.Log("MainMenuController: UpdatePlayerList called");
         _screenManager.UpdatePlayerList();
     }
 
     public void OnLobbyCreated()
     {
-        Debug.Log("MainMenuController: OnLobbyCreated called");
         ShowScreen(UIScreenManager.LobbySettingsScreenName);
         _lobbySettings.SyncAllSettings();
-        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
+        UIManager.Instance.OnPlayersUpdated();
     }
 
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
@@ -2709,8 +3110,6 @@ public class MainMenuController : MonoBehaviour
     {
         Debug.Log("MainMenuController: Returning to lobby list");
         ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
         StartCoroutine(DelayedLobbyRefresh2());
     }
 
@@ -2718,19 +3117,12 @@ public class MainMenuController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         UIManager.Instance?.OnLobbyListUpdated();
-        
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     public void HandleLobbyClosed(string lobbyId)
     {
         Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
-
-        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
         if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
         {
             Debug.Log("We were in the closed lobby, returning to lobby list");
@@ -2760,18 +3152,10 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator ShowLobbyListAfterDisbandCoroutine()
     {
-        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
-
+        yield return new WaitForSeconds(1f);
         ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
         UIManager.Instance?.OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     private void SetupClientModeUI()
@@ -2799,30 +3183,7 @@ public class MainMenuController : MonoBehaviour
         _settings?.Cleanup();
     }
 }
-Файл: ./Scripts/InputSystem.cs
-﻿// Assets/Scripts/InputSystem.cs
-using Unity.Entities;
-using UnityEngine.InputSystem;
-using Unity.Mathematics;
-
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(InitializationSystemGroup))]
-public partial struct InputSystem : ISystem
-{
-    public void OnUpdate(ref SystemState state)
-    {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            var mousePos = Mouse.current.position.ReadValue();
-            foreach (var input in SystemAPI.Query<RefRW<PlayerInputComponent>>())
-            {
-                input.ValueRW.IsClicked = true;
-                input.ValueRW.MouseClickPosition = new float2(mousePos.x, mousePos.y);
-            }
-        }
-    }
-}
-Файл: ./Scripts/LobbySystem.cs
+Файл: ./Scripts/MenuFeature/Network/LobbySystem.cs
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -2921,35 +3282,7 @@ public partial struct LobbySystem : ISystem
     }
 }
 
-Файл: ./Scripts/PlayerPrefabBaker.cs
-﻿using Unity.Entities;
-using UnityEngine;
-using Unity.Transforms;
-
-public class PlayerPrefabAuthoring : MonoBehaviour { }
-
-public class PlayerPrefabBaker : Baker<PlayerPrefabAuthoring>
-{
-    public override void Bake(PlayerPrefabAuthoring authoring)
-    {
-        // Создаём сущность-префаб игрока
-        var prefabEntity = CreateAdditionalEntity(TransformUsageFlags.None);
-
-        // Копируем все компоненты с игрока
-        AddComponent(prefabEntity, LocalTransform.FromPosition(Vector3.zero));
-        AddComponent(prefabEntity, new PlayerComponent
-        {
-            Name = new Unity.Collections.FixedString128Bytes("Player"),
-            ConnectionId = 0,
-            Ping = 0
-        });
-
-        // Сохраняем префаб в singleton
-        var holderEntity = GetEntity(TransformUsageFlags.None);
-        AddComponent(holderEntity, new PlayerPrefabComponent { Prefab = prefabEntity });
-    }
-}
-Файл: ./Scripts/ConnectionSystem.cs
+Файл: ./Scripts/MenuFeature/Network/ConnectionSystem.cs
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -3006,29 +3339,7 @@ public partial struct ConnectionSystem : ISystem
     }
 }
 
-Файл: ./Scripts/GameSettings.cs
-// Assets/Scripts/GameSettings.cs
-using UnityEngine;
-using System;
-
-[Serializable]
-public class GameSettings
-{
-    // Аудио
-    public float musicVolume = 0.8f;
-    public float soundVolume = 0.8f;
-    // Графика
-    public int resolutionIndex = 0;
-    public int qualityLevel = 2;
-    public bool fullscreen = true;
-    // Геймплей
-    public string playerName = "Player";
-    public int defaultWeaponIndex = 0;
-    public string selectedCharacter = "Toaster";
-    // Язык
-    public SystemLanguage language = SystemLanguage.Russian;
-}
-Файл: ./Scripts/LobbyDiscovery.cs
+Файл: ./Scripts/MenuFeature/Network/LobbyDiscovery.cs
 ﻿using UnityEngine;
 using System.Net;
 using System.Net.Sockets;
@@ -3468,7 +3779,7 @@ public class LobbyDiscovery : MonoBehaviour
         }
     }
 }
-Файл: ./Scripts/PingSystem.cs
+Файл: ./Scripts/MenuFeature/Network/PingSystem.cs
 ﻿using Unity.Entities;
 using Unity.NetCode;
 
@@ -3511,7 +3822,7 @@ public partial struct PingSystem : ISystem
     }
 }
 
-Файл: ./Scripts/JoinLobbySystem.cs
+Файл: ./Scripts/MenuFeature/Network/JoinLobbySystem.cs
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -3573,234 +3884,7 @@ public partial struct JoinLobbySystem : ISystem
     }
 }
 
-Файл: ./Scripts/UnityMainThreadDispatcher.cs
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
-using UnityEngine;
-
-public class UnityMainThreadDispatcher : MonoBehaviour
-{
-    private static UnityMainThreadDispatcher _instance;
-    private readonly Queue<Action> _actions = new Queue<Action>();
-    private static readonly object _lockObject = new object();
-
-    public static UnityMainThreadDispatcher Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                // ФИКС: Используем FindObjectOfType только в главном потоке
-                if (Application.isPlaying)
-                {
-                    _instance = FindObjectOfType<UnityMainThreadDispatcher>();
-                    if (_instance == null)
-                    {
-                        var obj = new GameObject("UnityMainThreadDispatcher");
-                        _instance = obj.AddComponent<UnityMainThreadDispatcher>();
-                        DontDestroyOnLoad(obj);
-                    }
-                }
-            }
-            return _instance;
-        }
-    }
-
-    private void Awake()
-    {
-        if (_instance == null)
-        {
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (_instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public void Enqueue(Action action)
-    {
-        if (action == null) return;
-
-        // ФИКС: Проверяем, находимся ли мы уже в главном потоке
-        if (Thread.CurrentThread.ManagedThreadId == 1) // Главный поток Unity обычно имеет ID = 1
-        {
-            action?.Invoke();
-        }
-        else
-        {
-            lock (_lockObject)
-            {
-                _actions.Enqueue(action);
-            }
-        }
-    }
-
-    private void Update()
-    {
-        lock (_lockObject)
-        {
-            while (_actions.Count > 0)
-            {
-                var action = _actions.Dequeue();
-                try
-                {
-                    action?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Error in main thread action: {e}");
-                }
-            }
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (_instance == this)
-        {
-            _instance = null;
-        }
-    }
-}
-Файл: ./Scripts/SpawnSystem.cs
-﻿using Unity.Entities;
-using Unity.NetCode;
-using Unity.Mathematics;
-using Unity.Transforms;
-using Unity.Collections;
-
-[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial struct SpawnSystem : ISystem
-{
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<NetworkId>();
-    }
-
-    public void OnUpdate(ref SystemState state)
-    {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
-
-        var prefabEntity = SystemAPI.QueryBuilder()
-            .WithAll<PlayerPrefabComponent>()
-            .Build()
-            .TryGetSingleton(out PlayerPrefabComponent prefabData)
-            ? prefabData.Prefab
-            : Entity.Null;
-
-        foreach (var (spawnCmd, entity) in SystemAPI.Query<RefRO<SpawnPlayerCommand>>().WithEntityAccess())
-        {
-            if (prefabEntity == Entity.Null)
-                continue;
-
-            var playerEntity = ecb.Instantiate(prefabEntity);
-            ecb.SetComponent(playerEntity, LocalTransform.FromPosition(float3.zero));
-            ecb.AddComponent(playerEntity, new PlayerComponent
-            {
-                Name = new FixedString128Bytes("Player"),
-                ConnectionId = spawnCmd.ValueRO.ConnectionId,
-                Ping = 0
-            });
-            ecb.AddComponent(playerEntity, new GhostOwner());
-            ecb.DestroyEntity(entity);
-        }
-
-        ecb.Playback(state.EntityManager);
-    }
-}
-
-Файл: ./Scripts/SceneLoaderSystem.cs
-﻿using Unity.Entities;
-using Unity.Scenes;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Unity.Collections;
-
-[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]  // Only on server
-[UpdateInGroup(typeof(InitializationSystemGroup))]
-public partial struct SceneLoaderSystem : ISystem
-{
-    public void OnUpdate(ref SystemState state)
-    {
-        var query = SystemAPI.QueryBuilder().WithAll<StartGameCommand>().Build();
-        var entities = query.ToEntityArray(Allocator.Temp);
-        var count = entities.Length;
-
-        if (count > 1)
-        {
-            Debug.LogWarning($"Found {count} StartGameCommand instances! Destroying extras.");
-            for (int i = 1; i < count; i++)
-            {
-                state.EntityManager.DestroyEntity(entities[i]);
-            }
-        }
-
-        if (count == 0)
-        {
-            entities.Dispose();
-            return;
-        }
-
-        Debug.Log("SceneLoaderSystem: Loading game scenes...");
-
-        // Загружаем сцены (Additive) only once
-        if (!SceneManager.GetSceneByName("ArenaSubscene").isLoaded)
-        {
-            SceneManager.LoadSceneAsync("ArenaSubscene", LoadSceneMode.Additive);
-        }
-        if (!SceneManager.GetSceneByName("EntitiesSubscene").isLoaded)
-        {
-            SceneManager.LoadSceneAsync("EntitiesSubscene", LoadSceneMode.Additive);
-        }
-        if (!SceneManager.GetSceneByName("SystemsSubscene").isLoaded)
-        {
-            SceneManager.LoadSceneAsync("SystemsSubscene", LoadSceneMode.Additive);
-        }
-
-        // Уничтожаем оставшуюся команду
-        state.EntityManager.DestroyEntity(entities[0]);
-        entities.Dispose();
-
-        Debug.Log("Game scenes loading started");
-    }
-}
-Файл: ./Scripts/NavMeshMovementSystem.cs
-﻿// Assets/Scripts/NavMeshMovementSystem.cs
-using Unity.Entities;
-using Unity.NetCode;
-using Unity.Mathematics;
-using Unity.Transforms;
-using UnityEngine.AI;
-using UnityEngine; // Для Camera и Physics
-
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial struct NavMeshMovementSystem : ISystem
-{
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var (transform, input) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerInputComponent>>())
-        {
-            if (input.ValueRO.IsClicked)
-            {
-                var ray = Camera.main.ScreenPointToRay(new Vector3(input.ValueRO.MouseClickPosition.x, input.ValueRO.MouseClickPosition.y, 0));
-                if (Physics.Raycast(ray, out var hit))
-                {
-                    var path = new NavMeshPath();
-                    NavMesh.CalculatePath(transform.ValueRO.Position, hit.point, NavMesh.AllAreas, path);
-                    // Implement path following in a component, here simplified lerp
-                    transform.ValueRW.Position = math.lerp(transform.ValueRO.Position, hit.point, 0.1f);
-                }
-            }
-        }
-    }
-}
-Файл: ./Scripts/LobbyManager.cs
+Файл: ./Scripts/MenuFeature/Network/LobbyManager.cs
 ﻿using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
@@ -4505,7 +4589,7 @@ public class LobbyManager : MonoBehaviour
 
 }
 
-Файл: ./Scripts/ECSComponents.cs
+Файл: ./Scripts/MenuFeature/Data/ECSLobbyData.cs
 ﻿// Assets/Scripts/ECSComponents.cs
 using Unity.Entities;
 using Unity.NetCode;
@@ -4522,23 +4606,7 @@ public struct PlayerComponent : IComponentData
     [GhostField] public int Ping;
 }
 
-[GhostComponent(PrefabType = GhostPrefabType.AllPredicted)]
-public struct PlayerInputComponent : IInputComponentData
-{
-    public bool IsClicked;
-    public float2 MouseClickPosition;
-}
-
-public struct StartGameCommand : IComponentData
-{
-}
-
 public struct KickPlayerCommand : IComponentData
-{
-    public ulong ConnectionId;
-}
-
-public struct SpawnPlayerCommand : IComponentData
 {
     public ulong ConnectionId;
 }
@@ -4555,11 +4623,6 @@ public struct LobbyPlayerBuffer : IBufferElementData
 {
     public FixedString128Bytes PlayerName;
     public ulong ConnectionId;
-}
-
-public struct PlayerPrefabComponent : IComponentData
-{
-    public Entity Prefab;
 }
 
 /// <summary>
@@ -4583,6 +4646,23 @@ public struct LobbyInfo
     }
 }
 
+public struct LobbyData
+{
+    public string name;
+    public string password;
+    public int maxPlayers;
+    public bool isOpen;
+}
+
+/// <summary>
+/// RPC-команда от клиента: присоединение к лобби.
+/// </summary>
+public struct JoinLobbyCommand : IRpcCommand
+{
+    public FixedString128Bytes PlayerName;
+    public FixedString64Bytes Weapon;
+    public FixedString64Bytes Password;
+}
 
 public struct ConnectToServerCommand : IComponentData
 {
@@ -4590,14 +4670,6 @@ public struct ConnectToServerCommand : IComponentData
     public ushort ServerPort;
     public FixedString128Bytes PlayerName;
     public FixedString64Bytes Password;
-}
-
-public struct LobbyData
-{
-    public string name;
-    public string password;
-    public int maxPlayers;
-    public bool isOpen;
 }
 
 public struct NetworkStreamRequestConnect : IComponentData
@@ -4610,2805 +4682,7 @@ public struct PlayerData
     public FixedString128Bytes name;
     public string selectedCharacter; // "Vacuum", "Toaster", "GPT"
 }
-
-/// <summary>
-/// RPC-команда от клиента: присоединение к лобби.
-/// </summary>
-public struct JoinLobbyCommand : IRpcCommand
-{
-    public FixedString128Bytes PlayerName;
-    public FixedString64Bytes Weapon;
-    public FixedString64Bytes Password;
-}
-Файл: ./Scripts/GameManager.cs
-using UnityEngine;
-
-public class GameManager : MonoBehaviour
-{
-    private static GameManager _instance;
-
-    [Header("Manager Prefabs")]
-    public GameObject settingsManagerPrefab;
-    public GameObject localizationManagerPrefab;
-    public GameObject uiManagerPrefab;
-
-    private void Awake()
-    {
-        if (_instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-        InitializeManagers();
-    }
-
-    private void InitializeManagers()
-    {
-        CreateIfMissing<SettingsManager>(settingsManagerPrefab);
-        CreateIfMissing<LocalizationManager>(localizationManagerPrefab);
-        CreateIfMissing<UIManager>(uiManagerPrefab);
-    }
-
-    private void CreateIfMissing<T>(GameObject prefab) where T : MonoBehaviour
-    {
-        if (FindObjectOfType<T>() != null) return;
-
-        GameObject go;
-        if (prefab != null)
-        {
-            go = Instantiate(prefab);
-        }
-        else
-        {
-            go = new GameObject(typeof(T).Name);
-            go.AddComponent<T>();
-        }
-        DontDestroyOnLoad(go);
-    }
-}
-Файл: ./Scripts/PlayerAuthoring.cs
-﻿using UnityEngine;
-using Unity.Entities;
-using Unity.NetCode;
-using Unity.Transforms;
-
-public class PlayerAuthoring : MonoBehaviour
-{
-    // Поставь этот скрипт на prefab игрока
-}
-
-public class PlayerBaker : Baker<PlayerAuthoring>
-{
-    public override void Bake(PlayerAuthoring authoring)
-    {
-        var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-        // Добавляем компоненты ИГРОКА
-        AddComponent(entity, LocalTransform.FromPosition(Vector3.zero));
-        AddComponent(entity, new PlayerComponent
-        {
-            Name = new Unity.Collections.FixedString128Bytes("Player"),
-            ConnectionId = 0,
-            Ping = 0
-        });
-
-        // ❌ НЕ ДОБАВЛЯЙ PlayerPrefabComponent на игрока!
-        // AddComponent<PlayerPrefabComponent>(entity); // УДАЛИ ЭТУ СТРОКУ
-    }
-}
-
-Файл: ./Scripts/PlayerSpawnManager.cs
-﻿using Unity.Entities;
-using Unity.Transforms;
-using UnityEngine;
-using Unity.Collections;  // Для FixedString128Bytes
-
-public class PlayerSpawnManager : MonoBehaviour
-{
-    private Entity prefabEntity;
-    private EntityManager entityManager;
-
-    void Start()
-    {
-        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-        // 1. Пытаемся найти из SubScene
-        var query = entityManager.CreateEntityQuery(typeof(PlayerPrefabComponent));
-        if (!query.IsEmptyIgnoreFilter)
-        {
-            var prefabComp = entityManager.GetComponentData<PlayerPrefabComponent>(query.GetSingletonEntity());
-            prefabEntity = prefabComp.Prefab;
-            Debug.Log("Player prefab loaded from SubScene.");
-            return;
-        }
-
-        // 2. Если SubScene не загружена — создаём вручную
-        Debug.Log("SubScene not loaded yet. Creating player prefab manually.");
-        prefabEntity = entityManager.CreateEntity();
-        entityManager.AddComponentData(prefabEntity, LocalTransform.FromPosition(Vector3.zero));
-        entityManager.AddComponentData(prefabEntity, new PlayerComponent
-        {
-            Name = new FixedString128Bytes("Player"),
-            ConnectionId = 0,
-            Ping = 0
-        });
-
-        // Singleton для совместимости
-        var singletonEntity = entityManager.CreateEntity();
-        entityManager.AddComponentData(singletonEntity, new PlayerPrefabComponent { Prefab = prefabEntity });
-    }
-
-    public void SpawnPlayer(ulong connectionId, Vector3 spawnPoint)
-    {
-        if (prefabEntity == Entity.Null)
-        {
-            Debug.LogError("Player prefab not initialized!");
-            return;
-        }
-
-        var playerEntity = entityManager.Instantiate(prefabEntity);
-        entityManager.SetComponentData(playerEntity, LocalTransform.FromPosition(spawnPoint));
-        entityManager.SetComponentData(playerEntity, new PlayerComponent
-        {
-            Name = new FixedString128Bytes("Player_" + connectionId),
-            ConnectionId = connectionId,
-            Ping = 0
-        });
-        Debug.Log($"Player spawned: ID={connectionId} at {spawnPoint}");
-    }
-}
-Файл: ./Scripts/PlayerMovementSystem.cs
-﻿using Unity.Entities;
-using Unity.NetCode;
-using Unity.Mathematics;
-using Unity.Transforms;
-using Unity.Collections;
-
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
-public partial struct PlayerMovementSystem : ISystem
-{
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var (transform, input) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerInputComponent>>())
-        {
-            if (input.ValueRO.IsClicked)
-            {
-                // movement placeholder
-                transform.ValueRW.Position += new float3(0, 0, 1) * SystemAPI.Time.DeltaTime;
-            }
-        }
-    }
-}
-
-Обработка директории: ./Scripts/UI
-==========================================
-
-Файл: ./Scripts/UI/UILobbySetupManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.InputSystem;
-using System.Collections.Generic;
-
-public class UILobbySetupManager
-{
-    private readonly VisualElement _root;
-    private readonly MainMenuController _controller;
-
-    // UI Elements
-    private Slider _playerCountSlider;
-    private Label _playerCountValue;
-    private Slider _waveCountSlider;
-    private Label _waveCountValue;
-    private RadioButton _waveCountRadio;
-    private RadioButton _infinityRadio;
-    private RadioButton _radioOpen;
-    private RadioButton _radioClosed;
-    private TextField _lobbyNameField; // <-- раньше playerNameField — теперь это название лобби
-    private TextField _lobbyPassword;
-    private Button _togglePasswordBtn;
-    private Button _randomNameBtn;
-    private bool _isPasswordVisible = false;
-
-    public UILobbySetupManager(VisualElement root, MainMenuController controller)
-    {
-        _root = root;
-        _controller = controller;
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        FindUIElements();
-        SetupSliders();
-        SetupRadioButtons();
-        SetupPasswordField();
-        SetupTextFields();
-        SetupRandomNameButton();
-        Debug.Log("UILobbySetupManager initialized (lobby-name semantics)");
-    }
-
-    private void FindUIElements()
-    {
-        _playerCountSlider = _root.Q<Slider>("playerCountSlider");
-        _playerCountValue = _root.Q<Label>("playerCountValue");
-        _waveCountSlider = _root.Q<Slider>("waveCountSlider");
-        _waveCountValue = _root.Q<Label>("waveCountValue");
-        _waveCountRadio = _root.Q<RadioButton>("waveCountRadio");
-        _infinityRadio = _root.Q<RadioButton>("infinityRadio");
-        _radioOpen = _root.Q<RadioButton>("radioOpen");
-        _radioClosed = _root.Q<RadioButton>("radioClosed");
-        _lobbyNameField = _root.Q<TextField>("playerNameField"); // NOTE: в UXML всё ещё name="playerNameField", но семантика — lobby name
-        _lobbyPassword = _root.Q<TextField>("lobbyPassword");
-        _togglePasswordBtn = _root.Q<Button>("togglePasswordVisibility");
-        _randomNameBtn = _root.Q<Button>("randomNameBtn");
-    }
-
-    private void SetupTextFields()
-    {
-        if (_lobbyNameField != null)
-        {
-            _lobbyNameField.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_lobbyNameField, true));
-            _lobbyNameField.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_lobbyNameField, false));
-            SetupTextFieldStyle(_lobbyNameField);
-        }
-
-        if (_lobbyPassword != null)
-        {
-            _lobbyPassword.RegisterCallback<FocusInEvent>(evt => OnTextFieldFocus(_lobbyPassword, true));
-            _lobbyPassword.RegisterCallback<FocusOutEvent>(evt => OnTextFieldFocus(_lobbyPassword, false));
-            SetupTextFieldStyle(_lobbyPassword);
-        }
-    }
-
-    private void SetupTextFieldStyle(TextField textField)
-    {
-        textField.style.color = new StyleColor(Color.white);
-        textField.style.opacity = 1f;
-
-        var textInput = textField.Q(className: "unity-base-text-field__input");
-        if (textInput != null)
-        {
-            textInput.style.color = new StyleColor(Color.white);
-            textInput.style.opacity = 1f;
-            textInput.style.backgroundColor = new StyleColor(Color.clear);
-        }
-    }
-
-    private void OnTextFieldFocus(TextField textField, bool focused)
-    {
-        Debug.Log($"TextField {textField.name} focused: {focused}");
-    }
-
-    private void SetupRandomNameButton()
-    {
-        if (_randomNameBtn != null)
-        {
-            _randomNameBtn.clicked += OnRandomNameClicked;
-        }
-    }
-
-    private void OnRandomNameClicked()
-    {
-        if (_lobbyNameField != null)
-        {
-            _lobbyNameField.value = GenerateRandomLobbyName();
-        }
-    }
-
-    private string GenerateRandomLobbyName()
-    {
-        // Генерация названия лобби (короткое и читаемое)
-        string[] prefixes = { "Alpha", "Bravo", "Gamma", "Delta", "Echo", "Orbit", "Neon" };
-        string[] suffixes = { "Room", "Lobby", "Match", "Arena", "Zone" };
-        return prefixes[Random.Range(0, prefixes.Length)] + " " + suffixes[Random.Range(0, suffixes.Length)] + "-" + Random.Range(1, 999).ToString();
-    }
-
-    #region Sliders
-    private void SetupSliders()
-    {
-        SetupPlayerCountSlider();
-        SetupWaveCountSlider();
-    }
-
-    private void SetupPlayerCountSlider()
-    {
-        if (_playerCountSlider != null && _playerCountValue != null)
-        {
-            _playerCountSlider.RegisterValueChangedCallback(OnPlayerCountChanged);
-            UpdatePlayerCountValue(_playerCountSlider.value);
-        }
-    }
-
-    private void SetupWaveCountSlider()
-    {
-        if (_waveCountSlider != null && _waveCountValue != null)
-        {
-            _waveCountSlider.lowValue = 10;
-            _waveCountSlider.highValue = 50;
-            _waveCountSlider.value = 10;
-
-            _waveCountSlider.RegisterValueChangedCallback(OnWaveCountChanged);
-            UpdateWaveCountValue(_waveCountSlider.value);
-        }
-    }
-
-    private void OnPlayerCountChanged(ChangeEvent<float> evt)
-    {
-        UpdatePlayerCountValue(evt.newValue);
-    }
-
-    private void OnWaveCountChanged(ChangeEvent<float> evt)
-    {
-        float roundedValue = Mathf.Round(evt.newValue / 10f) * 10f;
-        if (Mathf.Abs(roundedValue - evt.newValue) > 0.1f)
-        {
-            _waveCountSlider.value = roundedValue;
-        }
-        UpdateWaveCountValue(_waveCountSlider.value);
-    }
-
-    private void UpdatePlayerCountValue(float value)
-    {
-        if (_playerCountValue != null)
-        {
-            _playerCountValue.text = Mathf.RoundToInt(value).ToString();
-        }
-    }
-
-    private void UpdateWaveCountValue(float value)
-    {
-        if (_waveCountValue != null)
-        {
-            _waveCountValue.text = Mathf.RoundToInt(value).ToString();
-        }
-    }
-    #endregion
-
-    #region Radio Buttons
-    private void SetupRadioButtons()
-    {
-        SetupWaveRadioButtons();
-        SetupLobbyRadioButtons();
-    }
-
-    private void SetupWaveRadioButtons()
-    {
-        if (_waveCountRadio != null && _infinityRadio != null)
-        {
-            _waveCountRadio.SetValueWithoutNotify(false);
-            _infinityRadio.SetValueWithoutNotify(false);
-
-            _waveCountRadio.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    _infinityRadio.SetValueWithoutNotify(false);
-                    if (_waveCountSlider != null)
-                        _waveCountSlider.SetEnabled(true);
-                }
-                else if (!_infinityRadio.value)
-                {
-                    _waveCountRadio.SetValueWithoutNotify(true);
-                }
-            });
-
-            _infinityRadio.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    _waveCountRadio.SetValueWithoutNotify(false);
-                    if (_waveCountSlider != null)
-                        _waveCountSlider.SetEnabled(false);
-                }
-                else if (!_waveCountRadio.value)
-                {
-                    _infinityRadio.SetValueWithoutNotify(true);
-                }
-            });
-
-            _waveCountRadio.value = true;
-            _infinityRadio.value = false;
-            if (_waveCountSlider != null)
-                _waveCountSlider.SetEnabled(true);
-        }
-    }
-
-    private void SetupLobbyRadioButtons()
-    {
-        if (_radioOpen != null && _radioClosed != null)
-        {
-            _radioOpen.SetValueWithoutNotify(false);
-            _radioClosed.SetValueWithoutNotify(false);
-
-            _radioOpen.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    _radioClosed.SetValueWithoutNotify(false);
-                    if (_lobbyPassword != null && _lobbyPassword.parent != null)
-                        _lobbyPassword.parent.style.display = DisplayStyle.None;
-                }
-                else if (!_radioClosed.value)
-                {
-                    _radioOpen.SetValueWithoutNotify(true);
-                }
-            });
-
-            _radioClosed.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    _radioOpen.SetValueWithoutNotify(false);
-                    if (_lobbyPassword != null && _lobbyPassword.parent != null)
-                        _lobbyPassword.parent.style.display = DisplayStyle.Flex;
-                }
-                else if (!_radioOpen.value)
-                {
-                    _radioClosed.SetValueWithoutNotify(true);
-                }
-            });
-
-            _radioOpen.value = true;
-            _radioClosed.value = false;
-            if (_lobbyPassword != null && _lobbyPassword.parent != null)
-                _lobbyPassword.parent.style.display = DisplayStyle.None;
-        }
-    }
-    #endregion
-
-    #region Password Field
-    private void SetupPasswordField()
-    {
-        if (_togglePasswordBtn != null)
-        {
-            _togglePasswordBtn.clicked += TogglePasswordVisibility;
-            UpdatePasswordEyeIcon();
-        }
-    }
-
-    public void TogglePasswordVisibility()
-    {
-        _isPasswordVisible = !_isPasswordVisible;
-        if (_lobbyPassword != null)
-        {
-            _lobbyPassword.isPasswordField = !_isPasswordVisible;
-        }
-        UpdatePasswordEyeIcon();
-    }
-
-    private void UpdatePasswordEyeIcon()
-    {
-        if (_togglePasswordBtn == null) return;
-
-        if (_isPasswordVisible)
-        {
-            _togglePasswordBtn.RemoveFromClassList("show-password");
-            _togglePasswordBtn.AddToClassList("show-password");
-        }
-        else
-        {
-            _togglePasswordBtn.RemoveFromClassList("show-password");
-        }
-    }
-    #endregion
-
-    #region Debug Methods
-    public void DebugTextFieldState(TextField textField, string fieldName)
-    {
-        if (textField == null)
-        {
-            Debug.LogError($"{fieldName} is null!");
-            return;
-        }
-
-        Debug.Log($"=== {fieldName} State ===");
-        Debug.Log($"- Display: {textField.resolvedStyle.display}");
-        Debug.Log($"- Visibility: {textField.resolvedStyle.visibility}");
-        Debug.Log($"- Opacity: {textField.resolvedStyle.opacity}");
-        Debug.Log($"- Enabled: {textField.enabledSelf}");
-        Debug.Log($"- Focusable: {textField.focusable}");
-        Debug.Log($"- Value: '{textField.value}'");
-
-        var inputElement = textField.Q(className: "unity-base-text-field__input");
-        if (inputElement != null)
-        {
-            Debug.Log($"- Input Display: {inputElement.resolvedStyle.display}");
-            Debug.Log($"- Input Color: {inputElement.resolvedStyle.color}");
-        }
-        else
-        {
-            Debug.LogError("- Input element not found!");
-        }
-
-        Debug.Log($"=== End {fieldName} State ===\n");
-    }
-    #endregion
-
-    // Данные для создания лобби
-    public LobbyData GetLobbyData()
-    {
-        return new LobbyData
-        {
-            name = _lobbyNameField?.value ?? "Default Lobby",
-            password = _radioClosed != null && _radioClosed.value ? _lobbyPassword?.value ?? "" : "",
-            maxPlayers = Mathf.RoundToInt(_playerCountSlider != null ? _playerCountSlider.value : 4),
-            isOpen = _radioOpen != null ? _radioOpen.value : true
-        };
-    }
-
-    // Возвращает название лобби (ранее поле использовалось как player name)
-    public string GetLobbyName()
-    {
-        return _lobbyNameField?.value ?? "Default Lobby";
-    }
-}
-
-Файл: ./Scripts/UI/UICharacterSelectionManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-
-public class UICharacterSelectionManager
-{
-    private readonly VisualElement _root;
-
-    // Character Elements
-    private VisualElement _charVacuum;
-    private VisualElement _charToaster;
-    private VisualElement _charGPT;
-
-    public UICharacterSelectionManager(VisualElement root)
-    {
-        _root = root;
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        FindCharacterElements();
-        SetupCharacterSelection();
-        Debug.Log("UICharacterSelectionManager initialized");
-    }
-
-    private void FindCharacterElements()
-    {
-        _charVacuum = _root.Q<VisualElement>("charVacuum");
-        _charToaster = _root.Q<VisualElement>("charToaster");
-        _charGPT = _root.Q<VisualElement>("charGPT");
-    }
-
-    private void SetupCharacterSelection()
-    {
-        if (_charVacuum != null)
-            _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
-
-        if (_charToaster != null)
-            _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
-
-        if (_charGPT != null)
-            _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
-    }
-
-    private void SelectCharacter(VisualElement selectedCharacter)
-    {
-        // Снимаем выделение со всех персонажей
-        if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
-        if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
-        if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
-
-        // Выделяем выбранного персонажа
-        selectedCharacter.AddToClassList("selected");
-        Debug.Log($"Selected character: {selectedCharacter.name}");
-    }
-
-    public string GetSelectedCharacter()
-    {
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            return "Vacuum";
-        if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            return "Toaster";
-        if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            return "GPT";
-
-        return "None";
-    }
-}
-Файл: ./Scripts/UI/UIInputManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.InputSystem;
-using System.Collections.Generic;
-
-public class UIInputManager
-{
-    private readonly InputActionAsset _inputActions;
-    private readonly VisualElement _root;
-    private InputActionMap _uiActionMap;
-    private InputAction _navigateAction, _submitAction, _cancelAction;
-    private InputAction _openSettingsAction, _openStatisticsAction, _tabAction;
-    private bool _isTextFieldFocused = false;
-    private VisualElement _currentlyFocusedElement;
-    private bool _isSettingFocus = false;
-    private bool _cancelSubscribed = false;
-    private bool _navigateSubscribed = false;
-    private bool _submitSubscribed = false;
-    private bool _tabSubscribed = false;
-    private bool _settingsSubscribed = false;
-    private bool _statsSubscribed = false;
-    private UIScreenManager _screenManager;
-    private MainMenuController _controller; // Добавляем ссылку
-
-    public UIInputManager(InputActionAsset inputActions, VisualElement root, MainMenuController controller)
-    {
-        _inputActions = inputActions;
-        _root = root;
-        _controller = controller;
-        _screenManager = new UIScreenManager(root, controller); // Передаём controller
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        if (_inputActions == null)
-        {
-            Debug.LogWarning("InputActionAsset is not assigned!");
-            return;
-        }
-        _uiActionMap = _inputActions.FindActionMap("UI");
-        if (_uiActionMap == null)
-        {
-            Debug.LogError("UI Action Map not found!");
-            return;
-        }
-        SetupInputActions();
-        SubscribeToInputEvents();
-    }
-
-    private void SetupInputActions()
-    {
-        _navigateAction = _uiActionMap.FindAction("Navigate");
-        _submitAction = _uiActionMap.FindAction("Submit");
-        _cancelAction = _uiActionMap.FindAction("Cancel");
-        _openSettingsAction = _uiActionMap.FindAction("OpenSettings");
-        _openStatisticsAction = _uiActionMap.FindAction("OpenStatistics");
-        _tabAction = _uiActionMap.FindAction("Tab");
-    }
-
-    private void SubscribeToInputEvents()
-    {
-        if (_cancelAction != null)
-        {
-            _cancelAction.performed += OnCancelPerformed;
-            _cancelSubscribed = true;
-        }
-        if (_navigateAction != null)
-        {
-            _navigateAction.performed += OnNavigatePerformed;
-            _navigateSubscribed = true;
-        }
-        if (_submitAction != null)
-        {
-            _submitAction.performed += OnSubmitPerformed;
-            _submitSubscribed = true;
-        }
-        if (_tabAction != null)
-        {
-            _tabAction.performed += OnTabPerformed;
-            _tabSubscribed = true;
-        }
-        if (_openSettingsAction != null)
-        {
-            _openSettingsAction.performed += OnOpenSettingsPerformed;
-            _settingsSubscribed = true;
-        }
-        if (_openStatisticsAction != null)
-        {
-            _openStatisticsAction.performed += OnOpenStatisticsPerformed;
-            _statsSubscribed = true;
-        }
-    }
-
-    public void Cleanup()
-    {
-        if (_cancelSubscribed && _cancelAction != null)
-            _cancelAction.performed -= OnCancelPerformed;
-        if (_navigateSubscribed && _navigateAction != null)
-            _navigateAction.performed -= OnNavigatePerformed;
-        if (_submitSubscribed && _submitAction != null)
-            _submitAction.performed -= OnSubmitPerformed;
-        if (_tabSubscribed && _tabAction != null)
-            _tabAction.performed -= OnTabPerformed;
-        if (_settingsSubscribed && _openSettingsAction != null)
-            _openSettingsAction.performed -= OnOpenSettingsPerformed;
-        if (_statsSubscribed && _openStatisticsAction != null)
-            _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
-        // Сбрасываем флаги
-        _cancelSubscribed = _navigateSubscribed = _submitSubscribed =
-            _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
-    }
-
-    public void Enable()
-    {
-        _inputActions?.Disable();
-        _uiActionMap?.Enable();
-    }
-
-    public void Disable() => _uiActionMap?.Disable();
-
-    #region Input Handlers
-    private void OnCancelPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed || _isTextFieldFocused) return;
-        HandleEscapeKey();
-    }
-
-    private void OnNavigatePerformed(InputAction.CallbackContext ctx)
-    {
-        if (_isSettingFocus || _isTextFieldFocused) return;
-        Vector2 dir = ctx.ReadValue<Vector2>();
-        if (Mathf.Abs(dir.y) > 0.1f) NavigateUI(Mathf.RoundToInt(-dir.y));
-        else if (Mathf.Abs(dir.x) > 0.1f) NavigateHorizontal(Mathf.RoundToInt(dir.x));
-    }
-
-    private void OnTabPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed || _isTextFieldFocused) return;
-        NavigateUI(1);
-    }
-
-    private void OnSubmitPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed || _isTextFieldFocused) return;
-        if (_currentlyFocusedElement is Button btn && btn.enabledSelf)
-            HandleButtonClick(btn);
-    }
-
-    private void OnOpenSettingsPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed || _isTextFieldFocused) return;
-        string current = _screenManager.GetCurrentScreen();
-        if (current != UIScreenManager.SettingsScreenName)
-            _controller.ShowScreen(UIScreenManager.SettingsScreenName);
-        else
-            _screenManager.ReturnToMainMenu();
-    }
-
-    private void OnOpenStatisticsPerformed(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed || _isTextFieldFocused) return;
-        Debug.Log("Open Statistics");
-        // _controller.ShowScreen("statistics_screen");
-    }
-    #endregion
-
-    #region Navigation
-    private void NavigateUI(int direction)
-    {
-        var elements = GetInteractiveElements();
-        if (elements.Count == 0) return;
-        int current = _currentlyFocusedElement != null ? elements.IndexOf(_currentlyFocusedElement) : -1;
-        int next = (current + direction + elements.Count) % elements.Count;
-        SetFocusToElement(elements[next]);
-    }
-
-    private void NavigateHorizontal(int direction) { }
-
-    private List<VisualElement> GetInteractiveElements()
-    {
-        var list = new List<VisualElement>();
-        list.AddRange(_root.Query<Button>().Where(b => b.enabledSelf && b.visible && b.focusable && b.resolvedStyle.display == DisplayStyle.Flex).ToList());
-        list.AddRange(_root.Query<TextField>().Where(t => t.enabledSelf && t.visible && t.focusable && t.resolvedStyle.display == DisplayStyle.Flex).ToList());
-        list.AddRange(_root.Query<RadioButton>().Where(r => r.enabledSelf && r.visible && r.focusable && r.resolvedStyle.display == DisplayStyle.Flex).ToList());
-        return list;
-    }
-
-    private void SetFocusToElement(VisualElement el)
-    {
-        if (_isSettingFocus || el == null) return;
-        _isSettingFocus = true;
-        try
-        {
-            _currentlyFocusedElement?.Blur();
-            _currentlyFocusedElement?.RemoveFromClassList("focused");
-            _currentlyFocusedElement = el;
-            el.focusable = true;
-            el.Focus();
-            el.AddToClassList("focused");
-            if (el is TextField tf)
-            {
-                _isTextFieldFocused = true;
-                tf.Q<TextElement>().style.color = Color.white;
-            }
-            else
-            {
-                _isTextFieldFocused = false;
-            }
-        }
-        finally
-        {
-            _isSettingFocus = false;
-        }
-    }
-    #endregion
-
-    #region Button Handlers
-    private void HandleButtonClick(Button btn)
-    {
-        switch (btn.name)
-        {
-            case "btnSingle": OnSinglePlayer(); break;
-            case "btnCreateLobby": OnCreateLobby(); break;
-            case "btnStatistics": OnStatistics(); break;
-            case "btnQuit": OnQuit(); break;
-            default: SimulateButtonClick(btn); break;
-        }
-    }
-
-    private void SimulateButtonClick(Button btn)
-    {
-        using var e = NavigationSubmitEvent.GetPooled();
-        e.target = btn;
-        btn.SendEvent(e);
-    }
-
-    private void HandleEscapeKey()
-    {
-        string screen = _screenManager.GetCurrentScreen();
-        if (screen == UIScreenManager.LobbyListScreenName || screen == UIScreenManager.SettingsScreenName)
-            _screenManager.ReturnToMainMenu();
-    }
-
-    private void OnSinglePlayer()
-    {
-        SwitchToPlayerInput();
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    private void OnCreateLobby()
-    {
-        _controller.ShowScreen(UIScreenManager.LobbyListScreenName);
-    }
-
-    private void OnStatistics() => Debug.Log("Statistics");
-    private void OnQuit() => Debug.Log("Quit");
-    #endregion
-
-    #region Input Switch
-    public void SwitchToPlayerInput()
-    {
-        _uiActionMap?.Disable();
-        var playerMap = _inputActions.FindActionMap("Player");
-        playerMap?.Enable();
-    }
-
-    public void SwitchToUIInput()
-    {
-        var playerMap = _inputActions.FindActionMap("Player");
-        playerMap?.Disable();
-        _uiActionMap?.Enable();
-    }
-    #endregion
-}
-Файл: ./Scripts/UI/PauseMenuController.cs
-﻿// Assets/Scripts/UI/PauseMenuController.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.InputSystem;
-
-public class PauseMenuController : MonoBehaviour
-{
-    private VisualElement _root;
-    private bool _paused = false;
-
-    void Start()
-    {
-        _root = GetComponent<UIDocument>().rootVisualElement;
-        _root.style.display = DisplayStyle.None;
-
-        _root.Q<Button>("btnResume").clicked += Resume;
-        _root.Q<Button>("btnLeaveGame").clicked += LeaveGame;
-    }
-
-    void Update()
-    {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame) 
-            TogglePause();
-    }
-
-    void TogglePause()
-    {
-        _paused = !_paused;
-        _root.style.display = _paused ? DisplayStyle.Flex : DisplayStyle.None;
-        Time.timeScale = _paused ? 0f : 1f;
-        AudioListener.pause = _paused;
-    }
-
-    void Resume() => TogglePause();
-
-    void LeaveGame()
-    {
-        TogglePause();
-        UIManager.Instance.LeaveGame();
-    }
-}
-Файл: ./Scripts/UI/StartupManager.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public class StartupManager : MonoBehaviour
-{
-    [SerializeField] private string managersScene = "ManagersScene";
-    [SerializeField] private string mainMenuScene = "MainMenuScene";
-
-    private void Start()
-    {
-        // Загружаем менеджеры (они DontDestroyOnLoad)
-        SceneManager.LoadSceneAsync(managersScene, LoadSceneMode.Additive)
-            .completed += _ => LoadMainMenu();
-    }
-
-    private void LoadMainMenu()
-    {
-        SceneManager.LoadSceneAsync(mainMenuScene, LoadSceneMode.Additive);
-    }
-}
-Файл: ./Scripts/UI/SceneUIController.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public class SceneUIController : MonoBehaviour
-{
-    void Start()
-    {
-        // Загружаем UI сцены аддитивно
-        SceneManager.LoadSceneAsync("HUDScene", LoadSceneMode.Additive);
-        SceneManager.LoadSceneAsync("PauseMenuScene", LoadSceneMode.Additive);
-        
-        // Подписываемся на события
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "HUDScene")
-        {
-            var hudRoot = GameObject.Find("HUDRoot")?.GetComponent<HUDController>();
-            UIManager.Instance.SetHUDController(hudRoot);
-        }
-        else if (scene.name == "PauseMenuScene")
-        {
-            var pauseRoot = GameObject.Find("PauseMenuRoot")?.GetComponent<PauseMenuController>();
-            UIManager.Instance.SetPauseController(pauseRoot);
-        }
-    }
-
-    void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        // Выгружаем UI сцены при выходе, только если загружены
-        var hudScene = SceneManager.GetSceneByName("HUDScene");
-        if (hudScene.isLoaded) SceneManager.UnloadSceneAsync("HUDScene");
-
-        var pauseScene = SceneManager.GetSceneByName("PauseMenuScene");
-        if (pauseScene.isLoaded) SceneManager.UnloadSceneAsync("PauseMenuScene");
-    }
-}
-Файл: ./Scripts/UI/UIManager.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Unity.NetCode;
-using UnityEngine.InputSystem;
-using System;
-using System.Collections;
-
-public class UIManager : MonoBehaviour
-{
-    public static UIManager Instance { get; private set; }
-
-    [SerializeField] private InputActionAsset inputActions;
-    public InputActionAsset InputActions => inputActions;
-
-    public LobbyManager LobbyManager { get; private set; }
-
-    private MainMenuController _mainMenuController;
-    private HUDController _hudController;
-    private PauseMenuController _pauseController;
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LobbyManager = GetComponent<LobbyManager>() ?? gameObject.AddComponent<LobbyManager>();
-            SceneManager.sceneLoaded += OnSceneLoaded;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "MainMenuScene")
-        {
-            _mainMenuController = FindObjectOfType<MainMenuController>();
-        }
-        else if (scene.name == "GameCoreScene")
-        {
-            // HUD и Pause загружаются в SceneUIController
-        }
-    }
-
-    public void SetHUDController(HUDController controller) => _hudController = controller;
-    public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
-
-    // === События для UI ===
-    public void OnPlayerJoined(int connectionId, string name)
-    {
-        OnPlayersUpdated();
-    }
-
-    public void OnPlayerLeft(int connectionId)
-    {
-        OnPlayersUpdated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnPlayersUpdated()
-    {
-        _mainMenuController?.UpdatePlayerList();
-        _hudController?.UpdatePlayerList();
-    }
-
-    public void OnLobbyListUpdated()
-    {
-        _mainMenuController?.OnLobbyListUpdated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnLobbyCreated()
-    {
-        _mainMenuController?.OnLobbyCreated();
-    }
-
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
-    public void OnJoinedAsClient()
-    {
-        _mainMenuController?.OnJoinedAsClient();
-    }
-
-    public void StartGame()
-    {
-        LobbyManager.StartGame();
-        SceneManager.LoadScene("GameCoreScene");
-    }
-
-    public void LeaveGame()
-    {
-        Debug.Log("UIManager: Leaving game...");
-
-        try
-        {
-            // Останавливаем все сетевые активности
-            var lobbyManager = FindObjectOfType<LobbyManager>();
-            if (lobbyManager != null)
-            {
-                // ФИКС: Используем DisbandLobby вместо прямого вызова
-                lobbyManager.DisbandLobby();
-            }
-            else
-            {
-                Debug.LogWarning("LobbyManager not found, proceeding without disband");
-                // Если менеджера нет, просто загружаем меню
-                LoadMainMenuDirectly();
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error leaving game: {e.Message}");
-            LoadMainMenuDirectly();
-        }
-    }
-
-    public string GetCurrentScreen()
-    {
-        var mainMenuController = FindObjectOfType<MainMenuController>();
-        return mainMenuController?.GetCurrentScreen() ?? "unknown";
-    }
-
-    private void LoadMainMenuDirectly()
-    {
-        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
-        {
-            SceneManager.LoadScene("MainMenu");
-        }
-        else
-        {
-            SceneManager.LoadScene(0); // Первая сцена
-        }
-    }
-
-    public void ShowMainMenuScreen()
-    {
-        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    public void ShowLobbyListScreen()
-    {
-        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
-        OnLobbyListUpdated();
-    }
-
-    public void ReturnToLobbyList()
-    {
-        Debug.Log("UIManager: Returning to lobby list");
-
-        try
-        {
-            // Используем _mainMenuController
-            if (_mainMenuController != null)
-            {
-                _mainMenuController.ReturnToLobbyList();
-            }
-            else
-            {
-                // Если контроллер не найден, пытаемся найти его
-                _mainMenuController = FindObjectOfType<MainMenuController>();
-                _mainMenuController?.ReturnToLobbyList();
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
-        }
-    }
-
-    private IEnumerator DelayedLobbyUpdate()
-    {
-        yield return new WaitForSeconds(0.5f);
-        OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
-    }
-
-
-    private void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-}
-Файл: ./Scripts/UI/LocalizationManager.cs
-// Assets/Scripts/UI/LocalizationManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using System.Collections.Generic;
-using System;
-using System.Collections;
-
-public class LocalizationManager : MonoBehaviour
-{
-    public static LocalizationManager Instance { get; private set; }
-
-    public event Action OnLanguageChanged;
-
-    [SerializeField] private SystemLanguage _defaultLanguage = SystemLanguage.English;
-
-    private Dictionary<string, string> _currentLocalization = new Dictionary<string, string>();
-    private UIDocument _uiDocument;
-    private SystemLanguage _currentLanguage;
-    private VisualElement _rootVisualElement;
-
-    // Кэш для всех UIDocument'ов в сцене
-    private List<UIDocument> _allUiDocuments = new List<UIDocument>();
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            _uiDocument = GetComponent<UIDocument>();
-            
-            // Находим все UIDocument'ы в сцене
-            RefreshUiDocuments();
-            
-            // Подписываемся на событие изменения настроек
-            if (SettingsManager.Instance != null)
-            {
-                SettingsManager.Instance.OnSettingsChanged += OnSettingsChanged;
-            }
-            
-            Debug.Log("LocalizationManager initialized");
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void Start()
-    {
-        // Получаем root visual element
-        if (_uiDocument != null)
-        {
-            _rootVisualElement = _uiDocument.rootVisualElement;
-        }
-
-        // Загружаем язык из настроек или используем системный
-        if (SettingsManager.IsReady())
-        {
-            LoadLanguage(SettingsManager.Instance.CurrentSettings.language, false);
-        }
-        else
-        {
-            DetectAndLoadLanguage();
-        }
-    }
-
-    // Обновляем список всех UIDocument'ов
-    private void RefreshUiDocuments()
-    {
-        _allUiDocuments.Clear();
-        _allUiDocuments.AddRange(FindObjectsOfType<UIDocument>());
-        Debug.Log($"Found {_allUiDocuments.Count} UI documents in scene");
-    }
-
-    private void OnSettingsChanged(GameSettings newSettings)
-    {
-        // При изменении настроек меняем язык
-        if (newSettings.language != _currentLanguage)
-        {
-            LoadLanguage(newSettings.language, true);
-        }
-    }
-
-    private void DetectAndLoadLanguage()
-    {
-        SystemLanguage systemLanguage = Application.systemLanguage;
-
-        if (systemLanguage == SystemLanguage.Russian || systemLanguage == SystemLanguage.English)
-        {
-            LoadLanguage(systemLanguage, false);
-        }
-        else
-        {
-            LoadLanguage(_defaultLanguage, false);
-        }
-    }
-
-    public void LoadLanguage(SystemLanguage language, bool forceUpdate = true)
-    {
-        Debug.Log($"Loading language: {language}, forceUpdate: {forceUpdate}");
-        
-        // Если язык не изменился, выходим
-        if (_currentLanguage == language && !forceUpdate)
-            return;
-
-        _currentLanguage = language;
-        string langCode = GetLanguageCode(language);
-        var localizationFile = Resources.Load<TextAsset>($"Localization/{langCode}");
-
-        if (localizationFile == null)
-        {
-            Debug.LogWarning($"Localization file for {language} not found, using default");
-            localizationFile = Resources.Load<TextAsset>($"Localization/en");
-        }
-
-        if (localizationFile != null)
-        {
-            ParseLocalizationFile(localizationFile.text);
-            
-            // Всегда обновляем UI при смене языка
-            UpdateAllUIElements();
-
-            // Вызываем событие об изменении языка
-            OnLanguageChanged?.Invoke();
-            
-            Debug.Log($"Language changed to: {language}, UI updated");
-        }
-        else
-        {
-            Debug.LogError("Default localization file not found!");
-        }
-    }
-
-    public void SwitchLanguage()
-    {
-        var newLanguage = _currentLanguage == SystemLanguage.English ?
-            SystemLanguage.Russian : SystemLanguage.English;
-        LoadLanguage(newLanguage, true);
-    }
-
-    private string GetLanguageCode(SystemLanguage language)
-    {
-        return language == SystemLanguage.Russian ? "ru" : "en";
-    }
-
-    private void ParseLocalizationFile(string content)
-    {
-        _currentLocalization.Clear();
-
-        try
-        {
-            var lines = content.Split('\n');
-            foreach (var line in lines)
-            {
-                if (line.Trim().StartsWith("\"") && line.Contains(":"))
-                {
-                    var parts = line.Split(new[] { ':' }, 2);
-                    if (parts.Length == 2)
-                    {
-                        var key = parts[0].Trim().Trim('"', ' ', '\t');
-                        var value = parts[1].Trim().Trim('"', ',', ' ', '\t');
-                        _currentLocalization[key] = value;
-                    }
-                }
-            }
-            Debug.Log($"Parsed {_currentLocalization.Count} localization entries");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error parsing localization file: {e.Message}");
-        }
-    }
-
-    public string GetLocalizedText(string key)
-    {
-        if (_currentLocalization.ContainsKey(key))
-            return _currentLocalization[key];
-        
-        Debug.LogWarning($"Localization key not found: {key}");
-        return $"#{key}";
-    }
-
-    public void UpdateAllUIElements()
-    {
-        Debug.Log("Updating ALL UI elements with new language");
-        
-        // Обновляем все UIDocument'ы в сцене
-        foreach (var uiDoc in _allUiDocuments)
-        {
-            if (uiDoc != null && uiDoc.rootVisualElement != null)
-            {
-                UpdateElementsWithPrefix(uiDoc.rootVisualElement, "#");
-            }
-        }
-        
-        Debug.Log($"Updated {_allUiDocuments.Count} UI documents");
-    }
-
-    private void UpdateElementsWithPrefix(VisualElement root, string prefix)
-    {
-        if (root == null) return;
-
-        int updatedCount = 0;
-
-        // ── LABELS ─────────────────────────────────────
-        root.Query<Label>().ForEach(label =>
-        {
-            if (!string.IsNullOrEmpty(label.text) && label.text.StartsWith(prefix))
-            {
-                string key = label.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (label.text != localized)
-                {
-                    label.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── BUTTONS ────────────────────────────────────
-        root.Query<Button>().ForEach(button =>
-        {
-            if (!string.IsNullOrEmpty(button.text) && button.text.StartsWith(prefix))
-            {
-                string key = button.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (button.text != localized)
-                {
-                    button.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── TEXTFIELDS (label) ─────────────────────────
-        root.Query<TextField>().ForEach(textField =>
-        {
-            if (!string.IsNullOrEmpty(textField.label) && textField.label.StartsWith(prefix))
-            {
-                string key = textField.label.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (textField.label != localized)
-                {
-                    textField.label = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── TEXTFIELDS (placeholder) ───────────────────
-        root.Query<TextField>().ForEach(textField =>
-        {
-            var placeholder = textField.Q<Label>(className: "unity-base-text-field__placeholder") 
-                           ?? textField.Q<Label>(className: "unity-text-field__placeholder");
-            
-            if (placeholder != null && !string.IsNullOrEmpty(placeholder.text) && placeholder.text.StartsWith(prefix))
-            {
-                string key = placeholder.text.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (placeholder.text != localized)
-                {
-                    placeholder.text = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── INTEGERFIELD ───────────────────────────────
-        root.Query<IntegerField>().ForEach(field =>
-        {
-            if (!string.IsNullOrEmpty(field.label) && field.label.StartsWith(prefix))
-            {
-                string key = field.label.Substring(prefix.Length);
-                string localized = GetLocalizedText(key);
-                if (field.label != localized)
-                {
-                    field.label = localized;
-                    updatedCount++;
-                }
-            }
-        });
-
-        // ── Рекурсия по детям ──────────────────────────
-        foreach (VisualElement child in root.Children())
-            UpdateElementsWithPrefix(child, prefix);
-
-        if (updatedCount > 0)
-        {
-            Debug.Log($"Updated {updatedCount} elements in {root.name}");
-        }
-    }
-
-    public SystemLanguage GetCurrentLanguage()
-    {
-        return _currentLanguage;
-    }
-
-    // Метод для принудительного обновления при смене сцены
-    public void RefreshForNewScene()
-    {
-        RefreshUiDocuments();
-        UpdateAllUIElements();
-    }
-
-    private void OnDestroy()
-    {
-        // Отписываемся от события
-        if (SettingsManager.Instance != null)
-        {
-            SettingsManager.Instance.OnSettingsChanged -= OnSettingsChanged;
-        }
-    }
-}
-Файл: ./Scripts/UI/HUDController.cs
-﻿// Assets/Scripts/HUDController.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using Unity.Entities;
-using Unity.Collections;
-using Unity.NetCode;
-using System.Linq;
-
-public class HUDController : MonoBehaviour
-{
-    private VisualElement _hudRoot;
-    private VisualElement _playersContainer;
-
-    void Start()
-    {
-        _hudRoot = GetComponent<UIDocument>().rootVisualElement;
-        _playersContainer = _hudRoot.Q<VisualElement>("hud__players");
-        InvokeRepeating(nameof(UpdatePlayerList), 0f, 1f);
-    }
-
-    public void UpdatePlayerList()
-    {
-        _playersContainer.Clear();
-        var clientWorld = World.All.FirstOrDefault(w => w.IsClient());
-        if (clientWorld == null) return;
-        
-        var em = clientWorld.EntityManager;
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
-        var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
-        
-        for (int i = 0; i < players.Length; i++)
-        {
-            var p = players[i];
-            string name = p.Name.ToString();
-            string ping = p.Ping.ToString() + "мс";
-            CreatePlayerHUD(_playersContainer, name, ping);
-        }
-        players.Dispose();
-    }
-
-    private void CreatePlayerHUD(VisualElement container, string name, string ping)
-    {
-        var player = new VisualElement();
-        player.AddToClassList("hud__player");
-        var icon = new VisualElement();
-        icon.AddToClassList("hud__player-icon");
-        icon.AddToClassList("mic");
-        var nameLabel = new Label(name);
-        nameLabel.AddToClassList("hud__player-name");
-        var pingLabel = new Label(ping);
-        pingLabel.AddToClassList("hud__player-ping");
-        float pingValue = float.Parse(ping.Replace("мс", ""));
-        if (pingValue < 50) pingLabel.AddToClassList("good");
-        else if (pingValue < 150) pingLabel.AddToClassList("medium");
-        else pingLabel.AddToClassList("bad");
-        player.Add(icon); player.Add(nameLabel); player.Add(pingLabel);
-        container.Add(player);
-    }
-}
-Файл: ./Scripts/UI/SettingsManager.cs
-// Assets/Scripts/UI/SettingsManager.cs
-using UnityEngine;
-using System;
-
-public class SettingsManager : MonoBehaviour
-{
-    public static SettingsManager Instance { get; private set; }
-
-    public GameSettings CurrentSettings { get; private set; }
-    public event Action<GameSettings> OnSettingsChanged;
-
-    private const string SETTINGS_KEY = "GameSettings";
-
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = true;
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            LoadSettings();
-
-            if (debugMode)
-            {
-                Debug.Log("=== SettingsManager Initialized ===");
-                Debug.Log($"Instance: {Instance != null}");
-                Debug.Log($"CurrentSettings: {CurrentSettings != null}");
-                Debug.Log($"Language: {CurrentSettings?.language}");
-            }
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public void LoadSettings()
-    {
-        string json = PlayerPrefs.GetString(SETTINGS_KEY, "");
-
-        if (!string.IsNullOrEmpty(json))
-        {
-            try
-            {
-                CurrentSettings = JsonUtility.FromJson<GameSettings>(json);
-                if (debugMode) Debug.Log("Settings loaded from PlayerPrefs");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error loading settings: {e.Message}");
-                CreateDefaultSettings();
-            }
-        }
-        else
-        {
-            CreateDefaultSettings();
-            if (debugMode) Debug.Log("Default settings created");
-        }
-
-        ApplySettings();
-    }
-
-    private void CreateDefaultSettings()
-    {
-        CurrentSettings = new GameSettings();
-        // Определяем язык системы
-        CurrentSettings.language = Application.systemLanguage == SystemLanguage.Russian ?
-            SystemLanguage.Russian : SystemLanguage.English;
-
-        if (debugMode) Debug.Log($"Default language set to: {CurrentSettings.language}");
-    }
-
-    public void SaveSettings(GameSettings newSettings)
-    {
-        if (newSettings == null)
-        {
-            Debug.LogError("Cannot save null settings!");
-            return;
-        }
-
-        CurrentSettings = newSettings;
-        string json = JsonUtility.ToJson(CurrentSettings);
-        PlayerPrefs.SetString(SETTINGS_KEY, json);
-        PlayerPrefs.Save();
-
-        ApplySettings();
-        OnSettingsChanged?.Invoke(CurrentSettings);
-
-        if (debugMode)
-        {
-            Debug.Log("=== Settings Saved ===");
-            Debug.Log($"Language: {CurrentSettings.language}");
-            Debug.Log($"Music: {CurrentSettings.musicVolume}, Sound: {CurrentSettings.soundVolume}");
-            Debug.Log($"Player: {CurrentSettings.playerName}");
-        }
-    }
-
-    private void ApplySettings()
-    {
-        if (CurrentSettings == null)
-        {
-            Debug.LogError("CurrentSettings is null!");
-            return;
-        }
-
-        // Применяем настройки аудио
-        AudioListener.volume = CurrentSettings.soundVolume;
-
-        // Применяем настройки графики
-        if (CurrentSettings.qualityLevel >= 0 && CurrentSettings.qualityLevel < QualitySettings.names.Length)
-        {
-            QualitySettings.SetQualityLevel(CurrentSettings.qualityLevel);
-        }
-
-        Screen.fullScreen = CurrentSettings.fullscreen;
-
-        // Применяем язык - ВАЖНО: всегда применяем язык, даже если LocalizationManager еще не готов
-        ApplyLanguage();
-
-        // Применяем разрешение экрана
-        ApplyResolution();
-    }
-
-    private void ApplyLanguage()
-    {
-        if (LocalizationManager.Instance != null)
-        {
-            // Всегда принудительно обновляем язык
-            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language, true);
-            Debug.Log($"Language applied: {CurrentSettings.language}");
-        }
-        else
-        {
-            Debug.LogWarning("LocalizationManager not found, retrying...");
-            // Пробуем еще раз через кадр
-            StartCoroutine(DelayedLanguageApply());
-        }
-    }
-
-    private System.Collections.IEnumerator DelayedLanguageApply()
-    {
-        yield return new WaitForEndOfFrame();
-        
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.LoadLanguage(CurrentSettings.language, true);
-            Debug.Log($"Language applied after delay: {CurrentSettings.language}");
-        }
-        else
-        {
-            Debug.LogError("LocalizationManager still not found after delay!");
-        }
-    }
-
-    private void ApplyResolution()
-    {
-        Resolution[] resolutions = Screen.resolutions;
-        if (CurrentSettings.resolutionIndex >= 0 && CurrentSettings.resolutionIndex < resolutions.Length)
-        {
-            Resolution resolution = resolutions[CurrentSettings.resolutionIndex];
-            Screen.SetResolution(resolution.width, resolution.height, CurrentSettings.fullscreen);
-
-            if (debugMode) Debug.Log($"Resolution set to: {resolution.width}x{resolution.height}");
-        }
-    }
-
-    // Метод для быстрого доступа из других скриптов
-    public static bool IsReady()
-    {
-        return Instance != null && Instance.CurrentSettings != null;
-    }
-}
-Файл: ./Scripts/UI/UIScreenManager.cs
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Unity.NetCode;
-using UnityEngine.UIElements;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Collections;
-
-public class UIScreenManager
-{
-    public const string MenuScreenName = "menu_screen";
-    public const string SettingsScreenName = "settings_screen";
-    public const string LobbyListScreenName = "lobby_list_screen";
-    public const string LobbySettingsScreenName = "lobby_settings_screen";
-    private Button _btnRefreshLobbyList;
-
-    private readonly VisualElement _root;
-    private readonly MainMenuController _controller;
-    private string _currentScreen = MenuScreenName;
-
-    // UI Elements
-    private Button _btnShowLobbyList;
-    private Button _btnCreateLobby;
-    private Button _btnDisbandLobby;
-    private Button _btnStartGame;
-    private ScrollView _lobbyListScroll;
-    private ScrollView _playersScroll;
-
-    private bool _isProcessingDisband = false;
-
-    public UIScreenManager(VisualElement root, MainMenuController controller)
-    {
-        _root = root;
-        _controller = controller;
-        InitializeButtons();
-        SetupCallbacks();
-
-        // Подписываемся на обновления списка лобби
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.OnLobbiesUpdated += OnLobbiesUpdated;
-            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
-        }
-    }
-
-    public string GetCurrentScreen() => _currentScreen;
-
-    public void OnLobbyClosed(string lobbyId)
-    {
-        Debug.Log($"UIScreenManager: Lobby {lobbyId} closed, current screen: {_currentScreen}");
-
-        // ФИКС: Используем UnityMainThreadDispatcher для вызова в главном потоке
-        UnityMainThreadDispatcher.Instance.Enqueue(() =>
-        {
-            _controller?.HandleLobbyClosed(lobbyId);
-        });
-    }
-
-    private void InitializeButtons()
-    {
-        Debug.Log("Initializing UI buttons...");
-
-        var menuScreen = _root.Q<VisualElement>(MenuScreenName);
-        _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
-        Debug.Log($"_btnShowLobbyList found: {_btnShowLobbyList != null}");
-
-        var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
-        _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
-        _btnRefreshLobbyList = lobbyListScreen?.Q<Button>("btnRefreshLobbyList");
-        _lobbyListScroll = lobbyListScreen?.Q<ScrollView>("lobbyListScroll");
-
-        Debug.Log($"_btnCreateLobby found: {_btnCreateLobby != null}");
-        Debug.Log($"_btnRefreshLobbyList found: {_btnRefreshLobbyList != null}");
-        Debug.Log($"_lobbyListScroll found: {_lobbyListScroll != null}");
-
-        var lobbySettingsScreen = _root.Q<VisualElement>(LobbySettingsScreenName);
-        _playersScroll = lobbySettingsScreen?.Q<ScrollView>("playersScroll");
-        _btnDisbandLobby = lobbySettingsScreen?.Q<Button>("btnDisbandLobby");
-        _btnStartGame = lobbySettingsScreen?.Q<Button>("btnStartGame");
-
-        Debug.Log("UI buttons initialization complete");
-    }
-
-    private void SetupCallbacks()
-    {
-        if (_btnShowLobbyList != null)
-            _btnShowLobbyList.clicked += () => {
-                _controller.ShowScreen(LobbyListScreenName);
-                RefreshLobbyList();
-            };
-
-        if (_btnCreateLobby != null)
-            _btnCreateLobby.clicked += OnCreateLobby;
-
-        if (_btnRefreshLobbyList != null)
-            _btnRefreshLobbyList.clicked += () => {
-                Debug.Log("Manual lobby list refresh");
-                RefreshLobbyList();
-                // Принудительно отправляем DISCOVER запрос
-                if (LobbyDiscovery.Instance != null)
-                {
-                    LobbyDiscovery.Instance.ForceDiscovery();
-                }
-            };
-
-        if (_btnDisbandLobby != null)
-            _btnDisbandLobby.clicked += OnDisbandLobby;
-
-        if (_btnStartGame != null)
-            _btnStartGame.clicked += () => UIManager.Instance.StartGame();
-
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.OnLobbiesUpdated += (lobbies) => {
-                if (_currentScreen == LobbyListScreenName)
-                {
-                    RefreshLobbyList();
-                }
-            };
-        }
-
-    }
-
-    private void OnLobbiesUpdated(List<LobbyInfo> lobbies)
-    {
-        Debug.Log($"UIScreenManager: OnLobbiesUpdated called with {lobbies.Count} lobbies");
-        Debug.Log($"Current screen: {_currentScreen}, should be: {LobbyListScreenName}");
-
-        // ОБНОВЛЯЕМ В ЛЮБОМ СЛУЧАЕ, ЕСЛИ МЫ НА ЭКРАНЕ СПИСКА ЛОББИ
-        if (_currentScreen == LobbyListScreenName)
-        {
-            Debug.Log("Refreshing lobby list UI because we're on the lobby list screen");
-            RefreshLobbyList();
-        }
-        else
-        {
-            Debug.Log($"Not refreshing UI because current screen is {_currentScreen}, not {LobbyListScreenName}");
-            // НО СОХРАНЯЕМ ДАННЫЕ ДЛЯ БУДУЩЕГО ИСПОЛЬЗОВАНИЯ
-        }
-    }
-
-
-    public void ShowScreen(string screenName)
-    {
-        Debug.Log($"ShowScreen called: {screenName}");
-
-        var screens = _root.Query<VisualElement>(className: "screen").ToList();
-        foreach (var screen in screens)
-        {
-            screen.style.display = screen.name == screenName ? DisplayStyle.Flex : DisplayStyle.None;
-        }
-        _currentScreen = screenName;
-
-        Debug.Log($"Screen set to: {screenName}");
-
-        if (screenName == LobbyListScreenName)
-        {
-            Debug.Log("On lobby list screen, refreshing list...");
-            RefreshLobbyList();
-
-            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ПОКАЗЕ ЭКРАНА
-            if (LobbyDiscovery.Instance != null)
-            {
-                LobbyDiscovery.Instance.ForceDiscovery();
-            }
-        }
-
-        Debug.Log($"Showing screen: {screenName}");
-    }
-
-    public void RefreshLobbyList()
-    {
-        Debug.Log($"RefreshLobbyList called, current screen: {_currentScreen}, _lobbyListScroll is null: {_lobbyListScroll == null}");
-
-        if (_lobbyListScroll != null)
-        {
-            _lobbyListScroll.Clear();
-            Debug.Log("Cleared lobby list scroll");
-
-            // Получаем lobbies напрямую из LobbyDiscovery
-            var lobbies = LobbyDiscovery.Instance?.GetDiscoveredLobbies() ?? new List<LobbyInfo>();
-            Debug.Log($"RefreshLobbyList: Got {lobbies.Count} lobbies from LobbyDiscovery");
-
-            if (lobbies.Count == 0)
-            {
-                var noLobbies = new Label("No lobbies found. Waiting for discovery...");
-                noLobbies.AddToClassList("no-lobbies-label");
-                _lobbyListScroll.Add(noLobbies);
-                Debug.Log("Added 'no lobbies' message");
-            }
-            else
-            {
-                foreach (var lobby in lobbies)
-                {
-                    Debug.Log($"RefreshLobbyList: Adding lobby to UI: {lobby.name}");
-                    CreateLobbyItem(_lobbyListScroll, lobby);
-                }
-                Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
-            }
-        }
-        else
-        {
-            Debug.LogError("_lobbyListScroll is null - cannot refresh lobby list");
-        }
-    }
-
-    private VisualElement CreateLobbyItem(ScrollView scroll, LobbyInfo info)
-    {
-        var item = new VisualElement();
-        item.AddToClassList("lobby-item");
-
-        var nameLabel = new Label(info.name);
-        nameLabel.AddToClassList("lobby-name");
-
-        var playersLabel = new Label($"{info.currentPlayers}/{info.maxPlayers}");
-        playersLabel.AddToClassList("lobby-players");
-
-        var typeLabel = new Label(info.isOpen ? "Open" : "Password");
-        typeLabel.AddToClassList("lobby-type");
-
-        var joinBtn = new Button(() => {
-            if (info.isOpen || string.IsNullOrEmpty(info.password))
-            {
-                // Сначала переключаем экран, затем присоединяемся
-                _controller.OnJoinedAsClient(); // ← Новый метод
-                UIManager.Instance.LobbyManager.JoinLobby(info,
-                    SettingsManager.Instance.CurrentSettings.playerName,
-                    info.password);
-            }
-            else
-            {
-                // Вызываем метод из LobbyManager вместо несуществующего локального метода
-                UIManager.Instance.LobbyManager.ShowPasswordPrompt(info);
-            }
-        })
-        {
-            text = "Join"
-        };
-        joinBtn.AddToClassList("join-button");
-
-        item.Add(nameLabel);
-        item.Add(playersLabel);
-        item.Add(typeLabel);
-        item.Add(joinBtn);
-
-        scroll.Add(item);
-        return item;
-    }
-
-    private void OnCreateLobby()
-    {
-        var lobbyData = _controller.LobbySetupManager.GetLobbyData();
-        // Имя игрока берём из SettingsManager — игрок не может менять параметры игры при подключении
-        var playerName = SettingsManager.Instance != null ? SettingsManager.Instance.CurrentSettings.playerName : "Player";
-        var selectedCharacter = _controller.CharacterSelectionManager.GetSelectedCharacter();
-        var playerData = new PlayerData
-        {
-            name = new FixedString128Bytes(playerName),
-            selectedCharacter = selectedCharacter
-        };
-        UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
-    }
-
-    public void OnDisbandLobby()
-    {
-        Debug.Log("UIScreenManager: Disbanding lobby...");
-
-        // ФИКС: Добавляем проверку чтобы предотвратить множественные вызовы
-        if (_isProcessingDisband)
-        {
-            Debug.LogWarning("UIScreenManager: Disband already in progress, ignoring");
-            return;
-        }
-
-        _isProcessingDisband = true;
-
-        try
-        {
-            var lobbyManager = UIManager.Instance?.LobbyManager;
-            if (lobbyManager != null)
-            {
-                lobbyManager.DisbandLobby();
-            }
-
-            // ФИКС: Используем MainMenuController для вызова корутины
-            _controller?.ShowLobbyListAfterDisband();
-        }
-        finally
-        {
-            _isProcessingDisband = false;
-        }
-    }
-
-    public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
-
-    public void UpdatePlayerList()
-    {
-        if (_playersScroll != null)
-        {
-            _playersScroll.Clear();
-            UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
-        }
-    }
-}
-Файл: ./Scripts/UI/UISettingsManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
-public class UISettingsManager
-{
-    private readonly VisualElement _root;
-    private readonly UIDocument _uiDocument;
-    private readonly MainMenuController _controller;
-
-    // UI Elements
-    private TextField _playerNameField;
-    private RadioButtonGroup _weaponRadioGroup;
-    private Slider _musicSlider;
-    private Label _musicValue;
-    private Slider _soundSlider;
-    private Label _soundValue;
-    private DropdownField _resolutionDropdown;
-    private DropdownField _qualityDropdown;
-    private Button _btnRussian;
-    private Button _btnEnglish;
-    private Button _btnSaveSettings;
-    private Button _btnCancelSettings;
-
-    // Data
-    private List<Resolution> _resolutions;
-    private string[] _qualityNames;
-
-    public UISettingsManager(VisualElement root, UIDocument uiDocument, MainMenuController controller)
-    {
-        _root = root;
-        _uiDocument = uiDocument;
-        _controller = controller;
-        InitializeWithDelay();
-    }
-
-    private void InitializeWithDelay()
-    {
-        _uiDocument.StartCoroutine(InitializeCoroutine());
-    }
-
-    private IEnumerator InitializeCoroutine()
-    {
-        yield return null; // Ждём один кадр
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        FindUIElements();
-        SetupData();
-        SetupEventHandlers();
-        LoadCurrentSettings();
-        Debug.Log("UISettingsManager initialized");
-    }
-
-    private void FindUIElements()
-    {
-        var settingsScreen = _root.Q<VisualElement>(UIScreenManager.SettingsScreenName);
-        if (settingsScreen == null)
-        {
-            Debug.LogError($"[UISettingsManager] Экран '{UIScreenManager.SettingsScreenName}' не найден в UIDocument!");
-            return;
-        }
-
-        _playerNameField = settingsScreen.Q<TextField>("playerNameField");
-        if (_playerNameField == null) Debug.LogWarning("[UISettingsManager] playerNameField не найден!");
-
-        _musicSlider = settingsScreen.Q<Slider>("musicSlider");
-        _musicValue = settingsScreen.Q<Label>("musicVolumeLabel");
-        _soundSlider = settingsScreen.Q<Slider>("soundVolumeSlider");
-        _soundValue = settingsScreen.Q<Label>("soundVolumeLabel");
-        _resolutionDropdown = settingsScreen.Q<DropdownField>("resolutionDropdown");
-        _qualityDropdown = settingsScreen.Q<DropdownField>("qualityDropdown");
-        _btnRussian = settingsScreen.Q<Button>("russianButton");
-        _btnEnglish = settingsScreen.Q<Button>("englishButton");
-        _btnSaveSettings = settingsScreen.Q<Button>("btnSave");
-        _btnCancelSettings = settingsScreen.Q<Button>("cancelBtn");
-
-        var rightPanel = settingsScreen.Q<VisualElement>("right-panel");
-        if (rightPanel != null)
-        {
-            _weaponRadioGroup = rightPanel.Query<RadioButtonGroup>().First();
-            if (_weaponRadioGroup == null)
-                Debug.LogWarning("[UISettingsManager] RadioButtonGroup не найден в right-panel!");
-        }
-        else
-        {
-            Debug.LogWarning("[UISettingsManager] right-panel не найден в settings_screen!");
-        }
-    }
-
-    private void SetupData()
-    {
-        if (_resolutionDropdown != null)
-        {
-            _resolutions = new List<Resolution>(Screen.resolutions);
-            var options = _resolutions.Select(r => $"{r.width} x {r.height} ({r.refreshRate}Hz)").ToList();
-            _resolutionDropdown.choices = options;
-        }
-
-        if (_qualityDropdown != null)
-        {
-            _qualityNames = QualitySettings.names;
-            _qualityDropdown.choices = new List<string>(_qualityNames);
-        }
-    }
-
-    private void SetupEventHandlers()
-    {
-        if (_musicSlider != null)
-            _musicSlider.RegisterValueChangedCallback(OnMusicVolumeChanged);
-
-        if (_soundSlider != null)
-            _soundSlider.RegisterValueChangedCallback(OnSoundVolumeChanged);
-
-        if (_btnRussian != null)
-            _btnRussian.clicked += () => OnLanguageChanged(SystemLanguage.Russian);
-
-        if (_btnEnglish != null)
-            _btnEnglish.clicked += () => OnLanguageChanged(SystemLanguage.English);
-
-        if (_btnSaveSettings != null)
-            _btnSaveSettings.clicked += OnSaveSettings;
-
-        if (_btnCancelSettings != null)
-            _btnCancelSettings.clicked += OnCancelSettings;
-
-        _root.RegisterCallback<KeyDownEvent>(OnKeyDown);
-    }
-
-    private void LoadCurrentSettings()
-    {
-        if (!SettingsManager.IsReady())
-        {
-            Debug.LogWarning("[UISettingsManager] SettingsManager не готов. Повторная попытка через 0.1с...");
-            _uiDocument.StartCoroutine(RetryLoadSettings());
-            return;
-        }
-
-        var s = SettingsManager.Instance.CurrentSettings;
-
-        if (_playerNameField != null)
-            _playerNameField.value = s.playerName ?? "Player";
-        else
-            Debug.LogWarning("[UISettingsManager] playerNameField == null → имя игрока не установлено");
-
-        if (_weaponRadioGroup != null)
-            _weaponRadioGroup.value = s.defaultWeaponIndex;
-        else
-            Debug.LogWarning("[UISettingsManager] weaponRadioGroup == null → оружие не выбрано");
-
-        if (_musicSlider != null && _musicValue != null)
-        {
-            _musicSlider.value = s.musicVolume * 100f;
-            UpdateMusicValue(s.musicVolume * 100f);
-        }
-
-        if (_soundSlider != null && _soundValue != null)
-        {
-            _soundSlider.value = s.soundVolume * 100f;
-            UpdateSoundValue(s.soundVolume * 100f);
-        }
-
-        if (_resolutionDropdown != null && _resolutions != null && _resolutions.Count > 0)
-        {
-            int index = Mathf.Clamp(s.resolutionIndex, 0, _resolutions.Count - 1);
-            _resolutionDropdown.index = index;
-        }
-
-        if (_qualityDropdown != null && _qualityNames != null && _qualityNames.Length > 0)
-        {
-            int index = Mathf.Clamp(s.qualityLevel, 0, _qualityNames.Length - 1);
-            _qualityDropdown.index = index;
-        }
-
-        UpdateLanguageButtons(s.language);
-    }
-
-    private IEnumerator RetryLoadSettings()
-    {
-        yield return new WaitForSeconds(0.1f);
-        if (SettingsManager.IsReady())
-            LoadCurrentSettings();
-        else
-            Debug.LogError("[UISettingsManager] SettingsManager всё ещё не готов после задержки!");
-    }
-
-    private void UpdateLanguageButtons(SystemLanguage lang)
-    {
-        bool isRu = lang == SystemLanguage.Russian;
-
-        if (_btnRussian != null)
-        {
-            _btnRussian.RemoveFromClassList("selected-language");
-            if (isRu) _btnRussian.AddToClassList("selected-language");
-        }
-
-        if (_btnEnglish != null)
-        {
-            _btnEnglish.RemoveFromClassList("selected-language");
-            if (!isRu) _btnEnglish.AddToClassList("selected-language");
-        }
-    }
-
-    #region Event Handlers
-
-    private void OnMusicVolumeChanged(ChangeEvent<float> evt)
-    {
-        UpdateMusicValue(evt.newValue);
-    }
-
-    private void OnSoundVolumeChanged(ChangeEvent<float> evt)
-    {
-        UpdateSoundValue(evt.newValue);
-    }
-
-    private void UpdateMusicValue(float v)
-    {
-        if (_musicValue != null)
-            _musicValue.text = Mathf.RoundToInt(v).ToString();
-    }
-
-    private void UpdateSoundValue(float v)
-    {
-        if (_soundValue != null)
-            _soundValue.text = Mathf.RoundToInt(v).ToString();
-    }
-
-    private void OnLanguageChanged(SystemLanguage lang)
-    {
-        UpdateLanguageButtons(lang);
-        LocalizationManager.Instance?.LoadLanguage(lang, true);
-    }
-
-    private void OnSaveSettings()
-    {
-        if (!SettingsManager.IsReady())
-        {
-            Debug.LogWarning("[UISettingsManager] SettingsManager не готов → создаём временный");
-            CreateEmergencySettingsManager();
-            return;
-        }
-
-        var settings = CreateSettingsFromUI();
-        SettingsManager.Instance.SaveSettings(settings);
-
-        _uiDocument.StartCoroutine(DelayedReturn());
-    }
-
-    private IEnumerator DelayedReturn()
-    {
-        yield return new WaitForSeconds(0.1f);
-        LocalizationManager.Instance?.UpdateAllUIElements();
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    private void OnCancelSettings()
-    {
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    private void OnKeyDown(KeyDownEvent evt)
-    {
-        if (evt.keyCode == KeyCode.Escape)
-        {
-            _controller.ShowScreen(UIScreenManager.MenuScreenName);
-            evt.StopPropagation();
-        }
-    }
-
-    #endregion
-
-    #region Emergency & Helpers
-
-    private void CreateEmergencySettingsManager()
-    {
-        var obj = new GameObject("TempSettingsManager");
-        var mgr = obj.AddComponent<SettingsManager>();
-        _uiDocument.StartCoroutine(SaveWithTempManager(mgr));
-    }
-
-    private IEnumerator SaveWithTempManager(SettingsManager mgr)
-    {
-        yield return new WaitUntil(() => SettingsManager.IsReady());
-        var settings = CreateSettingsFromUI();
-        SettingsManager.Instance.SaveSettings(settings);
-        Object.Destroy(mgr.gameObject);
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
-    }
-
-    private GameSettings CreateSettingsFromUI()
-    {
-        return new GameSettings
-        {
-            playerName = _playerNameField?.value ?? "Player",
-            defaultWeaponIndex = _weaponRadioGroup?.value ?? 0,
-            musicVolume = _musicSlider != null ? _musicSlider.value / 100f : 0.8f,
-            soundVolume = _soundSlider != null ? _soundSlider.value / 100f : 0.8f,
-            resolutionIndex = _resolutionDropdown?.index ?? 0,
-            qualityLevel = _qualityDropdown?.index ?? 2,
-            language = (_btnRussian != null && _btnRussian.ClassListContains("selected-language"))
-                ? SystemLanguage.Russian
-                : SystemLanguage.English
-        };
-    }
-
-    #endregion
-
-    public void Cleanup()
-    {
-        _root.UnregisterCallback<KeyDownEvent>(OnKeyDown);
-
-        if (_btnRussian != null)
-            _btnRussian.clicked -= () => OnLanguageChanged(SystemLanguage.Russian);
-
-        if (_btnEnglish != null)
-            _btnEnglish.clicked -= () => OnLanguageChanged(SystemLanguage.English);
-
-        if (_btnSaveSettings != null)
-            _btnSaveSettings.clicked -= OnSaveSettings;
-
-        if (_btnCancelSettings != null)
-            _btnCancelSettings.clicked -= OnCancelSettings;
-    }
-}
-Файл: ./Scripts/UI/UIResponsiveManager.cs
-// Assets/Scripts/UI/UIResponsiveManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-
-public class UIResponsiveManager
-{
-    private readonly VisualElement _root;
-    private readonly float[] _breakpoints = { 768f, 1280f, 1920f, 2560f, 3840f };
-
-    public UIResponsiveManager(VisualElement root)
-    {
-        _root = root;
-        Initialize();
-    }
-
-    private void Initialize()
-    {
-        _root.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-        // УБРАТЬ: UpdateResponsiveClasses(); — будет NaN
-        Debug.Log("Responsive UI manager initialized");
-        HideScrollers();
-        Debug.Log("Responsive UI manager hide scrollers");
-    }
-
-    private void HideScrollers()
-    {
-        _root.Q<ScrollView>().verticalScrollerVisibility = ScrollerVisibility.Hidden;
-        _root.Q<ScrollView>().horizontalScrollerVisibility = ScrollerVisibility.Hidden;
-    }
-
-    private void OnGeometryChanged(GeometryChangedEvent evt)
-    {
-        UpdateResponsiveClasses();
-    }
-
-    private void UpdateResponsiveClasses()
-    {
-        if (_root == null) return;
-
-        float width = _root.resolvedStyle.width;
-
-        // ЗАЩИТА ОТ NaN
-        if (float.IsNaN(width) || width <= 0)
-        {
-            // Отложим до первого валидного события
-            return;
-        }
-
-        // Удаляем все классы
-        _root.RemoveFromClassList("sm-screen");
-        _root.RemoveFromClassList("md-screen");
-        _root.RemoveFromClassList("lg-screen");
-        _root.RemoveFromClassList("xl-screen");
-        _root.RemoveFromClassList("xxl-screen");
-
-        // Добавляем нужный
-        if (width < _breakpoints[0])
-            _root.AddToClassList("sm-screen");
-        else if (width < _breakpoints[1])
-            _root.AddToClassList("md-screen");
-        else if (width < _breakpoints[2])
-            _root.AddToClassList("lg-screen");
-        else if (width < _breakpoints[3])
-            _root.AddToClassList("xl-screen");
-        else
-            _root.AddToClassList("xxl-screen");
-
-        Debug.Log($"Screen width: {width}px, Class: {GetCurrentBreakpoint(width)}");
-    }
-
-    private string GetCurrentBreakpoint(float width)
-    {
-        if (width < _breakpoints[0]) return "sm";
-        else if (width < _breakpoints[1]) return "md";
-        else if (width < _breakpoints[2]) return "lg";
-        else if (width < _breakpoints[3]) return "xl";
-        else return "xxl";
-    }
-
-    public void RefreshResponsiveUI()
-    {
-        UpdateResponsiveClasses();
-    }
-
-    public void Cleanup()
-    {
-        if (_root != null)
-        {
-            _root.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-        }
-    }
-}
-Файл: ./Scripts/UI/LobbySettingsManager.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-
-public class LobbySettingsManager
-{
-    private VisualElement _root;
-
-    // Элементы lobby_list_screen (источник)
-    private TextField _createLobbyName;
-    private RadioButton _radioOpen;
-    private RadioButton _radioClosed;
-    private TextField _lobbyPassword;
-    private Slider _playerCountSlider;
-    private Label _playerCountValue;
-    private VisualElement _charVacuum;
-    private VisualElement _charToaster;
-    private VisualElement _charGPT;
-    private Slider _waveCountSlider;
-    private Label _waveCountValue;
-
-    // Элементы lobby_settings_screen (приёмник)
-    private TextField _lobbyNameField;
-    private RadioButton _settingsRadioOpen;
-    private RadioButton _settingsRadioClosed;
-    private TextField _lobbyPasswordField;
-    private Slider _settingsPlayerCountSlider;
-    private Label _settingsPlayerCountValue;
-    private VisualElement _settingsCharVacuum;
-    private VisualElement _settingsCharToaster;
-    private VisualElement _settingsCharGPT;
-    private Slider _settingsWaveCountSlider;
-    private Label _settingsWaveCountValue;
-
-    public LobbySettingsManager(VisualElement root)
-    {
-        _root = root;
-        InitializeElements();
-        SetupEventListeners();
-    }
-
-    private void InitializeElements()
-    {
-        // lobby_list_screen (создание)
-        var lobbyListScreen = _root.Q<VisualElement>("lobby_list_screen");
-        _createLobbyName = lobbyListScreen.Q<TextField>("createLobbyName");
-        _radioOpen = lobbyListScreen.Q<RadioButton>("radioOpen");
-        _radioClosed = lobbyListScreen.Q<RadioButton>("radioClosed");
-        _lobbyPassword = lobbyListScreen.Q<TextField>("lobbyPassword");
-        _playerCountSlider = lobbyListScreen.Q<Slider>("playerCountSlider");
-        _playerCountValue = lobbyListScreen.Q<Label>("playerCountValue");
-        _charVacuum = lobbyListScreen.Q<VisualElement>("charVacuum");
-        _charToaster = lobbyListScreen.Q<VisualElement>("charToaster");
-        _charGPT = lobbyListScreen.Q<VisualElement>("charGPT");
-        _waveCountSlider = lobbyListScreen.Q<Slider>("waveCountSlider");
-        _waveCountValue = lobbyListScreen.Q<Label>("waveCountValue");
-
-        // lobby_settings_screen (настройки)
-        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
-        _lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
-        _settingsRadioOpen = lobbySettingsScreen.Q<RadioButton>("radioOpen");
-        _settingsRadioClosed = lobbySettingsScreen.Q<RadioButton>("radioClosed");
-        _lobbyPasswordField = lobbySettingsScreen.Q<TextField>("lobbyPasswordField");
-        _settingsPlayerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
-        _settingsPlayerCountValue = lobbySettingsScreen.Q<Label>("playerCountValue");
-        _settingsCharVacuum = lobbySettingsScreen.Q<VisualElement>("charVacuum");
-        _settingsCharToaster = lobbySettingsScreen.Q<VisualElement>("charToaster");
-        _settingsCharGPT = lobbySettingsScreen.Q<VisualElement>("charGPT");
-        _settingsWaveCountSlider = lobbySettingsScreen.Q<Slider>("waveCountSlider");
-        _settingsWaveCountValue = lobbySettingsScreen.Q<Label>("waveCountValue");
-    }
-
-    private void SetupEventListeners()
-    {
-        // Синхронизация при изменении формы создания
-        if (_createLobbyName != null) _createLobbyName.RegisterValueChangedCallback(evt => SyncLobbyName());
-        if (_radioOpen != null) _radioOpen.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_radioClosed != null) _radioClosed.RegisterValueChangedCallback(evt => SyncLobbyType());
-        if (_lobbyPassword != null) _lobbyPassword.RegisterValueChangedCallback(evt => SyncPassword());
-        if (_playerCountSlider != null) _playerCountSlider.RegisterValueChangedCallback(evt => SyncPlayerCount());
-        if (_waveCountSlider != null) _waveCountSlider.RegisterValueChangedCallback(evt => SyncWaveCount());
-    }
-
-    public void SyncAllSettings()
-    {
-        SyncLobbyName();
-        SyncLobbyType();
-        SyncPassword();
-        SyncPlayerCount();
-        SyncCharacterSelection();
-        SyncWaveCount();
-    }
-
-    #region Синхронизация
-    private void SyncLobbyName()
-    {
-        if (_lobbyNameField != null && _createLobbyName != null)
-            _lobbyNameField.value = _createLobbyName.value;
-    }
-
-    private void SyncLobbyType()
-    {
-        if (_settingsRadioOpen != null && _radioOpen != null)
-            _settingsRadioOpen.SetValueWithoutNotify(_radioOpen.value);
-        if (_settingsRadioClosed != null && _radioClosed != null)
-            _settingsRadioClosed.SetValueWithoutNotify(_radioClosed.value);
-    }
-
-    private void SyncPassword()
-    {
-        if (_lobbyPasswordField != null && _lobbyPassword != null)
-            _lobbyPasswordField.value = _lobbyPassword.value;
-    }
-
-    private void SyncPlayerCount()
-    {
-        if (_settingsPlayerCountSlider != null && _playerCountSlider != null)
-            _settingsPlayerCountSlider.SetValueWithoutNotify(_playerCountSlider.value);
-        if (_settingsPlayerCountValue != null && _playerCountValue != null)
-            _settingsPlayerCountValue.text = _playerCountValue.text;
-    }
-
-    private void SyncCharacterSelection()
-    {
-        // Убираем selected со всех
-        _settingsCharVacuum?.RemoveFromClassList("selected");
-        _settingsCharToaster?.RemoveFromClassList("selected");
-        _settingsCharGPT?.RemoveFromClassList("selected");
-
-        // Добавляем selected к активному
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            _settingsCharVacuum?.AddToClassList("selected");
-        else if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            _settingsCharToaster?.AddToClassList("selected");
-        else if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            _settingsCharGPT?.AddToClassList("selected");
-    }
-
-    private void SyncWaveCount()
-    {
-        if (_settingsWaveCountSlider != null && _waveCountSlider != null)
-            _settingsWaveCountSlider.SetValueWithoutNotify(_waveCountSlider.value);
-        if (_settingsWaveCountValue != null && _waveCountValue != null)
-            _settingsWaveCountValue.text = _waveCountValue.text;
-    }
-    #endregion
-}
-Файл: ./Scripts/UI/MainMenuController.cs
-using UnityEngine;
-using UnityEngine.UIElements;
-using System.Collections;
-
-public class MainMenuController : MonoBehaviour
-{
-    private VisualElement _root;
-    private UIInputManager _inputManager;
-    private UIScreenManager _screenManager;
-    private UILobbySetupManager _lobbySetup;
-    private UICharacterSelectionManager _charSelect;
-    private UISettingsManager _settings;
-    private LobbySettingsManager _lobbySettings;
-
-    public UILobbySetupManager LobbySetupManager => _lobbySetup;
-    public UICharacterSelectionManager CharacterSelectionManager => _charSelect;
-
-    private void Start()
-    {
-        var uiDoc = GetComponent<UIDocument>();
-        _root = uiDoc.rootVisualElement;
-
-        _inputManager = new UIInputManager(UIManager.Instance.InputActions, _root, this);
-
-        _screenManager = new UIScreenManager(_root, this);  // ← this!
-        _lobbySetup = new UILobbySetupManager(_root, this);
-        _charSelect = new UICharacterSelectionManager(_root);
-        _settings = new UISettingsManager(_root, uiDoc, this);
-        _lobbySettings = new LobbySettingsManager(_root);
-        _inputManager.Enable();
-        _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
-
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.RefreshForNewScene();
-            LocalizationManager.Instance.UpdateAllUIElements();
-        }
-    }
-
-    public void ShowScreen(string screenName)
-    {
-        _screenManager.ShowScreen(screenName);
-
-        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
-        if (screenName == UIScreenManager.LobbyListScreenName)
-        {
-            // Даем кадр на отрисовку, затем обновляем
-            StartCoroutine(DelayedLobbyRefresh());
-        }
-    }
-
-    private IEnumerator DelayedLobbyRefresh()
-    {
-        yield return new WaitForEndOfFrame();
-        UIManager.Instance.OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
-    }
-
-    public void UpdatePlayerList()
-    {
-        Debug.Log("MainMenuController: UpdatePlayerList called");
-        _screenManager.UpdatePlayerList();
-    }
-
-    public void OnLobbyCreated()
-    {
-        Debug.Log("MainMenuController: OnLobbyCreated called");
-        ShowScreen(UIScreenManager.LobbySettingsScreenName);
-        _lobbySettings.SyncAllSettings();
-        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
-    }
-
-    public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
-
-    public void OnJoinedAsClient()
-    {
-        ShowScreen("lobby_settings_screen");
-        SetupClientModeUI();
-    }
-
-    public void SetupHostModeUI()
-    {
-        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
-        if (lobbySettingsScreen == null) return;
-
-        // Показываем все элементы для хоста
-        var btnStartGame = lobbySettingsScreen.Q<Button>("btnStartGame");
-        var btnDisbandLobby = lobbySettingsScreen.Q<Button>("btnDisbandLobby");
-        var lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
-        var playerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
-
-        if (btnStartGame != null) btnStartGame.style.display = DisplayStyle.Flex;
-        if (btnDisbandLobby != null) btnDisbandLobby.style.display = DisplayStyle.Flex;
-        if (lobbyNameField != null) lobbyNameField.SetEnabled(true);
-        if (playerCountSlider != null) playerCountSlider.SetEnabled(true);
-
-        Debug.Log("UI set to host mode - all controls enabled");
-    }
-
-    public void ReturnToLobbyList()
-    {
-        Debug.Log("MainMenuController: Returning to lobby list");
-        ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
-        StartCoroutine(DelayedLobbyRefresh2());
-    }
-
-    private IEnumerator DelayedLobbyRefresh2()
-    {
-        yield return new WaitForSeconds(0.5f);
-        UIManager.Instance?.OnLobbyListUpdated();
-        
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
-    }
-
-    public void HandleLobbyClosed(string lobbyId)
-    {
-        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
-
-        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
-        if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
-        {
-            Debug.Log("We were in the closed lobby, returning to lobby list");
-            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
-        }
-        else
-        {
-            Debug.Log($"Not returning to lobby list because we're on screen: {GetCurrentScreen()}");
-        }
-    }
-
-    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
-    {
-        yield return new WaitForSeconds(0.5f);
-        ReturnToLobbyList();
-    }
-
-    public string GetCurrentScreen()
-    {
-        return _screenManager?.GetCurrentScreen() ?? "unknown";
-    }
-
-    public void ShowLobbyListAfterDisband()
-    {
-        StartCoroutine(ShowLobbyListAfterDisbandCoroutine());
-    }
-
-    private IEnumerator ShowLobbyListAfterDisbandCoroutine()
-    {
-        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
-
-        ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
-        UIManager.Instance?.OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
-    }
-
-    private void SetupClientModeUI()
-    {
-        var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");
-        if (lobbySettingsScreen == null) return;
-
-        // Скрываем элементы, которые недоступны клиентам
-        var btnStartGame = lobbySettingsScreen.Q<Button>("btnStartGame");
-        var btnDisbandLobby = lobbySettingsScreen.Q<Button>("btnDisbandLobby");
-        var lobbyNameField = lobbySettingsScreen.Q<TextField>("lobbyNameField");
-        var playerCountSlider = lobbySettingsScreen.Q<Slider>("playerCountSlider");
-
-        if (btnStartGame != null) btnStartGame.style.display = DisplayStyle.None;
-        if (btnDisbandLobby != null) btnDisbandLobby.style.display = DisplayStyle.None;
-        if (lobbyNameField != null) lobbyNameField.SetEnabled(false);
-        if (playerCountSlider != null) playerCountSlider.SetEnabled(false);
-
-        Debug.Log("UI set to client mode - host controls disabled");
-    }
-
-    private void OnDestroy()
-    {
-        _inputManager?.Cleanup();
-        _settings?.Cleanup();
-    }
-}
+Директория ./Scripts/UI не существует, пропускаем
 Обработка директории: ./UI
 ==========================================
 

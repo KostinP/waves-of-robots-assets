@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Collections;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -36,7 +37,29 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public void ShowScreen(string screenName) => _screenManager.ShowScreen(screenName);
+    public void ShowScreen(string screenName)
+    {
+        _screenManager.ShowScreen(screenName);
+
+        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
+        if (screenName == UIScreenManager.LobbyListScreenName)
+        {
+            // Даем кадр на отрисовку, затем обновляем
+            StartCoroutine(DelayedLobbyRefresh());
+        }
+    }
+
+    private IEnumerator DelayedLobbyRefresh()
+    {
+        yield return new WaitForEndOfFrame();
+        UIManager.Instance.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
 
     public void UpdatePlayerList()
     {

@@ -68,6 +68,11 @@ public struct LobbyInfo
     public string ip;
     public int port;
     public string uniqueId;
+
+    public override string ToString()
+    {
+        return $"LobbyInfo: {name}, Players: {currentPlayers}/{maxPlayers}, Open: {isOpen}, IP: {ip}:{port}, ID: {uniqueId}";
+    }
 }
 
 

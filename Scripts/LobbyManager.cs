@@ -169,15 +169,27 @@ public class LobbyManager : MonoBehaviour
 
     private string GetLocalIPAddress()
     {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
+        try
         {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
             {
-                return ip.ToString();
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    Debug.Log($"Found local IP: {ip}");
+                    return ip.ToString();
+                }
             }
+
+            // Если не нашли подходящий IP, используем локальный
+            Debug.LogWarning("No suitable local IP found, using 127.0.0.1");
+            return "127.0.0.1";
         }
-        return "127.0.0.1";
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error getting local IP: {ex.Message}");
+            return "127.0.0.1";
+        }
     }
 
     public void JoinLobby(LobbyInfo lobbyInfo, string playerName, string password = "")
@@ -277,7 +289,8 @@ public class LobbyManager : MonoBehaviour
     {
         Debug.Log("Disbanding lobby...");
 
-        _discovery.StopHosting();
+        // ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ О ЗАКРЫТИИ
+        _discovery.StopHostingAndNotify();
         _discovery.ClearLobbies();
 
         // ОСТАНАВЛИВАЕМ КОРОУТИНЫ
@@ -294,18 +307,13 @@ public class LobbyManager : MonoBehaviour
         // УНИЧТОЖАЕМ МИРЫ NETCODE
         ShutdownAllNetCodeWorlds();
 
-        // ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ ВМЕСТО ГЛАВНОГО МЕНЮ
+        // ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ
         var mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
         {
             mainMenuController.ShowScreen(UIScreenManager.LobbyListScreenName);
             // ОБНОВЛЯЕМ СПИСОК ЛОББИ
             UIManager.Instance.OnLobbyListUpdated();
-        }
-        else
-        {
-            // ЕСЛИ КОНТРОЛЛЕР НЕ НАЙДЕН, ПЕРЕЗАГРУЖАЕМ СЦЕНУ
-            SceneManager.LoadScene("MainMenuScene");
         }
 
         Debug.Log("Lobby disbanded successfully - returned to lobby list");
@@ -382,8 +390,15 @@ public class LobbyManager : MonoBehaviour
     {
         if (_discovery != null)
         {
-            return _discovery.GetDiscoveredLobbies();
+            var lobbies = _discovery.GetDiscoveredLobbies();
+            Debug.Log($"GetDiscoveredLobbies: returning {lobbies.Count} lobbies");
+            foreach (var lobby in lobbies)
+            {
+                Debug.Log($" - {lobby.name} ({lobby.ip}:{lobby.port}), Open: {lobby.isOpen}");
+            }
+            return lobbies;
         }
+        Debug.LogWarning("GetDiscoveredLobbies: _discovery is null");
         return new List<LobbyInfo>();
     }
 

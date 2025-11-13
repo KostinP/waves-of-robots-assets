@@ -93,6 +93,7 @@
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
+                            <ui:Button name="btnRefreshLobbyList" text="#refresh_lobby_list" class="right-panel-button" />
                             <ui:Button name="btnCreateLobby" text="#create" class="right-panel-button" />
                         </ui:VisualElement>
                     </ui:VisualElement>

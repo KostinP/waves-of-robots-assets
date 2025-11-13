@@ -5,11 +5,8 @@ public class SceneUIController : MonoBehaviour
 {
     void Start()
     {
-        // Загружаем UI сцены аддитивно
         SceneManager.LoadSceneAsync("HUDScene", LoadSceneMode.Additive);
         SceneManager.LoadSceneAsync("PauseMenuScene", LoadSceneMode.Additive);
-        
-        // Подписываемся на события
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -30,7 +27,6 @@ public class SceneUIController : MonoBehaviour
     void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
-        // Выгружаем UI сцены при выходе, только если загружены
         var hudScene = SceneManager.GetSceneByName("HUDScene");
         if (hudScene.isLoaded) SceneManager.UnloadSceneAsync("HUDScene");
 

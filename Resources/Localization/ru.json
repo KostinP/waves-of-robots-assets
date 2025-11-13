@@ -38,17 +38,14 @@
     "weapon": "Оружие",
     "ping": "Пинг",
     "kick": "Выгнать",
-
     "lobby_settings": "Настройки лобби",
     "disband_lobby": "Распустить лобби",
     "card_title": "Выберите 1 карту",
     "card_subtitle": "Один выбор  – бесконечные последствия",
     "upgrade": "Улучшение",
-
     "current_player_name": "Имя игрока",
     "random": "Случайное",
     "default_arm": "Оружие по умолчанию",
-
     "common_gun1": "Огнемёт \"Термит\"",
     "common_gun2": "Автопушка \"Титан\"",
     "common_gun3": "Электрошокер \"Вольт\"",
@@ -58,7 +55,6 @@
     "rare_gun3": "Ледяной луч \"Крио\"",
     "legendary_gun1": "Плазменный веер \"Аркан\"",
     "legendary_gun2": "Гравитационная пушка \"Небула\"",
-
     "music_volume": "Громкость музыки",
     "sound_volume": "Громкость звуков",
     "default_difficulty": "Сложность по умолчанию",
@@ -67,7 +63,6 @@
     "language": "Язык интерфейса",
     "save_button": "Сохранить",
     "cancel_button": "Отменить",
-
     "lobby_name_label": "Название лобби",
     "player_count_label": "Количество игроков",
     "type_label": "Тип",
@@ -79,6 +74,5 @@
     "difficulty_label": "Сложность",
     "wave_count_label": "Количество волн",
     "lobby_settings_label": "Настройки лобби",
-
     "leave_game": "Покинуть игру"
 }

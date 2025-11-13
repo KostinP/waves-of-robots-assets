@@ -36,7 +36,6 @@
     "players_header": "Players",
     "player_name": "Players",
     "weapon": "Weapon",
-
     "ping": "Ping",
     "kick": "Kick",
     "lobby_settings": "Lobby Settings",
@@ -44,11 +43,9 @@
     "card_title": "Select 1 card",
     "card_subtitle": "One choice — endless consequences",
     "upgrade": "Upgrade",
-
     "current_player_name": "Player name",
     "random": "Random",
     "default_arm": "Default arm",
-
     "common_gun1": "Termit\"Flamethrower\"",
     "common_gun2": "Titan \"Autocannon\"",
     "common_gun3": "Volt \"Stun Gun\"",
@@ -58,7 +55,6 @@
     "rare_gun3": "Krio \"Ice Ray\"",
     "legendary_gun1": "Arcane \"Plasma Caster\"",
     "legendary_gun2": "Nebula \"Gravity Gun\"",
-
     "music_volume": "Music volume",
     "sound_volume": "Sound volume",
     "default_difficulty": "Default difficulty",
@@ -67,7 +63,6 @@
     "language": "language",
     "save_button": "Save",
     "cancel_button": "Cancel",
-
     "lobby_name_label": "Lobby name",
     "player_count_label": "Player count",
     "type_label": "Type",
@@ -79,6 +74,5 @@
     "difficulty_label": "Difficulty",
     "wave_count_label": "Wave count",
     "lobby_settings_label": "Lobby Settings",
-
     "leave_game": "Leave game"
 }

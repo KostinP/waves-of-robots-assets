@@ -8,9 +8,7 @@ public class StartupManager : MonoBehaviour
 
     private void Start()
     {
-        // Загружаем менеджеры (они DontDestroyOnLoad)
-        SceneManager.LoadSceneAsync(managersScene, LoadSceneMode.Additive)
-            .completed += _ => LoadMainMenu();
+        SceneManager.LoadSceneAsync(managersScene, LoadSceneMode.Additive).completed += _ => LoadMainMenu();
     }
 
     private void LoadMainMenu()

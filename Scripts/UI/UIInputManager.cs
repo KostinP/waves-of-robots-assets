@@ -20,14 +20,14 @@ public class UIInputManager
     private bool _settingsSubscribed = false;
     private bool _statsSubscribed = false;
     private UIScreenManager _screenManager;
-    private MainMenuController _controller; // Добавляем ссылку
+    private MainMenuController _controller;
 
     public UIInputManager(InputActionAsset inputActions, VisualElement root, MainMenuController controller)
     {
         _inputActions = inputActions;
         _root = root;
         _controller = controller;
-        _screenManager = new UIScreenManager(root, controller); // Передаём controller
+        _screenManager = new UIScreenManager(root, controller);
         Initialize();
     }
 
@@ -94,21 +94,14 @@ public class UIInputManager
 
     public void Cleanup()
     {
-        if (_cancelSubscribed && _cancelAction != null)
-            _cancelAction.performed -= OnCancelPerformed;
-        if (_navigateSubscribed && _navigateAction != null)
-            _navigateAction.performed -= OnNavigatePerformed;
-        if (_submitSubscribed && _submitAction != null)
-            _submitAction.performed -= OnSubmitPerformed;
-        if (_tabSubscribed && _tabAction != null)
-            _tabAction.performed -= OnTabPerformed;
-        if (_settingsSubscribed && _openSettingsAction != null)
-            _openSettingsAction.performed -= OnOpenSettingsPerformed;
-        if (_statsSubscribed && _openStatisticsAction != null)
-            _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
-        // Сбрасываем флаги
-        _cancelSubscribed = _navigateSubscribed = _submitSubscribed =
-            _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
+        if (_cancelSubscribed && _cancelAction != null) _cancelAction.performed -= OnCancelPerformed;
+        if (_navigateSubscribed && _navigateAction != null) _navigateAction.performed -= OnNavigatePerformed;
+        if (_submitSubscribed && _submitAction != null) _submitAction.performed -= OnSubmitPerformed;
+        if (_tabSubscribed && _tabAction != null) _tabAction.performed -= OnTabPerformed;
+        if (_settingsSubscribed && _openSettingsAction != null) _openSettingsAction.performed -= OnOpenSettingsPerformed;
+        if (_statsSubscribed && _openStatisticsAction != null) _openStatisticsAction.performed -= OnOpenStatisticsPerformed;
+
+        _cancelSubscribed = _navigateSubscribed = _submitSubscribed = _tabSubscribed = _settingsSubscribed = _statsSubscribed = false;
     }
 
     public void Enable()
@@ -119,7 +112,6 @@ public class UIInputManager
 
     public void Disable() => _uiActionMap?.Disable();
 
-    #region Input Handlers
     private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed || _isTextFieldFocused) return;
@@ -163,9 +155,7 @@ public class UIInputManager
         Debug.Log("Open Statistics");
         // _controller.ShowScreen("statistics_screen");
     }
-    #endregion
 
-    #region Navigation
     private void NavigateUI(int direction)
     {
         var elements = GetInteractiveElements();
@@ -175,7 +165,10 @@ public class UIInputManager
         SetFocusToElement(elements[next]);
     }
 
-    private void NavigateHorizontal(int direction) { }
+    private void NavigateHorizontal(int direction)
+    {
+        // Implement horizontal navigation if needed
+    }
 
     private List<VisualElement> GetInteractiveElements()
     {
@@ -213,9 +206,7 @@ public class UIInputManager
             _isSettingFocus = false;
         }
     }
-    #endregion
 
-    #region Button Handlers
     private void HandleButtonClick(Button btn)
     {
         switch (btn.name)
@@ -257,7 +248,6 @@ public class UIInputManager
     private void OnQuit() => Debug.Log("Quit");
     #endregion
 
-    #region Input Switch
     public void SwitchToPlayerInput()
     {
         _uiActionMap?.Disable();
@@ -271,5 +261,4 @@ public class UIInputManager
         playerMap?.Disable();
         _uiActionMap?.Enable();
     }
-    #endregion
 }

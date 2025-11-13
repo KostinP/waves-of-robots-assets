@@ -48,7 +48,6 @@ public class UIManager : MonoBehaviour
     public void SetHUDController(HUDController controller) => _hudController = controller;
     public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
 
-    // === События для UI ===
     public void OnPlayerJoined(int connectionId, string name)
     {
         OnPlayersUpdated();
@@ -59,7 +58,6 @@ public class UIManager : MonoBehaviour
         OnPlayersUpdated();
     }
 
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
     public void OnPlayersUpdated()
     {
         _mainMenuController?.UpdatePlayerList();
@@ -71,13 +69,11 @@ public class UIManager : MonoBehaviour
         _mainMenuController?.OnLobbyListUpdated();
     }
 
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
     public void OnLobbyCreated()
     {
         _mainMenuController?.OnLobbyCreated();
     }
 
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
     public void OnJoinedAsClient()
     {
         _mainMenuController?.OnJoinedAsClient();
@@ -91,8 +87,6 @@ public class UIManager : MonoBehaviour
 
     public void LeaveGame()
     {
-        Debug.Log("UIManager: Leaving game...");
-
         try
         {
             // Останавливаем все сетевые активности
@@ -130,7 +124,7 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            SceneManager.LoadScene(0); // Первая сцена
+            SceneManager.LoadScene(0);
         }
     }
 
@@ -180,7 +174,6 @@ public class UIManager : MonoBehaviour
             LobbyDiscovery.Instance.ForceDiscovery();
         }
     }
-
 
     private void OnDestroy()
     {

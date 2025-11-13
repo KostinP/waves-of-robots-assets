@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/HUDController.cs
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.Entities;
 using Unity.Collections;
@@ -23,11 +22,11 @@ public class HUDController : MonoBehaviour
         _playersContainer.Clear();
         var clientWorld = World.All.FirstOrDefault(w => w.IsClient());
         if (clientWorld == null) return;
-        
+
         var em = clientWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
         var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
-        
+
         for (int i = 0; i < players.Length; i++)
         {
             var p = players[i];
@@ -40,14 +39,14 @@ public class HUDController : MonoBehaviour
 
     private void CreatePlayerHUD(VisualElement container, string name, string ping)
     {
-        var player = new VisualElement();
+        var player = new VisualElement { pickingMode = PickingMode.Ignore };
         player.AddToClassList("hud__player");
-        var icon = new VisualElement();
+        var icon = new VisualElement { pickingMode = PickingMode.Ignore };
         icon.AddToClassList("hud__player-icon");
         icon.AddToClassList("mic");
-        var nameLabel = new Label(name);
+        var nameLabel = new Label(name) { pickingMode = PickingMode.Ignore };
         nameLabel.AddToClassList("hud__player-name");
-        var pingLabel = new Label(ping);
+        var pingLabel = new Label(ping) { pickingMode = PickingMode.Ignore };
         pingLabel.AddToClassList("hud__player-ping");
         float pingValue = float.Parse(ping.Replace("мс", ""));
         if (pingValue < 50) pingLabel.AddToClassList("good");

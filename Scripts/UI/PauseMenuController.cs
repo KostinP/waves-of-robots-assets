@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/UI/PauseMenuController.cs
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
 
@@ -19,7 +18,7 @@ public class PauseMenuController : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame) 
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
             TogglePause();
     }
 

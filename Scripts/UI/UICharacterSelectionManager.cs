@@ -20,7 +20,6 @@ public class UICharacterSelectionManager
     {
         FindCharacterElements();
         SetupCharacterSelection();
-        Debug.Log("UICharacterSelectionManager initialized");
     }
 
     private void FindCharacterElements()
@@ -32,37 +31,25 @@ public class UICharacterSelectionManager
 
     private void SetupCharacterSelection()
     {
-        if (_charVacuum != null)
-            _charVacuum.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
-
-        if (_charToaster != null)
-            _charToaster.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
-
-        if (_charGPT != null)
-            _charGPT.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
+        _charVacuum?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charVacuum));
+        _charToaster?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charToaster));
+        _charGPT?.RegisterCallback<ClickEvent>(evt => SelectCharacter(_charGPT));
     }
 
     private void SelectCharacter(VisualElement selectedCharacter)
     {
-        // Снимаем выделение со всех персонажей
-        if (_charVacuum != null) _charVacuum.RemoveFromClassList("selected");
-        if (_charToaster != null) _charToaster.RemoveFromClassList("selected");
-        if (_charGPT != null) _charGPT.RemoveFromClassList("selected");
+        _charVacuum?.RemoveFromClassList("selected");
+        _charToaster?.RemoveFromClassList("selected");
+        _charGPT?.RemoveFromClassList("selected");
 
-        // Выделяем выбранного персонажа
         selectedCharacter.AddToClassList("selected");
-        Debug.Log($"Selected character: {selectedCharacter.name}");
     }
 
     public string GetSelectedCharacter()
     {
-        if (_charVacuum != null && _charVacuum.ClassListContains("selected"))
-            return "Vacuum";
-        if (_charToaster != null && _charToaster.ClassListContains("selected"))
-            return "Toaster";
-        if (_charGPT != null && _charGPT.ClassListContains("selected"))
-            return "GPT";
-
+        if (_charVacuum?.ClassListContains("selected") == true) return "Vacuum";
+        if (_charToaster?.ClassListContains("selected") == true) return "Toaster";
+        if (_charGPT?.ClassListContains("selected") == true) return "GPT";
         return "None";
     }
 }

@@ -12,6 +12,7 @@
     "lobby_name": "Название лобби",
     "max_players": "Макс. игроков",
     "create": "Создать",
+    "refresh_lobby_list": "Обновить",
     "back": "Назад",
     "available_lobbies": "Доступные лобби",
     "start_game": "Начать игру",
@@ -989,6 +990,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
 using UnityEngine.InputSystem;
+using System;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -1036,11 +1039,16 @@ public class UIManager : MonoBehaviour
     // === События для UI ===
     public void OnPlayerJoined(int connectionId, string name)
     {
-        _mainMenuController?.UpdatePlayerList();
-        _hudController?.UpdatePlayerList();
+        OnPlayersUpdated();
     }
 
     public void OnPlayerLeft(int connectionId)
+    {
+        OnPlayersUpdated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnPlayersUpdated()
     {
         _mainMenuController?.UpdatePlayerList();
         _hudController?.UpdatePlayerList();
@@ -1051,6 +1059,18 @@ public class UIManager : MonoBehaviour
         _mainMenuController?.OnLobbyListUpdated();
     }
 
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnLobbyCreated()
+    {
+        _mainMenuController?.OnLobbyCreated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnJoinedAsClient()
+    {
+        _mainMenuController?.OnJoinedAsClient();
+    }
+
     public void StartGame()
     {
         LobbyManager.StartGame();
@@ -1059,9 +1079,96 @@ public class UIManager : MonoBehaviour
 
     public void LeaveGame()
     {
-        LobbyManager.DisbandLobby();
-        SceneManager.LoadScene("ManagersScene");
+        Debug.Log("UIManager: Leaving game...");
+
+        try
+        {
+            // Останавливаем все сетевые активности
+            var lobbyManager = FindObjectOfType<LobbyManager>();
+            if (lobbyManager != null)
+            {
+                // ФИКС: Используем DisbandLobby вместо прямого вызова
+                lobbyManager.DisbandLobby();
+            }
+            else
+            {
+                Debug.LogWarning("LobbyManager not found, proceeding without disband");
+                // Если менеджера нет, просто загружаем меню
+                LoadMainMenuDirectly();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error leaving game: {e.Message}");
+            LoadMainMenuDirectly();
+        }
     }
+
+    public string GetCurrentScreen()
+    {
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        return mainMenuController?.GetCurrentScreen() ?? "unknown";
+    }
+
+    private void LoadMainMenuDirectly()
+    {
+        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            SceneManager.LoadScene(0); // Первая сцена
+        }
+    }
+
+    public void ShowMainMenuScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
+    }
+
+    public void ShowLobbyListScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
+        OnLobbyListUpdated();
+    }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("UIManager: Returning to lobby list");
+
+        try
+        {
+            // Используем _mainMenuController
+            if (_mainMenuController != null)
+            {
+                _mainMenuController.ReturnToLobbyList();
+            }
+            else
+            {
+                // Если контроллер не найден, пытаемся найти его
+                _mainMenuController = FindObjectOfType<MainMenuController>();
+                _mainMenuController?.ReturnToLobbyList();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
+        }
+    }
+
+    private IEnumerator DelayedLobbyUpdate()
+    {
+        yield return new WaitForSeconds(0.5f);
+        OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
 
     private void OnDestroy()
     {
@@ -1634,6 +1741,7 @@ public class UIScreenManager
     public const string SettingsScreenName = "settings_screen";
     public const string LobbyListScreenName = "lobby_list_screen";
     public const string LobbySettingsScreenName = "lobby_settings_screen";
+    private Button _btnRefreshLobbyList;
 
     private readonly VisualElement _root;
     private readonly MainMenuController _controller;
@@ -1647,6 +1755,8 @@ public class UIScreenManager
     private ScrollView _lobbyListScroll;
     private ScrollView _playersScroll;
 
+    private bool _isProcessingDisband = false;
+
     public UIScreenManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
@@ -1658,22 +1768,46 @@ public class UIScreenManager
         if (LobbyDiscovery.Instance != null)
         {
             LobbyDiscovery.Instance.OnLobbiesUpdated += OnLobbiesUpdated;
+            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
         }
+    }
+
+    public string GetCurrentScreen() => _currentScreen;
+
+    public void OnLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"UIScreenManager: Lobby {lobbyId} closed, current screen: {_currentScreen}");
+
+        // ФИКС: Используем UnityMainThreadDispatcher для вызова в главном потоке
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            _controller?.HandleLobbyClosed(lobbyId);
+        });
     }
 
     private void InitializeButtons()
     {
+        Debug.Log("Initializing UI buttons...");
+
         var menuScreen = _root.Q<VisualElement>(MenuScreenName);
         _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
+        Debug.Log($"_btnShowLobbyList found: {_btnShowLobbyList != null}");
 
         var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
         _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
+        _btnRefreshLobbyList = lobbyListScreen?.Q<Button>("btnRefreshLobbyList");
         _lobbyListScroll = lobbyListScreen?.Q<ScrollView>("lobbyListScroll");
+
+        Debug.Log($"_btnCreateLobby found: {_btnCreateLobby != null}");
+        Debug.Log($"_btnRefreshLobbyList found: {_btnRefreshLobbyList != null}");
+        Debug.Log($"_lobbyListScroll found: {_lobbyListScroll != null}");
 
         var lobbySettingsScreen = _root.Q<VisualElement>(LobbySettingsScreenName);
         _playersScroll = lobbySettingsScreen?.Q<ScrollView>("playersScroll");
         _btnDisbandLobby = lobbySettingsScreen?.Q<Button>("btnDisbandLobby");
         _btnStartGame = lobbySettingsScreen?.Q<Button>("btnStartGame");
+
+        Debug.Log("UI buttons initialization complete");
     }
 
     private void SetupCallbacks()
@@ -1687,23 +1821,58 @@ public class UIScreenManager
         if (_btnCreateLobby != null)
             _btnCreateLobby.clicked += OnCreateLobby;
 
+        if (_btnRefreshLobbyList != null)
+            _btnRefreshLobbyList.clicked += () => {
+                Debug.Log("Manual lobby list refresh");
+                RefreshLobbyList();
+                // Принудительно отправляем DISCOVER запрос
+                if (LobbyDiscovery.Instance != null)
+                {
+                    LobbyDiscovery.Instance.ForceDiscovery();
+                }
+            };
+
         if (_btnDisbandLobby != null)
             _btnDisbandLobby.clicked += OnDisbandLobby;
 
         if (_btnStartGame != null)
             _btnStartGame.clicked += () => UIManager.Instance.StartGame();
+
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbiesUpdated += (lobbies) => {
+                if (_currentScreen == LobbyListScreenName)
+                {
+                    RefreshLobbyList();
+                }
+            };
+        }
+
     }
 
     private void OnLobbiesUpdated(List<LobbyInfo> lobbies)
     {
+        Debug.Log($"UIScreenManager: OnLobbiesUpdated called with {lobbies.Count} lobbies");
+        Debug.Log($"Current screen: {_currentScreen}, should be: {LobbyListScreenName}");
+
+        // ОБНОВЛЯЕМ В ЛЮБОМ СЛУЧАЕ, ЕСЛИ МЫ НА ЭКРАНЕ СПИСКА ЛОББИ
         if (_currentScreen == LobbyListScreenName)
         {
+            Debug.Log("Refreshing lobby list UI because we're on the lobby list screen");
             RefreshLobbyList();
+        }
+        else
+        {
+            Debug.Log($"Not refreshing UI because current screen is {_currentScreen}, not {LobbyListScreenName}");
+            // НО СОХРАНЯЕМ ДАННЫЕ ДЛЯ БУДУЩЕГО ИСПОЛЬЗОВАНИЯ
         }
     }
 
+
     public void ShowScreen(string screenName)
     {
+        Debug.Log($"ShowScreen called: {screenName}");
+
         var screens = _root.Query<VisualElement>(className: "screen").ToList();
         foreach (var screen in screens)
         {
@@ -1711,9 +1880,18 @@ public class UIScreenManager
         }
         _currentScreen = screenName;
 
+        Debug.Log($"Screen set to: {screenName}");
+
         if (screenName == LobbyListScreenName)
         {
+            Debug.Log("On lobby list screen, refreshing list...");
             RefreshLobbyList();
+
+            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ПОКАЗЕ ЭКРАНА
+            if (LobbyDiscovery.Instance != null)
+            {
+                LobbyDiscovery.Instance.ForceDiscovery();
+            }
         }
 
         Debug.Log($"Showing screen: {screenName}");
@@ -1721,25 +1899,37 @@ public class UIScreenManager
 
     public void RefreshLobbyList()
     {
+        Debug.Log($"RefreshLobbyList called, current screen: {_currentScreen}, _lobbyListScroll is null: {_lobbyListScroll == null}");
+
         if (_lobbyListScroll != null)
         {
             _lobbyListScroll.Clear();
+            Debug.Log("Cleared lobby list scroll");
 
-            var lobbies = UIManager.Instance.LobbyManager.GetDiscoveredLobbies();
-            if (lobbies == null || lobbies.Count == 0)
+            // Получаем lobbies напрямую из LobbyDiscovery
+            var lobbies = LobbyDiscovery.Instance?.GetDiscoveredLobbies() ?? new List<LobbyInfo>();
+            Debug.Log($"RefreshLobbyList: Got {lobbies.Count} lobbies from LobbyDiscovery");
+
+            if (lobbies.Count == 0)
             {
                 var noLobbies = new Label("No lobbies found. Waiting for discovery...");
                 noLobbies.AddToClassList("no-lobbies-label");
                 _lobbyListScroll.Add(noLobbies);
+                Debug.Log("Added 'no lobbies' message");
             }
             else
             {
                 foreach (var lobby in lobbies)
                 {
+                    Debug.Log($"RefreshLobbyList: Adding lobby to UI: {lobby.name}");
                     CreateLobbyItem(_lobbyListScroll, lobby);
                 }
                 Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
             }
+        }
+        else
+        {
+            Debug.LogError("_lobbyListScroll is null - cannot refresh lobby list");
         }
     }
 
@@ -1800,13 +1990,37 @@ public class UIScreenManager
         UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
     }
 
-    private void OnDisbandLobby()
+    public void OnDisbandLobby()
     {
-        UIManager.Instance.LobbyManager.DisbandLobby();
+        Debug.Log("UIScreenManager: Disbanding lobby...");
+
+        // ФИКС: Добавляем проверку чтобы предотвратить множественные вызовы
+        if (_isProcessingDisband)
+        {
+            Debug.LogWarning("UIScreenManager: Disband already in progress, ignoring");
+            return;
+        }
+
+        _isProcessingDisband = true;
+
+        try
+        {
+            var lobbyManager = UIManager.Instance?.LobbyManager;
+            if (lobbyManager != null)
+            {
+                lobbyManager.DisbandLobby();
+            }
+
+            // ФИКС: Используем MainMenuController для вызова корутины
+            _controller?.ShowLobbyListAfterDisband();
+        }
+        finally
+        {
+            _isProcessingDisband = false;
+        }
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
-    public string GetCurrentScreen() => _currentScreen;
 
     public void UpdatePlayerList()
     {
@@ -1814,15 +2028,6 @@ public class UIScreenManager
         {
             _playersScroll.Clear();
             UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
-        }
-    }
-
-    public IEnumerator SetInitialFocus(List<VisualElement> interactiveElements)
-    {
-        yield return null;
-        if (interactiveElements.Count > 0)
-        {
-            interactiveElements[0].Focus();
         }
     }
 }
@@ -2398,6 +2603,7 @@ public class LobbySettingsManager
 Файл: ./Scripts/UI/MainMenuController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Collections;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -2434,13 +2640,44 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public void ShowScreen(string screenName) => _screenManager.ShowScreen(screenName);
-    public void UpdatePlayerList() => _screenManager.UpdatePlayerList();
+    public void ShowScreen(string screenName)
+    {
+        _screenManager.ShowScreen(screenName);
+
+        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
+        if (screenName == UIScreenManager.LobbyListScreenName)
+        {
+            // Даем кадр на отрисовку, затем обновляем
+            StartCoroutine(DelayedLobbyRefresh());
+        }
+    }
+
+    private IEnumerator DelayedLobbyRefresh()
+    {
+        yield return new WaitForEndOfFrame();
+        UIManager.Instance.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    public void UpdatePlayerList()
+    {
+        Debug.Log("MainMenuController: UpdatePlayerList called");
+        _screenManager.UpdatePlayerList();
+    }
+
     public void OnLobbyCreated()
     {
+        Debug.Log("MainMenuController: OnLobbyCreated called");
         ShowScreen(UIScreenManager.LobbySettingsScreenName);
-        _lobbySettings.SyncAllSettings();  // Sync on create
+        _lobbySettings.SyncAllSettings();
+        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
     }
+
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
 
     public void OnJoinedAsClient()
@@ -2466,6 +2703,75 @@ public class MainMenuController : MonoBehaviour
         if (playerCountSlider != null) playerCountSlider.SetEnabled(true);
 
         Debug.Log("UI set to host mode - all controls enabled");
+    }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("MainMenuController: Returning to lobby list");
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+
+        // Принудительно обновляем список лобби
+        StartCoroutine(DelayedLobbyRefresh2());
+    }
+
+    private IEnumerator DelayedLobbyRefresh2()
+    {
+        yield return new WaitForSeconds(0.5f);
+        UIManager.Instance?.OnLobbyListUpdated();
+        
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    public void HandleLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
+
+        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
+        if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
+        {
+            Debug.Log("We were in the closed lobby, returning to lobby list");
+            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        }
+        else
+        {
+            Debug.Log($"Not returning to lobby list because we're on screen: {GetCurrentScreen()}");
+        }
+    }
+
+    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
+    {
+        yield return new WaitForSeconds(0.5f);
+        ReturnToLobbyList();
+    }
+
+    public string GetCurrentScreen()
+    {
+        return _screenManager?.GetCurrentScreen() ?? "unknown";
+    }
+
+    public void ShowLobbyListAfterDisband()
+    {
+        StartCoroutine(ShowLobbyListAfterDisbandCoroutine());
+    }
+
+    private IEnumerator ShowLobbyListAfterDisbandCoroutine()
+    {
+        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
+
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+
+        // Принудительно обновляем список лобби
+        UIManager.Instance?.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
     }
 
     private void SetupClientModeUI()
@@ -2749,12 +3055,17 @@ public class LobbyDiscovery : MonoBehaviour
     private Thread listenThread;
     public Action<List<LobbyInfo>> OnLobbiesUpdated;
     public List<LobbyInfo> DiscoveredLobbies = new();
+    public event Action<string> OnLobbyClosed;
 
     private string uniqueId;
     private bool isInitialized = false;
     private bool isHost = false;
     private LobbyInfo currentLobbyInfo;
     private bool _needsLobbyUpdate = false;
+
+    private Dictionary<string, float> _lobbyLastSeen = new Dictionary<string, float>();
+    private float _cleanupInterval = 5f; // проверяем каждые 5 секунд
+    private float _lobbyTimeout = 10f; // лобби считается устаревшим после 10 секунд
 
     public string UniqueID => uniqueId;
 
@@ -2768,6 +3079,58 @@ public class LobbyDiscovery : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         uniqueId = Guid.NewGuid().ToString().Substring(0, 8);
+
+        // УВЕЛИЧЬТЕ ТАЙМАУТ ДЛЯ ТЕСТИРОВАНИЯ
+        _lobbyTimeout = 30f; // 30 секунд вместо 10
+        _cleanupInterval = 10f; // Проверяем каждые 10 секунд вместо 5
+    }
+
+    private IEnumerator CleanupExpiredLobbies()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(_cleanupInterval);
+
+            // ФИКС: Вся логика в главном потоке
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                lock (DiscoveredLobbies)
+                {
+                    Debug.Log($"CleanupExpiredLobbies: Starting cleanup, current lobbies: {DiscoveredLobbies.Count}");
+
+                    var currentTime = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
+                    var lobbiesToRemove = new List<string>();
+
+                    foreach (var lobbyId in _lobbyLastSeen.Keys)
+                    {
+                        var lastSeen = _lobbyLastSeen[lobbyId];
+                        var timeSinceLastSeen = currentTime - lastSeen;
+                        Debug.Log($"CleanupExpiredLobbies: Lobby {lobbyId} - last seen: {lastSeen}, time since: {timeSinceLastSeen}, timeout: {_lobbyTimeout}");
+
+                        if (timeSinceLastSeen > _lobbyTimeout)
+                        {
+                            lobbiesToRemove.Add(lobbyId);
+                            Debug.Log($"CleanupExpiredLobbies: Marking lobby {lobbyId} for removal (timeout)");
+                        }
+                    }
+
+                    foreach (var lobbyId in lobbiesToRemove)
+                    {
+                        DiscoveredLobbies.RemoveAll(l => l.uniqueId == lobbyId);
+                        _lobbyLastSeen.Remove(lobbyId);
+                        Debug.Log($"CleanupExpiredLobbies: Removed expired lobby: {lobbyId}");
+                    }
+
+                    if (lobbiesToRemove.Count > 0)
+                    {
+                        _needsLobbyUpdate = true;
+                        Debug.Log($"CleanupExpiredLobbies: Removed {lobbiesToRemove.Count} lobbies, scheduling UI update");
+                    }
+
+                    Debug.Log($"CleanupExpiredLobbies: Cleanup completed, lobbies remaining: {DiscoveredLobbies.Count}");
+                }
+            });
+        }
     }
 
     private void Start() => StartCoroutine(StartDiscovery());
@@ -2777,6 +3140,7 @@ public class LobbyDiscovery : MonoBehaviour
         if (_needsLobbyUpdate)
         {
             _needsLobbyUpdate = false;
+            Debug.Log($"LobbyDiscovery: Updating UI with {DiscoveredLobbies.Count} lobbies");
             OnLobbiesUpdated?.Invoke(new List<LobbyInfo>(DiscoveredLobbies));
         }
     }
@@ -2795,9 +3159,12 @@ public class LobbyDiscovery : MonoBehaviour
 
             broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
 
+            Debug.Log($"LobbyDiscovery: Bound to port {broadcastPort}, broadcasting to {broadcastEndPoint}");
+
             listenThread = new Thread(ListenForBroadcasts) { IsBackground = true };
             listenThread.Start();
             StartCoroutine(SendDiscoveryRequest());
+            StartCoroutine(CleanupExpiredLobbies());
 
             isInitialized = true;
             Debug.Log($"LobbyDiscovery initialized (port {broadcastPort}, ID={uniqueId})");
@@ -2808,28 +3175,85 @@ public class LobbyDiscovery : MonoBehaviour
         }
     }
 
+    public void ForceDiscovery()
+    {
+        DebugNetworkInfo();
+
+        if (!isHost && udpClient != null)
+        {
+            try
+            {
+                udpClient.Send(Encoding.UTF8.GetBytes("DISCOVER"), 7, broadcastEndPoint);
+                Debug.Log("Forced DISCOVER request sent");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Forced discovery failed: {e.Message}");
+            }
+        }
+    }
+
     private void ListenForBroadcasts()
     {
         var remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+        Debug.Log("LobbyDiscovery: Starting to listen for broadcasts...");
+
         while (true)
         {
             try
             {
                 var data = udpClient.Receive(ref remoteEndPoint);
                 var msg = Encoding.UTF8.GetString(data);
+                Debug.Log($"Received raw message from {remoteEndPoint}: {msg}");
 
                 if (msg.StartsWith("LOBBY:"))
                 {
-                    var info = JsonUtility.FromJson<LobbyInfo>(msg.Substring(6));
-                    if (info.uniqueId == uniqueId) continue; // 🔹 игнорируем свои
+                    Debug.Log("Processing LOBBY message...");
+                    var json = msg.Substring(6);
+                    Debug.Log($"LOBBY JSON: {json}");
+
+                    var info = JsonUtility.FromJson<LobbyInfo>(json);
+                    Debug.Log($"Parsed lobby: {info.name}, uniqueId: {info.uniqueId}, myId: {uniqueId}");
+
+                    if (info.uniqueId == uniqueId)
+                    {
+                        Debug.Log($"Ignoring own lobby: {info.uniqueId}");
+                        continue;
+                    }
+
                     info.ip = remoteEndPoint.Address.ToString();
                     if (info.port == 0) info.port = gamePort;
+
+                    Debug.Log($"Discovered lobby: {info.name} from {info.ip}:{info.port}");
+
+                    // КРИТИЧЕСКИЙ ФИКС: ВЫЗЫВАЕМ UpdateLobbyList
                     UpdateLobbyList(info);
                     _needsLobbyUpdate = true;
+                    Debug.Log($"LobbyDiscovery: UpdateLobbyList called and UI update scheduled for {info.name}");
+                }
+                else if (msg.StartsWith("LOBBY_CLOSE:"))
+                {
+                    string closedLobbyId = msg.Substring(12);
+                    Debug.Log($"Received lobby close: {closedLobbyId}");
+
+                    // ФИКС: Используем UnityMainThreadDispatcher для вызова событий
+                    UnityMainThreadDispatcher.Instance.Enqueue(() =>
+                    {
+                        // Вызываем событие перед удалением
+                        OnLobbyClosed?.Invoke(closedLobbyId);
+
+                        // Удаляем лобби из списка
+                        RemoveLobbyById(closedLobbyId);
+                    });
                 }
                 else if (msg == "DISCOVER" && isHost)
                 {
+                    Debug.Log("Received DISCOVER request, broadcasting lobby");
                     BroadcastLobby(currentLobbyInfo);
+                }
+                else
+                {
+                    Debug.Log($"Unknown message type: {msg}");
                 }
             }
             catch (Exception e)
@@ -2841,14 +3265,72 @@ public class LobbyDiscovery : MonoBehaviour
         }
     }
 
-    private void UpdateLobbyList(LobbyInfo newLobby)
+
+    private void RemoveLobbyById(string lobbyId)
     {
+        bool wasRemoved = false;
         lock (DiscoveredLobbies)
         {
-            DiscoveredLobbies.RemoveAll(l => l.uniqueId == newLobby.uniqueId);
-            if (newLobby.isOpen || string.IsNullOrEmpty(newLobby.password))
-                DiscoveredLobbies.Add(newLobby);
+            int removed = DiscoveredLobbies.RemoveAll(l => l.uniqueId == lobbyId);
+            if (removed > 0)
+            {
+                _lobbyLastSeen.Remove(lobbyId);
+                wasRemoved = true;
+                Debug.Log($"Removed lobby from discovery: {lobbyId}");
+            }
         }
+
+        // ФИКС: Обновляем UI через главный поток
+        if (wasRemoved)
+        {
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                _needsLobbyUpdate = true;
+                Debug.Log($"Lobby {lobbyId} removed, scheduling UI update");
+            });
+        }
+    }
+
+    private void UpdateLobbyList(LobbyInfo newLobby)
+    {
+        Debug.Log($"=== UpdateLobbyList START ===");
+
+        try
+        {
+            lock (DiscoveredLobbies)
+            {
+                Debug.Log($"Adding lobby: {newLobby.name} (ID: {newLobby.uniqueId})");
+
+                int existingIndex = DiscoveredLobbies.FindIndex(l => l.uniqueId == newLobby.uniqueId);
+                if (existingIndex >= 0)
+                {
+                    DiscoveredLobbies[existingIndex] = newLobby;
+                    Debug.Log($"Updated existing lobby at index {existingIndex}");
+                }
+                else
+                {
+                    DiscoveredLobbies.Add(newLobby);
+                    Debug.Log($"Added new lobby. Total count: {DiscoveredLobbies.Count}");
+                }
+
+                // ФИКС: Используем DateTime для времени в фоновом потоке
+                _lobbyLastSeen[newLobby.uniqueId] = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
+                Debug.Log($"Set last seen for lobby {newLobby.uniqueId}");
+            }
+
+            // Только обновление UI через главный поток
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                _needsLobbyUpdate = true;
+                Debug.Log($"UI update scheduled");
+            });
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"UpdateLobbyList ERROR: {e.Message}\n{e.StackTrace}");
+        }
+
+        Debug.Log($"=== UpdateLobbyList END ===");
     }
 
     private IEnumerator SendDiscoveryRequest()
@@ -2860,12 +3342,18 @@ public class LobbyDiscovery : MonoBehaviour
                 try
                 {
                     udpClient.Send(Encoding.UTF8.GetBytes("DISCOVER"), 7, broadcastEndPoint);
+                    Debug.Log($"Sent DISCOVER request to {broadcastEndPoint}");
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to send DISCOVER: {e.Message}");
+                }
             }
             yield return new WaitForSeconds(3f);
         }
     }
+
+    
 
     public void StartHosting(LobbyInfo info)
     {
@@ -2898,10 +3386,48 @@ public class LobbyDiscovery : MonoBehaviour
             string message = "LOBBY:" + JsonUtility.ToJson(info);
             byte[] data = Encoding.UTF8.GetBytes(message);
             udpClient.Send(data, data.Length, broadcastEndPoint);
+            Debug.Log($"Broadcasted lobby to {broadcastEndPoint}: {info.name} at {info.ip}:{info.port}");
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"Broadcast failed: {e.Message}");
+            Debug.LogError($"Broadcast failed: {e.Message}");
+        }
+    }
+
+    public void StopHostingAndNotify()
+    {
+        if (!isHost) return;
+
+        // ОТПРАВЛЯЕМ СООБЩЕНИЕ О ЗАКРЫТИИ ЛОББИ
+        try
+        {
+            string closeMessage = "LOBBY_CLOSE:" + uniqueId;
+            byte[] data = Encoding.UTF8.GetBytes(closeMessage);
+            udpClient.Send(data, data.Length, broadcastEndPoint);
+            Debug.Log($"Sent lobby close notification: {uniqueId}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Failed to send lobby close notification: {e.Message}");
+        }
+
+        // ОСТАНАВЛИВАЕМ ХОСТИНГ
+        isHost = false;
+    }
+
+    public void DebugNetworkInfo()
+    {
+        Debug.Log($"LobbyDiscovery Debug Info:");
+        Debug.Log($"- Initialized: {isInitialized}");
+        Debug.Log($"- Is Host: {isHost}");
+        Debug.Log($"- My ID: {uniqueId}");
+        Debug.Log($"- Discovered Lobbies: {DiscoveredLobbies.Count}");
+        Debug.Log($"- Broadcast Port: {broadcastPort}");
+        Debug.Log($"- Game Port: {gamePort}");
+
+        foreach (var lobby in DiscoveredLobbies)
+        {
+            Debug.Log($"  - Lobby: {lobby.name} ({lobby.ip}:{lobby.port})");
         }
     }
 
@@ -2917,8 +3443,20 @@ public class LobbyDiscovery : MonoBehaviour
 
     public List<LobbyInfo> GetDiscoveredLobbies()
     {
+        List<LobbyInfo> result;
         lock (DiscoveredLobbies)
-            return new List<LobbyInfo>(DiscoveredLobbies);
+        {
+            result = new List<LobbyInfo>(DiscoveredLobbies);
+            Debug.Log($"=== GetDiscoveredLobbies ===");
+            Debug.Log($"Returning {result.Count} lobbies");
+
+            foreach (var lobby in result)
+            {
+                Debug.Log($"  - Returning: {lobby.name} (ID: {lobby.uniqueId})");
+            }
+            Debug.Log($"=== End GetDiscoveredLobbies ===");
+        }
+        return result;
     }
 
     public void ClearLobbies()
@@ -3035,6 +3573,99 @@ public partial struct JoinLobbySystem : ISystem
     }
 }
 
+Файл: ./Scripts/UnityMainThreadDispatcher.cs
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+
+public class UnityMainThreadDispatcher : MonoBehaviour
+{
+    private static UnityMainThreadDispatcher _instance;
+    private readonly Queue<Action> _actions = new Queue<Action>();
+    private static readonly object _lockObject = new object();
+
+    public static UnityMainThreadDispatcher Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // ФИКС: Используем FindObjectOfType только в главном потоке
+                if (Application.isPlaying)
+                {
+                    _instance = FindObjectOfType<UnityMainThreadDispatcher>();
+                    if (_instance == null)
+                    {
+                        var obj = new GameObject("UnityMainThreadDispatcher");
+                        _instance = obj.AddComponent<UnityMainThreadDispatcher>();
+                        DontDestroyOnLoad(obj);
+                    }
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (_instance == null)
+        {
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (_instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void Enqueue(Action action)
+    {
+        if (action == null) return;
+
+        // ФИКС: Проверяем, находимся ли мы уже в главном потоке
+        if (Thread.CurrentThread.ManagedThreadId == 1) // Главный поток Unity обычно имеет ID = 1
+        {
+            action?.Invoke();
+        }
+        else
+        {
+            lock (_lockObject)
+            {
+                _actions.Enqueue(action);
+            }
+        }
+    }
+
+    private void Update()
+    {
+        lock (_lockObject)
+        {
+            while (_actions.Count > 0)
+            {
+                var action = _actions.Dequeue();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error in main thread action: {e}");
+                }
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
+        }
+    }
+}
 Файл: ./Scripts/SpawnSystem.cs
 ﻿using Unity.Entities;
 using Unity.NetCode;
@@ -3138,69 +3769,6 @@ public partial struct SceneLoaderSystem : ISystem
         Debug.Log("Game scenes loading started");
     }
 }
-Файл: ./Scripts/MainThreadDispatcher.cs
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class MainThreadDispatcher : MonoBehaviour
-{
-    private static MainThreadDispatcher _instance;
-    private readonly Queue<Action> _actions = new Queue<Action>();
-
-    public static MainThreadDispatcher Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindObjectOfType<MainThreadDispatcher>();
-                if (_instance == null)
-                {
-                    var go = new GameObject("MainThreadDispatcher");
-                    _instance = go.AddComponent<MainThreadDispatcher>();
-                    DontDestroyOnLoad(go);
-                }
-            }
-            return _instance;
-        }
-    }
-
-    public void Enqueue(Action action)
-    {
-        lock (_actions)
-        {
-            _actions.Enqueue(action);
-        }
-    }
-
-    void Update()
-    {
-        lock (_actions)
-        {
-            while (_actions.Count > 0)
-            {
-                var action = _actions.Dequeue();
-                try
-                {
-                    action?.Invoke();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Exception in main thread dispatcher: {e}");
-                }
-            }
-        }
-    }
-
-    void OnDestroy()
-    {
-        if (_instance == this)
-        {
-            _instance = null;
-        }
-    }
-}
 Файл: ./Scripts/NavMeshMovementSystem.cs
 ﻿// Assets/Scripts/NavMeshMovementSystem.cs
 using Unity.Entities;
@@ -3243,6 +3811,8 @@ using System.Collections.Generic;
 using Unity.Collections;
 using System.Net;
 using System.Net.Sockets;
+using System;
+using System.Threading;
 
 /// <summary>
 /// Управляет локальным лобби: создает серверный мир, запускает discovery broadcast через LobbyDiscovery,
@@ -3251,10 +3821,10 @@ using System.Net.Sockets;
 public class LobbyManager : MonoBehaviour
 {
     private LobbyDiscovery _discovery;
-    private LobbyData _currentLobby;
+    private LobbyData? _currentLobby;
+    private LobbyInfo? _currentLobbyInfo;
     private Dictionary<ulong, PlayerData> _players = new();
     private bool _gameStarted = false;
-    private LobbyInfo _currentLobbyInfo;
     private Coroutine _lobbyMonitorCoroutine;
 
     private void Start()
@@ -3264,22 +3834,107 @@ public class LobbyManager : MonoBehaviour
         {
             _discovery = gameObject.AddComponent<LobbyDiscovery>();
         }
+
+        // ФИКС: Убедитесь, что подписка происходит в главном потоке
         _discovery.OnLobbiesUpdated += OnLobbiesUpdated;
+
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
+        }
     }
+
+    private void OnLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"LobbyManager: Lobby {lobbyId} was closed by host");
+
+        // ФИКС: Упрощенная и надежная логика определения нужно ли возвращаться к списку
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        });
+    }
+
+
+
+    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
+    {
+        yield return new WaitForSeconds(0.5f); // Даем время на синхронизацию
+
+        // Проверяем, находимся ли мы в клиентском режиме И в настройках лобби
+        var clientWorld = GetClientWorld();
+        bool isClient = clientWorld != null && clientWorld.IsCreated && clientWorld.IsClient();
+        bool isInLobbySettings = UIManager.Instance?.GetCurrentScreen() == "lobby_settings_screen";
+
+        Debug.Log($"HandleLobbyClosed: isClient={isClient}, isInLobbySettings={isInLobbySettings}, closedLobbyId={lobbyId}");
+
+        // ФИКС: Возвращаемся только если мы клиент И находимся в настройках лобби
+        if (isClient && isInLobbySettings)
+        {
+            Debug.Log("We are a client in lobby settings and host closed the lobby, returning to lobby list");
+
+            // Закрываем клиентское соединение
+            ShutdownClientWorld();
+
+            // Очищаем сохраненные данные о подключении
+            PlayerPrefs.DeleteKey("JoiningLobbyIP");
+            PlayerPrefs.DeleteKey("JoiningLobbyPort");
+            PlayerPrefs.Save();
+
+            // Возвращаемся к списку лобби
+            var mainMenuController = FindObjectOfType<MainMenuController>();
+            if (mainMenuController != null)
+            {
+                mainMenuController.ReturnToLobbyList();
+            }
+            else
+            {
+                UIManager.Instance?.ReturnToLobbyList();
+            }
+        }
+        else
+        {
+            Debug.Log($"HandleLobbyClosed: Not affected - isClient={isClient}, isInLobbySettings={isInLobbySettings}");
+        }
+    }
+
+
+    private void ShutdownClientWorld()
+    {
+        var clientWorld = GetClientWorld();
+        if (clientWorld != null && clientWorld.IsCreated)
+        {
+            try
+            {
+                clientWorld.Dispose();
+                Debug.Log("Client world disposed");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Error disposing client world: {e.Message}");
+            }
+        }
+    }
+
+
 
     private World GetServerWorld()
     {
         foreach (var w in World.All)
+        {
             if (w.IsCreated && w.IsServer())
                 return w;
+        }
         return null;
     }
 
     private World GetClientWorld()
     {
         foreach (var w in World.All)
+        {
             if (w.IsCreated && w.IsClient())
                 return w;
+        }
         return null;
     }
 
@@ -3323,46 +3978,46 @@ public class LobbyManager : MonoBehaviour
 
         _currentLobbyInfo = new LobbyInfo
         {
-            name = _currentLobby.name,
+            name = data.name,
             currentPlayers = 1,
-            maxPlayers = _currentLobby.maxPlayers,
-            isOpen = _currentLobby.isOpen,
-            password = _currentLobby.password,
+            maxPlayers = data.maxPlayers,
+            isOpen = data.isOpen,
+            password = data.password,
             ip = GetLocalIPAddress(),
             port = _discovery.gamePort,
             uniqueId = _discovery.UniqueID
         };
 
-        _discovery.StartHosting(_currentLobbyInfo);
+        _discovery.StartHosting(_currentLobbyInfo.Value);
 
         if (_lobbyMonitorCoroutine != null) StopCoroutine(_lobbyMonitorCoroutine);
         _lobbyMonitorCoroutine = StartCoroutine(LobbyBroadcastAndMonitorLoop());
 
         UIManager.Instance.OnLobbyListUpdated();
-
-        var mainMenuController = FindObjectOfType<MainMenuController>();
-        if (mainMenuController != null)
-        {
-            mainMenuController.ShowScreen("lobby_settings_screen");
-            mainMenuController.SetupHostModeUI();
-        }
+        UIManager.Instance.OnLobbyCreated();
+        UIManager.Instance.OnPlayersUpdated();
 
         Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
     }
 
     private IEnumerator LobbyBroadcastAndMonitorLoop()
     {
+        // Проверяем, что лобби существует
+        if (!_currentLobbyInfo.HasValue) yield break;
+
         // Периодически обновляем поле currentPlayers и шлём broadcast
         while (!_gameStarted)
         {
             int count = GetPlayerCount();
-            _currentLobbyInfo.currentPlayers = Mathf.Max(1, count); // >=1 (хост)
+            var currentInfo = _currentLobbyInfo.Value;
+            currentInfo.currentPlayers = Mathf.Max(1, count); // >=1 (хост)
             // Если стали меньше max — оставляем isOpen как есть (обычно true), если достигли — закрываем
-            if (_currentLobbyInfo.currentPlayers >= _currentLobbyInfo.maxPlayers)
+            if (currentInfo.currentPlayers >= currentInfo.maxPlayers)
             {
                 // Пометим как закрытое — чтобы клиенты не пытались зайти
-                _currentLobbyInfo.isOpen = false;
-                _discovery.BroadcastLobby(_currentLobbyInfo); // одноразовое обновление со статусом закрыто
+                currentInfo.isOpen = false;
+                _currentLobbyInfo = currentInfo;
+                _discovery.BroadcastLobby(currentInfo); // одноразовое обновление со статусом закрыто
                 Debug.Log("Lobby full — broadcasting hide/closed and starting game.");
                 // Небольшая задержка, чтобы клиенты успели получить сообщение
                 yield return new WaitForSeconds(0.5f);
@@ -3372,8 +4027,12 @@ public class LobbyManager : MonoBehaviour
             else
             {
                 // Обычная регулярная рассылка актуального состояния (имя/кол-во/порт)
-                _currentLobbyInfo.isOpen = _currentLobby.isOpen;
-                _discovery.BroadcastLobby(_currentLobbyInfo);
+                if (_currentLobby.HasValue)
+                {
+                    currentInfo.isOpen = _currentLobby.Value.isOpen;
+                }
+                _currentLobbyInfo = currentInfo;
+                _discovery.BroadcastLobby(currentInfo);
             }
 
             yield return new WaitForSeconds(1.0f);
@@ -3402,15 +4061,27 @@ public class LobbyManager : MonoBehaviour
 
     private string GetLocalIPAddress()
     {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList)
+        try
         {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
             {
-                return ip.ToString();
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    Debug.Log($"Found local IP: {ip}");
+                    return ip.ToString();
+                }
             }
+
+            // Если не нашли подходящий IP, используем локальный
+            Debug.LogWarning("No suitable local IP found, using 127.0.0.1");
+            return "127.0.0.1";
         }
-        return "127.0.0.1";
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error getting local IP: {ex.Message}");
+            return "127.0.0.1";
+        }
     }
 
     public void JoinLobby(LobbyInfo lobbyInfo, string playerName, string password = "")
@@ -3506,19 +4177,84 @@ public class LobbyManager : MonoBehaviour
         UIManager.Instance.OnPlayerLeft((int)connectionId);
     }
 
+    private bool _isDisbanding = false; // Добавляем флаг
+
     public void DisbandLobby()
     {
-        _discovery.StopHosting();
-        _discovery.ClearLobbies();
-        ShutdownAllNetCodeWorlds();
-
-        if (_lobbyMonitorCoroutine != null)
+        if (_isDisbanding)
         {
-            StopCoroutine(_lobbyMonitorCoroutine);
-            _lobbyMonitorCoroutine = null;
+            Debug.LogWarning("LobbyManager: DisbandLobby already in progress, ignoring duplicate call");
+            return;
         }
 
-        SceneManager.LoadScene("MainMenu");
+        _isDisbanding = true;
+        Debug.Log("LobbyManager: Starting lobby disband process...");
+
+        try
+        {
+            // Останавливаем корутины
+            if (_lobbyMonitorCoroutine != null)
+            {
+                Debug.Log("Stopping lobby monitor coroutine...");
+                StopCoroutine(_lobbyMonitorCoroutine);
+                _lobbyMonitorCoroutine = null;
+            }
+
+            // ФИКС: Сначала уведомляем о закрытии
+            if (LobbyDiscovery.Instance != null)
+            {
+                Debug.Log("Sending lobby close notification...");
+                LobbyDiscovery.Instance.StopHostingAndNotify();
+            }
+
+            // Очищаем данные лобби
+            Debug.Log("Clearing lobby data...");
+            _players.Clear();
+            _gameStarted = false;
+            _currentLobby = null;
+            _currentLobbyInfo = null;
+
+            // Уничтожаем NetCode миры
+            Debug.Log("Shutting down NetCode worlds...");
+            ShutdownAllNetCodeWorlds();
+
+            // Останавливаем хостинг в discovery
+            if (_discovery != null)
+            {
+                Debug.Log("Stopping discovery hosting...");
+                _discovery.StopHosting();
+            }
+
+            // Возвращаем в главное меню
+            Debug.Log("Returning to main menu...");
+            StartCoroutine(ReturnToMainMenuWithDelay());
+
+            Debug.Log("Lobby disbanded successfully");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error during lobby disband: {e.Message}\n{e.StackTrace}");
+            // Все равно пытаемся вернуться в главное меню
+            StartCoroutine(ReturnToMainMenuWithDelay());
+        }
+        finally
+        {
+            _isDisbanding = false;
+        }
+    }
+
+    private IEnumerator ReturnToMainMenuWithDelay()
+    {
+        yield return new WaitForSeconds(0.5f); // Даем время на очистку сетевых соединений
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.LeaveGame();
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     public void StartGame()
@@ -3592,8 +4328,15 @@ public class LobbyManager : MonoBehaviour
     {
         if (_discovery != null)
         {
-            return _discovery.GetDiscoveredLobbies();
+            var lobbies = _discovery.GetDiscoveredLobbies();
+            Debug.Log($"GetDiscoveredLobbies: returning {lobbies.Count} lobbies");
+            foreach (var lobby in lobbies)
+            {
+                Debug.Log($" - {lobby.name} ({lobby.ip}:{lobby.port}), Open: {lobby.isOpen}");
+            }
+            return lobbies;
         }
+        Debug.LogWarning("GetDiscoveredLobbies: _discovery is null");
         return new List<LobbyInfo>();
     }
 
@@ -3721,9 +4464,26 @@ public class LobbyManager : MonoBehaviour
 
     private void ShutdownAllNetCodeWorlds()
     {
-        foreach (var world in World.All)
-            if (world.IsCreated && (world.IsServer() || world.IsClient()))
-                world.Dispose();
+        // СОЗДАЕМ КОПИЮ СПИСКА МИРОВ ДЛЯ БЕЗОПАСНОЙ ИТЕРАЦИИ
+        var worldsToDispose = new List<World>();
+        foreach (var w in World.All)
+        {
+            if (w.IsCreated && (w.IsServer() || w.IsClient() || w.IsThinClient()))
+                worldsToDispose.Add(w);
+        }
+
+        // ТЕПЕРЬ БЕЗОПАСНО УНИЧТОЖАЕМ МИРЫ
+        foreach (var w in worldsToDispose)
+        {
+            try
+            {
+                w.Dispose();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Failed to dispose world {w.Name}: {e.Message}");
+            }
+        }
     }
 
     public bool IsConnectedToServer()
@@ -3734,6 +4494,15 @@ public class LobbyManager : MonoBehaviour
         var query = clientWorld.EntityManager.CreateEntityQuery(typeof(NetworkStreamConnection));
         return !query.IsEmptyIgnoreFilter;
     }
+
+    private void OnDestroy()
+    {
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbyClosed -= OnLobbyClosed;
+        }
+    }
+
 }
 
 Файл: ./Scripts/ECSComponents.cs
@@ -3807,6 +4576,11 @@ public struct LobbyInfo
     public string ip;
     public int port;
     public string uniqueId;
+
+    public override string ToString()
+    {
+        return $"LobbyInfo: {name}, Players: {currentPlayers}/{maxPlayers}, Open: {isOpen}, IP: {ip}:{port}, ID: {uniqueId}";
+    }
 }
 
 
@@ -4826,6 +5600,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
 using UnityEngine.InputSystem;
+using System;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -4873,11 +5649,16 @@ public class UIManager : MonoBehaviour
     // === События для UI ===
     public void OnPlayerJoined(int connectionId, string name)
     {
-        _mainMenuController?.UpdatePlayerList();
-        _hudController?.UpdatePlayerList();
+        OnPlayersUpdated();
     }
 
     public void OnPlayerLeft(int connectionId)
+    {
+        OnPlayersUpdated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnPlayersUpdated()
     {
         _mainMenuController?.UpdatePlayerList();
         _hudController?.UpdatePlayerList();
@@ -4888,6 +5669,18 @@ public class UIManager : MonoBehaviour
         _mainMenuController?.OnLobbyListUpdated();
     }
 
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnLobbyCreated()
+    {
+        _mainMenuController?.OnLobbyCreated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnJoinedAsClient()
+    {
+        _mainMenuController?.OnJoinedAsClient();
+    }
+
     public void StartGame()
     {
         LobbyManager.StartGame();
@@ -4896,9 +5689,96 @@ public class UIManager : MonoBehaviour
 
     public void LeaveGame()
     {
-        LobbyManager.DisbandLobby();
-        SceneManager.LoadScene("ManagersScene");
+        Debug.Log("UIManager: Leaving game...");
+
+        try
+        {
+            // Останавливаем все сетевые активности
+            var lobbyManager = FindObjectOfType<LobbyManager>();
+            if (lobbyManager != null)
+            {
+                // ФИКС: Используем DisbandLobby вместо прямого вызова
+                lobbyManager.DisbandLobby();
+            }
+            else
+            {
+                Debug.LogWarning("LobbyManager not found, proceeding without disband");
+                // Если менеджера нет, просто загружаем меню
+                LoadMainMenuDirectly();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error leaving game: {e.Message}");
+            LoadMainMenuDirectly();
+        }
     }
+
+    public string GetCurrentScreen()
+    {
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        return mainMenuController?.GetCurrentScreen() ?? "unknown";
+    }
+
+    private void LoadMainMenuDirectly()
+    {
+        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            SceneManager.LoadScene(0); // Первая сцена
+        }
+    }
+
+    public void ShowMainMenuScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
+    }
+
+    public void ShowLobbyListScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
+        OnLobbyListUpdated();
+    }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("UIManager: Returning to lobby list");
+
+        try
+        {
+            // Используем _mainMenuController
+            if (_mainMenuController != null)
+            {
+                _mainMenuController.ReturnToLobbyList();
+            }
+            else
+            {
+                // Если контроллер не найден, пытаемся найти его
+                _mainMenuController = FindObjectOfType<MainMenuController>();
+                _mainMenuController?.ReturnToLobbyList();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
+        }
+    }
+
+    private IEnumerator DelayedLobbyUpdate()
+    {
+        yield return new WaitForSeconds(0.5f);
+        OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
 
     private void OnDestroy()
     {
@@ -5471,6 +6351,7 @@ public class UIScreenManager
     public const string SettingsScreenName = "settings_screen";
     public const string LobbyListScreenName = "lobby_list_screen";
     public const string LobbySettingsScreenName = "lobby_settings_screen";
+    private Button _btnRefreshLobbyList;
 
     private readonly VisualElement _root;
     private readonly MainMenuController _controller;
@@ -5484,6 +6365,8 @@ public class UIScreenManager
     private ScrollView _lobbyListScroll;
     private ScrollView _playersScroll;
 
+    private bool _isProcessingDisband = false;
+
     public UIScreenManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
@@ -5495,22 +6378,46 @@ public class UIScreenManager
         if (LobbyDiscovery.Instance != null)
         {
             LobbyDiscovery.Instance.OnLobbiesUpdated += OnLobbiesUpdated;
+            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
         }
+    }
+
+    public string GetCurrentScreen() => _currentScreen;
+
+    public void OnLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"UIScreenManager: Lobby {lobbyId} closed, current screen: {_currentScreen}");
+
+        // ФИКС: Используем UnityMainThreadDispatcher для вызова в главном потоке
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            _controller?.HandleLobbyClosed(lobbyId);
+        });
     }
 
     private void InitializeButtons()
     {
+        Debug.Log("Initializing UI buttons...");
+
         var menuScreen = _root.Q<VisualElement>(MenuScreenName);
         _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
+        Debug.Log($"_btnShowLobbyList found: {_btnShowLobbyList != null}");
 
         var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
         _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
+        _btnRefreshLobbyList = lobbyListScreen?.Q<Button>("btnRefreshLobbyList");
         _lobbyListScroll = lobbyListScreen?.Q<ScrollView>("lobbyListScroll");
+
+        Debug.Log($"_btnCreateLobby found: {_btnCreateLobby != null}");
+        Debug.Log($"_btnRefreshLobbyList found: {_btnRefreshLobbyList != null}");
+        Debug.Log($"_lobbyListScroll found: {_lobbyListScroll != null}");
 
         var lobbySettingsScreen = _root.Q<VisualElement>(LobbySettingsScreenName);
         _playersScroll = lobbySettingsScreen?.Q<ScrollView>("playersScroll");
         _btnDisbandLobby = lobbySettingsScreen?.Q<Button>("btnDisbandLobby");
         _btnStartGame = lobbySettingsScreen?.Q<Button>("btnStartGame");
+
+        Debug.Log("UI buttons initialization complete");
     }
 
     private void SetupCallbacks()
@@ -5524,23 +6431,58 @@ public class UIScreenManager
         if (_btnCreateLobby != null)
             _btnCreateLobby.clicked += OnCreateLobby;
 
+        if (_btnRefreshLobbyList != null)
+            _btnRefreshLobbyList.clicked += () => {
+                Debug.Log("Manual lobby list refresh");
+                RefreshLobbyList();
+                // Принудительно отправляем DISCOVER запрос
+                if (LobbyDiscovery.Instance != null)
+                {
+                    LobbyDiscovery.Instance.ForceDiscovery();
+                }
+            };
+
         if (_btnDisbandLobby != null)
             _btnDisbandLobby.clicked += OnDisbandLobby;
 
         if (_btnStartGame != null)
             _btnStartGame.clicked += () => UIManager.Instance.StartGame();
+
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbiesUpdated += (lobbies) => {
+                if (_currentScreen == LobbyListScreenName)
+                {
+                    RefreshLobbyList();
+                }
+            };
+        }
+
     }
 
     private void OnLobbiesUpdated(List<LobbyInfo> lobbies)
     {
+        Debug.Log($"UIScreenManager: OnLobbiesUpdated called with {lobbies.Count} lobbies");
+        Debug.Log($"Current screen: {_currentScreen}, should be: {LobbyListScreenName}");
+
+        // ОБНОВЛЯЕМ В ЛЮБОМ СЛУЧАЕ, ЕСЛИ МЫ НА ЭКРАНЕ СПИСКА ЛОББИ
         if (_currentScreen == LobbyListScreenName)
         {
+            Debug.Log("Refreshing lobby list UI because we're on the lobby list screen");
             RefreshLobbyList();
+        }
+        else
+        {
+            Debug.Log($"Not refreshing UI because current screen is {_currentScreen}, not {LobbyListScreenName}");
+            // НО СОХРАНЯЕМ ДАННЫЕ ДЛЯ БУДУЩЕГО ИСПОЛЬЗОВАНИЯ
         }
     }
 
+
     public void ShowScreen(string screenName)
     {
+        Debug.Log($"ShowScreen called: {screenName}");
+
         var screens = _root.Query<VisualElement>(className: "screen").ToList();
         foreach (var screen in screens)
         {
@@ -5548,9 +6490,18 @@ public class UIScreenManager
         }
         _currentScreen = screenName;
 
+        Debug.Log($"Screen set to: {screenName}");
+
         if (screenName == LobbyListScreenName)
         {
+            Debug.Log("On lobby list screen, refreshing list...");
             RefreshLobbyList();
+
+            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ПОКАЗЕ ЭКРАНА
+            if (LobbyDiscovery.Instance != null)
+            {
+                LobbyDiscovery.Instance.ForceDiscovery();
+            }
         }
 
         Debug.Log($"Showing screen: {screenName}");
@@ -5558,25 +6509,37 @@ public class UIScreenManager
 
     public void RefreshLobbyList()
     {
+        Debug.Log($"RefreshLobbyList called, current screen: {_currentScreen}, _lobbyListScroll is null: {_lobbyListScroll == null}");
+
         if (_lobbyListScroll != null)
         {
             _lobbyListScroll.Clear();
+            Debug.Log("Cleared lobby list scroll");
 
-            var lobbies = UIManager.Instance.LobbyManager.GetDiscoveredLobbies();
-            if (lobbies == null || lobbies.Count == 0)
+            // Получаем lobbies напрямую из LobbyDiscovery
+            var lobbies = LobbyDiscovery.Instance?.GetDiscoveredLobbies() ?? new List<LobbyInfo>();
+            Debug.Log($"RefreshLobbyList: Got {lobbies.Count} lobbies from LobbyDiscovery");
+
+            if (lobbies.Count == 0)
             {
                 var noLobbies = new Label("No lobbies found. Waiting for discovery...");
                 noLobbies.AddToClassList("no-lobbies-label");
                 _lobbyListScroll.Add(noLobbies);
+                Debug.Log("Added 'no lobbies' message");
             }
             else
             {
                 foreach (var lobby in lobbies)
                 {
+                    Debug.Log($"RefreshLobbyList: Adding lobby to UI: {lobby.name}");
                     CreateLobbyItem(_lobbyListScroll, lobby);
                 }
                 Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
             }
+        }
+        else
+        {
+            Debug.LogError("_lobbyListScroll is null - cannot refresh lobby list");
         }
     }
 
@@ -5637,13 +6600,37 @@ public class UIScreenManager
         UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
     }
 
-    private void OnDisbandLobby()
+    public void OnDisbandLobby()
     {
-        UIManager.Instance.LobbyManager.DisbandLobby();
+        Debug.Log("UIScreenManager: Disbanding lobby...");
+
+        // ФИКС: Добавляем проверку чтобы предотвратить множественные вызовы
+        if (_isProcessingDisband)
+        {
+            Debug.LogWarning("UIScreenManager: Disband already in progress, ignoring");
+            return;
+        }
+
+        _isProcessingDisband = true;
+
+        try
+        {
+            var lobbyManager = UIManager.Instance?.LobbyManager;
+            if (lobbyManager != null)
+            {
+                lobbyManager.DisbandLobby();
+            }
+
+            // ФИКС: Используем MainMenuController для вызова корутины
+            _controller?.ShowLobbyListAfterDisband();
+        }
+        finally
+        {
+            _isProcessingDisband = false;
+        }
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
-    public string GetCurrentScreen() => _currentScreen;
 
     public void UpdatePlayerList()
     {
@@ -5651,15 +6638,6 @@ public class UIScreenManager
         {
             _playersScroll.Clear();
             UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
-        }
-    }
-
-    public IEnumerator SetInitialFocus(List<VisualElement> interactiveElements)
-    {
-        yield return null;
-        if (interactiveElements.Count > 0)
-        {
-            interactiveElements[0].Focus();
         }
     }
 }
@@ -6235,6 +7213,7 @@ public class LobbySettingsManager
 Файл: ./Scripts/UI/MainMenuController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Collections;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -6271,13 +7250,44 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public void ShowScreen(string screenName) => _screenManager.ShowScreen(screenName);
-    public void UpdatePlayerList() => _screenManager.UpdatePlayerList();
+    public void ShowScreen(string screenName)
+    {
+        _screenManager.ShowScreen(screenName);
+
+        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
+        if (screenName == UIScreenManager.LobbyListScreenName)
+        {
+            // Даем кадр на отрисовку, затем обновляем
+            StartCoroutine(DelayedLobbyRefresh());
+        }
+    }
+
+    private IEnumerator DelayedLobbyRefresh()
+    {
+        yield return new WaitForEndOfFrame();
+        UIManager.Instance.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    public void UpdatePlayerList()
+    {
+        Debug.Log("MainMenuController: UpdatePlayerList called");
+        _screenManager.UpdatePlayerList();
+    }
+
     public void OnLobbyCreated()
     {
+        Debug.Log("MainMenuController: OnLobbyCreated called");
         ShowScreen(UIScreenManager.LobbySettingsScreenName);
-        _lobbySettings.SyncAllSettings();  // Sync on create
+        _lobbySettings.SyncAllSettings();
+        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
     }
+
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
 
     public void OnJoinedAsClient()
@@ -6303,6 +7313,75 @@ public class MainMenuController : MonoBehaviour
         if (playerCountSlider != null) playerCountSlider.SetEnabled(true);
 
         Debug.Log("UI set to host mode - all controls enabled");
+    }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("MainMenuController: Returning to lobby list");
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+
+        // Принудительно обновляем список лобби
+        StartCoroutine(DelayedLobbyRefresh2());
+    }
+
+    private IEnumerator DelayedLobbyRefresh2()
+    {
+        yield return new WaitForSeconds(0.5f);
+        UIManager.Instance?.OnLobbyListUpdated();
+        
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    public void HandleLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
+
+        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
+        if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
+        {
+            Debug.Log("We were in the closed lobby, returning to lobby list");
+            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        }
+        else
+        {
+            Debug.Log($"Not returning to lobby list because we're on screen: {GetCurrentScreen()}");
+        }
+    }
+
+    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
+    {
+        yield return new WaitForSeconds(0.5f);
+        ReturnToLobbyList();
+    }
+
+    public string GetCurrentScreen()
+    {
+        return _screenManager?.GetCurrentScreen() ?? "unknown";
+    }
+
+    public void ShowLobbyListAfterDisband()
+    {
+        StartCoroutine(ShowLobbyListAfterDisbandCoroutine());
+    }
+
+    private IEnumerator ShowLobbyListAfterDisbandCoroutine()
+    {
+        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
+
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+
+        // Принудительно обновляем список лобби
+        UIManager.Instance?.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
     }
 
     private void SetupClientModeUI()
@@ -6429,6 +7508,7 @@ public class MainMenuController : MonoBehaviour
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
+                            <ui:Button name="btnRefreshLobbyList" text="#refresh_lobby_list" class="right-panel-button" />
                             <ui:Button name="btnCreateLobby" text="#create" class="right-panel-button" />
                         </ui:VisualElement>
                     </ui:VisualElement>

@@ -21,8 +21,7 @@ public class MainMenuController : MonoBehaviour
         _root = uiDoc.rootVisualElement;
 
         _inputManager = new UIInputManager(UIManager.Instance.InputActions, _root, this);
-
-        _screenManager = new UIScreenManager(_root, this);  // ← this!
+        _screenManager = new UIScreenManager(_root, this);
         _lobbySetup = new UILobbySetupManager(_root, this);
         _charSelect = new UICharacterSelectionManager(_root);
         _settings = new UISettingsManager(_root, uiDoc, this);
@@ -30,21 +29,16 @@ public class MainMenuController : MonoBehaviour
         _inputManager.Enable();
         _screenManager.ShowScreen(UIScreenManager.MenuScreenName);
 
-        if (LocalizationManager.Instance != null)
-        {
-            LocalizationManager.Instance.RefreshForNewScene();
-            LocalizationManager.Instance.UpdateAllUIElements();
-        }
+        LocalizationManager.Instance?.RefreshForNewScene();
+        LocalizationManager.Instance?.UpdateAllUIElements();
     }
 
     public void ShowScreen(string screenName)
     {
         _screenManager.ShowScreen(screenName);
 
-        // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ПРИ ПОКАЗЕ СПИСКА ЛОББИ
         if (screenName == UIScreenManager.LobbyListScreenName)
         {
-            // Даем кадр на отрисовку, затем обновляем
             StartCoroutine(DelayedLobbyRefresh());
         }
     }
@@ -54,25 +48,19 @@ public class MainMenuController : MonoBehaviour
         yield return new WaitForEndOfFrame();
         UIManager.Instance.OnLobbyListUpdated();
 
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     public void UpdatePlayerList()
     {
-        Debug.Log("MainMenuController: UpdatePlayerList called");
         _screenManager.UpdatePlayerList();
     }
 
     public void OnLobbyCreated()
     {
-        Debug.Log("MainMenuController: OnLobbyCreated called");
         ShowScreen(UIScreenManager.LobbySettingsScreenName);
         _lobbySettings.SyncAllSettings();
-        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
+        UIManager.Instance.OnPlayersUpdated();
     }
 
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
@@ -106,8 +94,6 @@ public class MainMenuController : MonoBehaviour
     {
         Debug.Log("MainMenuController: Returning to lobby list");
         ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
         StartCoroutine(DelayedLobbyRefresh2());
     }
 
@@ -115,19 +101,12 @@ public class MainMenuController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         UIManager.Instance?.OnLobbyListUpdated();
-        
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     public void HandleLobbyClosed(string lobbyId)
     {
         Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
-
-        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
         if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
         {
             Debug.Log("We were in the closed lobby, returning to lobby list");
@@ -157,18 +136,10 @@ public class MainMenuController : MonoBehaviour
 
     private IEnumerator ShowLobbyListAfterDisbandCoroutine()
     {
-        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
-
+        yield return new WaitForSeconds(1f);
         ShowScreen(UIScreenManager.LobbyListScreenName);
-
-        // Принудительно обновляем список лобби
         UIManager.Instance?.OnLobbyListUpdated();
-
-        // Принудительный запрос discovery
-        if (LobbyDiscovery.Instance != null)
-        {
-            LobbyDiscovery.Instance.ForceDiscovery();
-        }
+        LobbyDiscovery.Instance?.ForceDiscovery();
     }
 
     private void SetupClientModeUI()

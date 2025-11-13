@@ -303,24 +303,75 @@ public class UIScreenManager
 
     public void UpdatePlayerList()
     {
-        if (_playersScroll != null)
+        if (_playersScroll == null) return;
+
+        _playersScroll.Clear();
+
+        var players = UIManager.Instance.LobbyManager.GetLobbyPlayersForClient();
+
+        foreach (var player in players)
         {
-            _playersScroll.Clear();
+            var item = new VisualElement();
+            item.style.flexDirection = FlexDirection.Row;
+            item.style.justifyContent = Justify.SpaceBetween;
+            item.style.alignItems = Align.Center;
+            item.style.paddingTop = 8;
+            item.style.paddingBottom = 8;
+            item.style.borderBottomWidth = 1;
+            item.style.borderBottomColor = new Color(0.3f, 0.3f, 0.3f, 0.3f);
 
-            // Получаем ConnectionId локального игрока
+            // Имя игрока
+            var nameLabel = new Label(player.Name);
+            nameLabel.style.width = 200;
+            nameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            item.Add(nameLabel);
+
+            // Оружие
+            var weaponLabel = new Label(player.Weapon);
+            weaponLabel.style.width = 120;
+            weaponLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            item.Add(weaponLabel);
+
+            // Пинг
+            var pingLabel = new Label($"{player.Ping} ms");
+            pingLabel.style.width = 80;
+            pingLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            item.Add(pingLabel);
+
+            // Действия (кнопка выгнать для хоста)
+            var actionsContainer = new VisualElement();
+            actionsContainer.style.width = 100;
+            actionsContainer.style.unityTextAlign = TextAnchor.MiddleCenter;
+
             var localConnectionId = UIManager.Instance?.GetLocalPlayerConnectionId() ?? 0;
+            bool isHost = localConnectionId == 0;
 
-            var players = GetPlayersForUI();
-            Debug.Log($"UpdatePlayerList: Processing {players.Count} players");
-
-            foreach (var player in players)
+            if (isHost && player.ConnectionId != localConnectionId)
             {
-                Debug.Log($"Player: {player.Name}, Weapon: {player.Weapon}, Connection: {player.ConnectionId}");
-                CreatePlayerListItem(_playersScroll, player, localConnectionId);
+                var kickBtn = new Button(() =>
+                {
+                    UIManager.Instance?.LobbyManager?.KickPlayer(player.ConnectionId);
+                })
+                {
+                    text = "Выгнать"
+                };
+                kickBtn.style.width = 80;
+                kickBtn.style.height = 25;
+                kickBtn.style.fontSize = 10;
+                actionsContainer.Add(kickBtn);
+            }
+            else
+            {
+                // Пустой элемент для выравнивания
+                actionsContainer.Add(new VisualElement() { style = { width = 80, height = 25 } });
             }
 
-            Debug.Log($"Updated player list with {players.Count} players");
+            item.Add(actionsContainer);
+
+            _playersScroll.Add(item);
         }
+
+        Debug.Log($"Updated player list with {players.Count} players");
     }
 
     private List<LobbyPlayerInfo> GetPlayersForUI()

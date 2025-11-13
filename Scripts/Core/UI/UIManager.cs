@@ -81,23 +81,28 @@ public class UIManager : MonoBehaviour
     // === НОВЫЕ МЕТОДЫ ДЛЯ ЛОББИ ===
 
     // Публичный метод для получения ConnectionId локального игрока
+    //public ulong GetLocalPlayerConnectionId()
+    //{
+    //    var clientWorld = GetClientWorld();
+    //    if (clientWorld == null) return 0;
+
+    //    var em = clientWorld.EntityManager;
+    //    var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
+
+    //    if (query.IsEmptyIgnoreFilter) return 0;
+
+    //    using var entities = query.ToEntityArray(Allocator.Temp);
+    //    if (entities.Length > 0)
+    //    {
+    //        return (ulong)em.GetComponentData<NetworkId>(entities[0]).Value;
+    //    }
+
+    //    return 0;
+    //}
+
     public ulong GetLocalPlayerConnectionId()
     {
-        var clientWorld = GetClientWorld();
-        if (clientWorld == null) return 0;
-
-        var em = clientWorld.EntityManager;
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
-
-        if (query.IsEmptyIgnoreFilter) return 0;
-
-        using var entities = query.ToEntityArray(Allocator.Temp);
-        if (entities.Length > 0)
-        {
-            return (ulong)em.GetComponentData<NetworkId>(entities[0]).Value;
-        }
-
-        return 0;
+        return LobbyManager?.GetLocalConnectionId() ?? 0;
     }
 
     // Метод для получения клиентского мира

@@ -802,61 +802,117 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    public ulong GetLocalConnectionId()
+    {
+        var clientWorld = GetClientWorld();
+        if (clientWorld == null) return 0;
+
+        var em = clientWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
+        if (!query.IsEmptyIgnoreFilter)
+        {
+            return (ulong)em.GetComponentData<NetworkId>(query.GetSingletonEntity()).Value;
+        }
+        return 0;
+    }
+
     public List<LobbyPlayerInfo> GetLobbyPlayersForClient()
     {
         var players = new List<LobbyPlayerInfo>();
         Debug.Log("=== GetLobbyPlayersForClient START ===");
 
-        // Детально логируем все миры
+        // Сначала пробуем найти синхронизированные данные
         foreach (var world in World.All)
         {
             if (!world.IsCreated) continue;
 
-            Debug.Log($"Checking world: {world.Name}, IsClient: {world.IsClient()}, IsServer: {world.IsServer()}");
-
             var em = world.EntityManager;
-            var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+
+            // Ищем ghost сущности с синхронизированными данными
+            var query = em.CreateEntityQuery(
+                ComponentType.ReadOnly<SyncedLobbyData>(),
+                ComponentType.ReadOnly<LobbyPlayerBuffer>()
+            );
 
             if (!query.IsEmptyIgnoreFilter)
             {
                 var entities = query.ToEntityArray(Allocator.Temp);
-                Debug.Log($"Found {entities.Length} entities with LobbyPlayerBuffer in {world.Name}");
-
                 foreach (var entity in entities)
                 {
                     if (em.HasBuffer<LobbyPlayerBuffer>(entity))
                     {
                         var buffer = em.GetBuffer<LobbyPlayerBuffer>(entity);
+                        var syncedData = em.GetComponentData<SyncedLobbyData>(entity);
 
-                        // Проверяем маркер синхронизации
-                        bool isSynced = em.HasComponent<SyncedLobbyData>(entity);
-                        Debug.Log($"Entity {entity} in {world.Name}: {buffer.Length} players, Synced: {isSynced}");
-
-                        for (int i = 0; i < buffer.Length; i++)
+                        if (syncedData.IsInitialized)
                         {
-                            var playerBuffer = buffer[i];
-                            players.Add(new LobbyPlayerInfo
+                            for (int i = 0; i < buffer.Length; i++)
                             {
-                                Name = playerBuffer.PlayerName.ToString(),
-                                Weapon = playerBuffer.Weapon.ToString(),
-                                ConnectionId = playerBuffer.ConnectionId,
-                                Ping = GetPingForClient(playerBuffer.ConnectionId)
-                            });
-                            Debug.Log($"Added player: {playerBuffer.PlayerName} from {world.Name}");
+                                var player = buffer[i];
+                                players.Add(new LobbyPlayerInfo
+                                {
+                                    Name = player.PlayerName.ToString(),
+                                    Weapon = player.Weapon.ToString(),
+                                    ConnectionId = player.ConnectionId,
+                                    Ping = GetPingForClient(player.ConnectionId)
+                                });
+                            }
+                            Debug.Log($"Found {buffer.Length} synced players in world {world.Name}");
+                            entities.Dispose();
+                            return players;
                         }
                     }
                 }
                 entities.Dispose();
             }
-            else
-            {
-                Debug.Log($"No LobbyPlayerBuffer found in {world.Name}");
-            }
         }
+
+        // Если синхронизированных данных нет, используем простой метод
+        players = GetPlayersSimple();
+        Debug.Log($"Using simple method, found {players.Count} players");
 
         Debug.Log($"=== GetLobbyPlayersForClient END: {players.Count} players ===");
         return players;
     }
+
+    public List<LobbyPlayerInfo> GetPlayersSimple()
+    {
+        var players = new List<LobbyPlayerInfo>();
+
+        // ПРОСТОЙ ПОИСК ВО ВСЕХ МИРАХ
+        foreach (var world in World.All)
+        {
+            if (!world.IsCreated) continue;
+
+            var em = world.EntityManager;
+            var query = em.CreateEntityQuery(typeof(LobbyPlayerBuffer));
+
+            if (!query.IsEmptyIgnoreFilter)
+            {
+                var entities = query.ToEntityArray(Allocator.Temp);
+                foreach (var entity in entities)
+                {
+                    var buffer = em.GetBuffer<LobbyPlayerBuffer>(entity);
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        var player = buffer[i];
+                        players.Add(new LobbyPlayerInfo
+                        {
+                            Name = player.PlayerName.ToString(),
+                            Weapon = player.Weapon.ToString(),
+                            ConnectionId = player.ConnectionId,
+                            Ping = 0
+                        });
+                    }
+                }
+                entities.Dispose();
+            }
+        }
+
+        Debug.Log($"GetPlayersSimple found: {players.Count} players");
+        return players;
+    }
+
 
     private int GetPingForClient(ulong connectionId)
     {

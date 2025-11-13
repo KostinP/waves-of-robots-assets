@@ -22,7 +22,7 @@
 .menu-button {
     width: 25%;
     height: 6%;
-    color: white;
+    color: var(--color-white);
     background-color: rgba(0, 0, 0, 0);
     border-width: 0px;
     border-color: rgba(200, 100, 255, 0.8);
@@ -74,7 +74,7 @@
 
 /* ЗАГОЛОВОК ЭКРАНА ЛОББИ */
 .network-title {
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
     font-size: var(--size-60-adaptive);
 }
@@ -145,14 +145,14 @@
 }
 .shortcut-key-text {
     font-size: var(--size-30-adaptive);
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
     padding: 0px;
     margin: 0px;
 }
 .shortcut-action {
     font-size: var(--size-30-adaptive);
-    color: white;
+    color: var(--color-white);
 }
 
 /* 📋 ЗАГОЛОВОК ПАНЕЛИ */
@@ -171,7 +171,7 @@
 }
 
 .panel-header-text {
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     font-size: var(--size-24-adaptive);
@@ -284,7 +284,7 @@
 
 .section-label {
     font-size: var(--size-16-adaptive);
-    color: white;
+    color: var(--color-white);
     background-color: var(--color-primary);
     padding: var(--size-3-adaptive) var(--size-30-adaptive) var(--size-3-adaptive) var(--size-60-adaptive);
     border-radius: 0px var(--size-6-adaptive) var(--size-6-adaptive) 0px;
@@ -331,7 +331,7 @@ RadioButton:checked .unity-radio-button__checkmark {
 }
 RadioButton .unity-radio-button__text {
     font-size: var(--size-24-adaptive);
-    color: white;
+    color: var(--color-white);
 }
 
 /* === Слайдер === */
@@ -399,7 +399,7 @@ RadioButton .unity-radio-button__text {
 }
 .character-name {
     font-size: var(--size-24-adaptive);
-    color: white;
+    color: var(--color-white);
     -unity-text-align: middle-center;
     margin-top: var(--size-3-adaptive);
 }
@@ -427,7 +427,7 @@ RadioButton .unity-radio-button__text {
 }
 .checkbox-label {
     font-size: var(--size-24-adaptive);
-    color: white;
+    color: var(--color-white);
 }
 
 /* === Кнопка создания === */
@@ -437,7 +437,7 @@ RadioButton .unity-radio-button__text {
     background-color: var(--color-primary);
     border-radius: var(--size-8-adaptive);
     font-size: var(--size-30-adaptive);
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
     margin-top: var(--size-30-adaptive);
 }
@@ -449,7 +449,7 @@ RadioButton .unity-radio-button__text {
     background-color: var(--color-primary);
     border-radius: var(--size-8-adaptive);
     font-size: var(--size-30-adaptive);
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
 }
 .random-button:hover { background-color: #d4a5ff; }
@@ -516,18 +516,18 @@ RadioButton .unity-radio-button__text {
 
 /* === Выпадающий список === */
 .custom-foldout {
-    color: white;
+    color: var(--color-white);
     font-size: var(--size-24-adaptive);
 }
 
 .custom-dropfield {
-    color: white;
+    color: var(--color-white);
     font-size: var(--size-24-adaptive);
 }
 
 /* === Переключающееся оружие === */
 .custom-radio-button {
-    color: white;
+    color: var(--color-white);
     font-size: var(--size-24-adaptive);
 }
 
@@ -547,7 +547,7 @@ RadioButton .unity-radio-button__text {
 }
 .kick-btn:focus {
     background-color: #ff4444;
-    color: white;
+    color: var(--color-white);
 }
 
 /* Кнопка "Распустить лобби" */
@@ -574,7 +574,7 @@ RadioButton .unity-radio-button__text {
 }
 .pause-title {
     font-size: var(--size-60-adaptive);
-    color: white;
+    color: var(--color-white);
     -unity-font-style: bold;
 }
 .pause-button {
@@ -583,7 +583,7 @@ RadioButton .unity-radio-button__text {
     background-color: var(--color-primary);
     border-radius: var(--size-8-adaptive);
     font-size: var(--size-30-adaptive);
-    color: white;
+    color: var(--color-white);
 }
 .leave-btn {
     background-color: #c0392b;
@@ -613,22 +613,23 @@ RadioButton .unity-radio-button__text {
     align-items: center;
     padding: 10px;
     border-bottom: 1px solid #333;
+    color: var(--color-white);
 }
 
 .lobby-name {
     width: 200px;
-    color: white;
+    color: var(--color-white);
 }
 
 .lobby-players {
     width: 80px;
-    color: white;
+    color: var(--color-white);
     -unity-text-align: middle-center;
 }
 
 .lobby-type {
     width: 120px;
-    color: white;
+    color: var(--color-white);
     -unity-text-align: middle-center;
 }
 
@@ -636,7 +637,7 @@ RadioButton .unity-radio-button__text {
     width: 80px;
     height: 30px;
     background-color: #4CAF50;
-    color: white;
+    color: var(--color-white);
 }
 
 .no-lobbies-label {

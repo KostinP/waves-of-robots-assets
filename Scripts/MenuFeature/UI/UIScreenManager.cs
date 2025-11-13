@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Entities;
 
 public class UIScreenManager
 {
@@ -306,20 +307,135 @@ public class UIScreenManager
         {
             _playersScroll.Clear();
 
-            // Получаем ConnectionId локального игрока через UIManager
+            // Получаем ConnectionId локального игрока
             var localConnectionId = UIManager.Instance?.GetLocalPlayerConnectionId() ?? 0;
 
-            // 🔹 ИСПРАВЛЕНИЕ: Используем правильный метод
-            if (UIManager.Instance?.LobbyManager != null)
+            var players = GetPlayersForUI();
+            Debug.Log($"UpdatePlayerList: Processing {players.Count} players");
+
+            foreach (var player in players)
             {
-                var players = UIManager.Instance.LobbyManager.GetLobbyPlayers();
-                foreach (var player in players)
+                Debug.Log($"Player: {player.Name}, Weapon: {player.Weapon}, Connection: {player.ConnectionId}");
+                CreatePlayerListItem(_playersScroll, player, localConnectionId);
+            }
+
+            Debug.Log($"Updated player list with {players.Count} players");
+        }
+    }
+
+    private List<LobbyPlayerInfo> GetPlayersForUI()
+    {
+        var players = new List<LobbyPlayerInfo>();
+
+        // Сначала пробуем получить данные через LobbyManager
+        if (UIManager.Instance?.LobbyManager != null)
+        {
+            players = UIManager.Instance.LobbyManager.GetLobbyPlayersForClient();
+
+            // Если пусто, пробуем серверный метод (для хоста)
+            if (players.Count == 0)
+            {
+                players = UIManager.Instance.LobbyManager.GetLobbyPlayers();
+            }
+        }
+
+        // Если все еще пусто, используем запасной метод
+        if (players.Count == 0)
+        {
+            players = GetPlayersFromWorldFallback();
+        }
+
+        Debug.Log($"GetPlayersForUI returning {players.Count} players");
+        return players;
+    }
+
+    private List<LobbyPlayerInfo> GetPlayersFromWorldFallback()
+    {
+        var players = new List<LobbyPlayerInfo>();
+
+        try
+        {
+            // Проверяем все миры более тщательно
+            foreach (var world in World.All)
+            {
+                if (!world.IsCreated) continue;
+
+                var em = world.EntityManager;
+
+                // Ищем entity с буфером игроков
+                var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+
+                if (!query.IsEmptyIgnoreFilter)
                 {
-                    CreatePlayerListItem(_playersScroll, player, localConnectionId);
+                    var entities = query.ToEntityArray(Allocator.Temp);
+                    foreach (var entity in entities)
+                    {
+                        if (em.HasBuffer<LobbyPlayerBuffer>(entity))
+                        {
+                            var buffer = em.GetBuffer<LobbyPlayerBuffer>(entity);
+                            Debug.Log($"Fallback: Found {buffer.Length} players in world {world.Name}");
+
+                            for (int i = 0; i < buffer.Length; i++)
+                            {
+                                var player = buffer[i];
+                                players.Add(new LobbyPlayerInfo
+                                {
+                                    Name = player.PlayerName.ToString(),
+                                    Weapon = player.Weapon.ToString(),
+                                    ConnectionId = player.ConnectionId,
+                                    Ping = 0
+                                });
+                            }
+                        }
+                    }
+                    entities.Dispose();
+
+                    if (players.Count > 0) break;
                 }
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"Error in fallback player retrieval: {e.Message}");
+        }
+
+        return players;
     }
+
+
+    private List<LobbyPlayerInfo> GetPlayersFromWorld()
+    {
+        var players = new List<LobbyPlayerInfo>();
+
+        // Проверяем все миры
+        foreach (var world in World.All)
+        {
+            if (!world.IsCreated) continue;
+
+            var em = world.EntityManager;
+            var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+
+            if (!query.IsEmptyIgnoreFilter)
+            {
+                var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    var player = buffer[i];
+                    players.Add(new LobbyPlayerInfo
+                    {
+                        Name = player.PlayerName.ToString(),
+                        Weapon = player.Weapon.ToString(),
+                        ConnectionId = player.ConnectionId,
+                        Ping = 0
+                    });
+                }
+                break; // Нашли в одном мире - достаточно
+            }
+        }
+
+        return players;
+    }
+
 
     private void CreatePlayerListItem(ScrollView scroll, LobbyPlayerInfo player, ulong localPlayerConnectionId)
     {

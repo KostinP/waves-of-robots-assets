@@ -282,16 +282,15 @@ public class LobbyDiscovery : MonoBehaviour
                     Debug.Log($"Added new lobby. Total count: {DiscoveredLobbies.Count}");
                 }
 
-                // 🔹 ИСПРАВЛЕНИЕ: Используем DateTime в фоновом потоке
                 _lobbyLastSeen[newLobby.uniqueId] = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
                 Debug.Log($"Set last seen for lobby {newLobby.uniqueId}");
             }
 
-            // 🔹 ИСПРАВЛЕНИЕ: Безопасный вызов в главном потоке
+            // ВСЕ UI ОБНОВЛЕНИЯ ДОЛЖНЫ БЫТЬ В ГЛАВНОМ ПОТОКЕ
             UnityMainThreadDispatcher.Instance?.Enqueue(() =>
             {
                 _needsLobbyUpdate = true;
-                Debug.Log($"UI update scheduled");
+                Debug.Log($"UI update scheduled from main thread");
             });
         }
         catch (Exception e)

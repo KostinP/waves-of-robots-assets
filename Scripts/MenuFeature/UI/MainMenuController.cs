@@ -196,6 +196,25 @@ public class MainMenuController : MonoBehaviour
     {
         _screenManager?.ShowScreen("lobby_settings_screen");
         SetupClientModeUI();
+
+        Debug.Log("OnJoinedAsClient: Setting up client UI and starting player list monitoring");
+
+        // 🔹 УСИЛЕННОЕ ОБНОВЛЕНИЕ СПИСКА ИГРОКОВ
+        StartCoroutine(EnhancedPlayerListUpdate());
+    }
+
+    private IEnumerator EnhancedPlayerListUpdate()
+    {
+        yield return new WaitForEndOfFrame();
+
+        // Многократное обновление с задержками
+        for (int i = 0; i < 3; i++)
+        {
+            UpdatePlayerList();
+            yield return new WaitForSeconds(1f);
+        }
+
+        Debug.Log("Enhanced player list update completed");
     }
 
     public void SetupHostModeUI()

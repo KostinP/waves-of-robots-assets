@@ -11,8 +11,9 @@ public partial struct LobbySystem : ISystem
     {
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
         var em = state.EntityManager;
+        bool playersWereAdded = false;
 
-        // 🔹 ИСПРАВЛЕНИЕ: Проверяем существование лобби перед обработкой
+        // 🔹 Проверяем существование лобби перед обработкой
         var lobbyQuery = SystemAPI.QueryBuilder().WithAll<LobbyDataComponent, LobbyPlayerBuffer>().Build();
         if (lobbyQuery.IsEmpty)
         {
@@ -43,6 +44,29 @@ public partial struct LobbySystem : ISystem
                 });
 
                 UnityEngine.Debug.Log($"[Server] Added player {joinCmd.PlayerName} with weapon {joinCmd.Weapon} (Conn={connId})");
+                playersWereAdded = true;
+
+                // 🔹 НЕМЕДЛЕННАЯ СИНХРОНИЗАЦИЯ - упрощенная версия
+                // Сохраняем необходимые данные в локальные переменные для использования в лямбде
+                var playerName = joinCmd.PlayerName.ToString();
+                var weapon = joinCmd.Weapon.ToString();
+                var connectionId = connId;
+
+                UnityMainThreadDispatcher.Instance?.Enqueue(() =>
+                {
+                    // Обновляем UI
+                    UIManager.Instance?.OnPlayersUpdated();
+
+                    // Логируем для отладки
+                    Debug.Log($"[LobbySystem] Synchronized new player: {playerName} with weapon {weapon} (Conn={connectionId})");
+
+                    // Дополнительная принудительная синхронизация через LobbyManager
+                    var lobbyManager = UnityEngine.Object.FindObjectOfType<LobbyManager>();
+                    if (lobbyManager != null)
+                    {
+                        lobbyManager.ForceSyncPlayers();
+                    }
+                });
 
                 // Создаём сущность для SpawnPlayerCommand
                 var spawn = ecb.CreateEntity();
@@ -52,9 +76,6 @@ public partial struct LobbySystem : ISystem
                     PlayerName = joinCmd.PlayerName,
                     Weapon = joinCmd.Weapon
                 });
-
-                // 🔹 ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI
-                UIManager.Instance?.OnPlayersUpdated();
             }
             else
             {
@@ -81,7 +102,26 @@ public partial struct LobbySystem : ISystem
             {
                 if (lobbyBuffer[i].ConnectionId == kickCmd.ValueRO.ConnectionId)
                 {
+                    var removedPlayer = lobbyBuffer[i];
                     lobbyBuffer.RemoveAt(i);
+                    playersWereAdded = true;
+
+                    // 🔹 УВЕДОМЛЕНИЕ ОБ УДАЛЕНИИ ИГРОКА
+                    var removedPlayerName = removedPlayer.PlayerName.ToString();
+                    var removedConnectionId = removedPlayer.ConnectionId;
+
+                    UnityMainThreadDispatcher.Instance?.Enqueue(() =>
+                    {
+                        UIManager.Instance?.OnPlayersUpdated();
+                        Debug.Log($"[LobbySystem] Player kicked: {removedPlayerName} (Conn={removedConnectionId})");
+
+                        // Принудительная синхронизация
+                        var lobbyManager = UnityEngine.Object.FindObjectOfType<LobbyManager>();
+                        if (lobbyManager != null)
+                        {
+                            lobbyManager.ForceSyncPlayers();
+                        }
+                    });
                     break;
                 }
             }
@@ -98,9 +138,23 @@ public partial struct LobbySystem : ISystem
             }
 
             ecb.DestroyEntity(entity);
+        }
 
-            // 🔹 ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI
-            UIManager.Instance?.OnPlayersUpdated();
+        // 🔹 ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI ЕСЛИ БЫЛИ ИЗМЕНЕНИЯ
+        if (playersWereAdded)
+        {
+            // Используем UnityMainThreadDispatcher для вызова в главном потоке
+            UnityMainThreadDispatcher.Instance?.Enqueue(() =>
+            {
+                UIManager.Instance?.OnPlayersUpdated();
+
+                // Дополнительная синхронизация
+                var lobbyManager = UnityEngine.Object.FindObjectOfType<LobbyManager>();
+                if (lobbyManager != null)
+                {
+                    lobbyManager.ForceSyncPlayers();
+                }
+            });
         }
 
         ecb.Playback(em);

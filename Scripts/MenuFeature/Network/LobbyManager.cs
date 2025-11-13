@@ -69,38 +69,50 @@ public class LobbyManager : MonoBehaviour
     public List<LobbyPlayerInfo> GetLobbyPlayers()
     {
         var players = new List<LobbyPlayerInfo>();
-        var serverWorld = GetServerWorld();
+        Debug.Log("=== GetLobbyPlayers START ===");
 
-        if (serverWorld == null)
+        // Пробуем получить данные из всех миров
+        foreach (var world in World.All)
         {
-            // Если мы клиент, пытаемся получить данные из клиентского мира
-            var clientWorld = GetClientWorld();
-            if (clientWorld == null) return players;
+            if (!world.IsCreated) continue;
 
-            // Здесь можно добавить логику для получения игроков на клиенте
-            // через RPC или синхронизацию
-            return players;
-        }
+            var em = world.EntityManager;
 
-        var em = serverWorld.EntityManager;
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+            // Ищем entity с буфером игроков
+            var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
 
-        if (query.IsEmptyIgnoreFilter) return players;
-
-        var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
-
-        for (int i = 0; i < buffer.Length; i++)
-        {
-            var playerBuffer = buffer[i];
-            players.Add(new LobbyPlayerInfo
+            if (!query.IsEmptyIgnoreFilter)
             {
-                Name = playerBuffer.PlayerName.ToString(),
-                Weapon = playerBuffer.Weapon.ToString(),
-                ConnectionId = playerBuffer.ConnectionId,
-                Ping = GetPing(playerBuffer.ConnectionId)
-            });
+                var entities = query.ToEntityArray(Allocator.Temp);
+                foreach (var entity in entities)
+                {
+                    if (em.HasBuffer<LobbyPlayerBuffer>(entity))
+                    {
+                        var buffer = em.GetBuffer<LobbyPlayerBuffer>(entity);
+                        Debug.Log($"Found buffer in world {world.Name}: {buffer.Length} players");
+
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            var playerBuffer = buffer[i];
+                            players.Add(new LobbyPlayerInfo
+                            {
+                                Name = playerBuffer.PlayerName.ToString(),
+                                Weapon = playerBuffer.Weapon.ToString(),
+                                ConnectionId = playerBuffer.ConnectionId,
+                                Ping = GetPing(playerBuffer.ConnectionId)
+                            });
+                            Debug.Log($"Added player: {playerBuffer.PlayerName} from world {world.Name}");
+                        }
+                    }
+                }
+                entities.Dispose();
+
+                // Если нашли игроков, выходим
+                if (players.Count > 0) break;
+            }
         }
 
+        Debug.Log($"=== GetLobbyPlayers END: {players.Count} players ===");
         return players;
     }
 
@@ -145,7 +157,6 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-
     private void ShutdownClientWorld()
     {
         var clientWorld = GetClientWorld();
@@ -162,8 +173,6 @@ public class LobbyManager : MonoBehaviour
             }
         }
     }
-
-
 
     private World GetServerWorld()
     {
@@ -249,6 +258,19 @@ public class LobbyManager : MonoBehaviour
         UIManager.Instance.OnPlayersUpdated();
 
         Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
+
+        // ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ СРАЗУ ПОСЛЕ СОЗДАНИЯ
+        StartCoroutine(InitialSyncCoroutine());
+    }
+
+    private IEnumerator InitialSyncCoroutine()
+    {
+        yield return new WaitForSeconds(1f); // Даем время на инициализацию
+        ForceSyncPlayers();
+
+        // Дополнительная синхронизация
+        yield return new WaitForSeconds(2f);
+        ForceSyncPlayers();
     }
 
     private IEnumerator LobbyBroadcastAndMonitorLoop()
@@ -302,14 +324,6 @@ public class LobbyManager : MonoBehaviour
 #endif
     }
 
-    private void CreateClient()
-    {
-        if (GetClientWorld() == null)
-        {
-            ClientServerBootstrap.CreateClientWorld("ClientWorld");
-        }
-    }
-
     private string GetLocalIPAddress()
     {
         try
@@ -335,29 +349,24 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // Обновите метод JoinLobby
     public void JoinLobby(LobbyInfo lobbyInfo, string playerName, string password = "")
     {
         Debug.Log($"Joining lobby: {lobbyInfo.name} at {lobbyInfo.ip}:{lobbyInfo.port}");
 
+        // Сохраняем данные для подключения
         PlayerPrefs.SetString("JoiningLobbyIP", lobbyInfo.ip);
         PlayerPrefs.SetInt("JoiningLobbyPort", lobbyInfo.port);
         PlayerPrefs.SetString("JoiningPlayerName", playerName);
         PlayerPrefs.Save();
 
-        // 🔹 ЗАПУСКАЕМ МОНИТОРИНГ ИГРОКОВ ДЛЯ КЛИЕНТА
-        StartLobbyMonitoring();
-
         var mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
             mainMenuController.OnJoinedAsClient();
-        else
-            SceneManager.LoadScene("LobbyScene");
 
-        // получаем строковое название оружия по индексу
+        // Получаем название оружия
         string weaponName = GetWeaponNameFromIndex(SettingsManager.Instance.CurrentSettings.defaultWeaponIndex);
 
-        // отправляем JoinLobbyCommand
+        // Отправляем команду подключения
         var clientWorld = GetClientWorld();
         if (clientWorld != null)
         {
@@ -372,9 +381,72 @@ public class LobbyManager : MonoBehaviour
             em.AddComponentData(req, new SendRpcCommandRequest { TargetConnection = Entity.Null });
         }
 
-        UIManager.Instance.OnLobbyListUpdated();
+        // Запускаем усиленное обновление списка игроков
+        StartCoroutine(EnhancedPlayerListUpdate());
     }
 
+    private IEnumerator EnhancedPlayerListUpdate()
+    {
+        Debug.Log("Starting enhanced player list update for client...");
+
+        // Многократные попытки обновления с прогрессивной задержкой
+        for (int attempt = 0; attempt < 8; attempt++) // Увеличил до 8 попыток
+        {
+            yield return new WaitForSeconds(0.5f + attempt * 0.3f); // Более частые попытки
+
+            Debug.Log($"Player list update attempt {attempt + 1}");
+
+            // Принудительно запрашиваем синхронизацию
+            if (attempt % 2 == 0) // Каждую вторую попытку
+            {
+                ForceSyncPlayers();
+            }
+
+            UIManager.Instance?.OnPlayersUpdated();
+
+            // Проверяем, есть ли данные
+            var players = GetLobbyPlayersForClient();
+            if (players.Count > 0)
+            {
+                Debug.Log($"Successfully found {players.Count} players on attempt {attempt + 1}");
+
+                // Дополнительное обновление после успеха
+                yield return new WaitForSeconds(0.5f);
+                UIManager.Instance?.OnPlayersUpdated();
+                break;
+            }
+
+            if (attempt == 7) // Последняя попытка
+            {
+                Debug.LogWarning("Failed to get player list after all attempts");
+            }
+        }
+
+        Debug.Log("Enhanced player list update completed");
+    }
+
+    public void ForceSyncPlayers()
+    {
+        var serverWorld = GetServerWorld();
+        if (serverWorld == null) return;
+
+        var em = serverWorld.EntityManager;
+        var lobbyQuery = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyDataComponent>(),
+                                            ComponentType.ReadOnly<LobbyPlayerBuffer>());
+    
+        if (lobbyQuery.IsEmptyIgnoreFilter) return;
+
+        var lobbyEntity = lobbyQuery.GetSingletonEntity();
+        var buffer = em.GetBuffer<LobbyPlayerBuffer>(lobbyEntity);
+    
+        Debug.Log($"ForceSync: Syncing {buffer.Length} players to all clients");
+    
+        // Принудительно обновляем UI
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            UIManager.Instance?.OnPlayersUpdated();
+        });
+    }
 
     private string GetWeaponNameFromIndex(int index)
     {
@@ -433,7 +505,7 @@ public class LobbyManager : MonoBehaviour
         UIManager.Instance.OnPlayerLeft((int)connectionId);
     }
 
-    private bool _isDisbanding = false; // Добавляем флаг
+    private bool _isDisbanding = false;
 
     public void DisbandLobby()
     {
@@ -562,77 +634,7 @@ public class LobbyManager : MonoBehaviour
         return em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity()).Length;
     }
 
-    public void PopulateLobbyList(ScrollView scroll)
-    {
-        scroll.Clear();
-        var lobbies = GetDiscoveredLobbies();
-        if (lobbies == null || lobbies.Count == 0)
-        {
-            var noLobbies = new Label("No lobbies found");
-            noLobbies.AddToClassList("no-lobbies-label");
-            scroll.Add(noLobbies);
-            return;
-        }
-
-        foreach (var lobby in lobbies)
-        {
-            CreateLobbyItem(scroll, lobby);
-        }
-    }
-
-    private VisualElement CreateLobbyItem(ScrollView scroll, LobbyInfo info)
-    {
-        var item = new VisualElement();
-        item.AddToClassList("lobby-item");
-
-        var nameLabel = new Label(info.name);
-        nameLabel.AddToClassList("lobby-name");
-
-        var playersLabel = new Label($"{info.currentPlayers}/{info.maxPlayers}");
-        playersLabel.AddToClassList("lobby-players");
-
-        var typeLabel = new Label(info.isOpen ? "Open" : "Password");
-        typeLabel.AddToClassList("lobby-type");
-
-        var joinBtn = new Button(() => {
-            if (info.isOpen || string.IsNullOrEmpty(info.password))
-            {
-                JoinLobby(info, SettingsManager.Instance.CurrentSettings.playerName, info.password);
-            }
-            else
-            {
-                ShowPasswordPrompt(info);
-            }
-        })
-        {
-            text = "Join"
-        };
-        joinBtn.AddToClassList("join-button");
-
-        item.Add(nameLabel);
-        item.Add(playersLabel);
-        item.Add(typeLabel);
-        item.Add(joinBtn);
-
-        scroll.Add(item);
-        return item;
-    }
-
-    public List<LobbyInfo> GetDiscoveredLobbies()
-    {
-        if (_discovery != null)
-        {
-            var lobbies = _discovery.GetDiscoveredLobbies();
-            Debug.Log($"GetDiscoveredLobbies: returning {lobbies.Count} lobbies");
-            foreach (var lobby in lobbies)
-            {
-                Debug.Log($" - {lobby.name} ({lobby.ip}:{lobby.port}), Open: {lobby.isOpen}");
-            }
-            return lobbies;
-        }
-        Debug.LogWarning("GetDiscoveredLobbies: _discovery is null");
-        return new List<LobbyInfo>();
-    }
+    // УДАЛЕНО: PopulateLobbyList и CreateLobbyItem - эти методы дублируют функциональность из UIScreenManager
 
     public void StartLobbyMonitoring()
     {
@@ -675,7 +677,6 @@ public class LobbyManager : MonoBehaviour
             _playerListUpdateCoroutine = null;
         }
     }
-
 
     public void PopulatePlayerList(ScrollView scroll, ulong localPlayerConnectionId = 0)
     {
@@ -753,31 +754,6 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private VisualElement CreatePlayerItem(ScrollView scroll, ulong id, string name)
-    {
-        var item = new VisualElement();
-        item.AddToClassList("player-item");
-
-        var nameLabel = new Label(name);
-        nameLabel.AddToClassList("player-name");
-
-        var pingLabel = new Label($"{GetPing(id)} ms");
-        pingLabel.AddToClassList("player-ping");
-
-        var kickBtn = new Button(() => KickPlayer(id))
-        {
-            text = "Kick"
-        };
-        kickBtn.AddToClassList("kick-button");
-
-        item.Add(nameLabel);
-        item.Add(pingLabel);
-        item.Add(kickBtn);
-
-        scroll.Add(item);
-        return item;
-    }
-
     private int GetPing(ulong id)
     {
         var serverWorld = GetServerWorld();
@@ -826,6 +802,81 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    public List<LobbyPlayerInfo> GetLobbyPlayersForClient()
+    {
+        var players = new List<LobbyPlayerInfo>();
+        Debug.Log("=== GetLobbyPlayersForClient START ===");
+
+        // Детально логируем все миры
+        foreach (var world in World.All)
+        {
+            if (!world.IsCreated) continue;
+
+            Debug.Log($"Checking world: {world.Name}, IsClient: {world.IsClient()}, IsServer: {world.IsServer()}");
+
+            var em = world.EntityManager;
+            var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+
+            if (!query.IsEmptyIgnoreFilter)
+            {
+                var entities = query.ToEntityArray(Allocator.Temp);
+                Debug.Log($"Found {entities.Length} entities with LobbyPlayerBuffer in {world.Name}");
+
+                foreach (var entity in entities)
+                {
+                    if (em.HasBuffer<LobbyPlayerBuffer>(entity))
+                    {
+                        var buffer = em.GetBuffer<LobbyPlayerBuffer>(entity);
+
+                        // Проверяем маркер синхронизации
+                        bool isSynced = em.HasComponent<SyncedLobbyData>(entity);
+                        Debug.Log($"Entity {entity} in {world.Name}: {buffer.Length} players, Synced: {isSynced}");
+
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            var playerBuffer = buffer[i];
+                            players.Add(new LobbyPlayerInfo
+                            {
+                                Name = playerBuffer.PlayerName.ToString(),
+                                Weapon = playerBuffer.Weapon.ToString(),
+                                ConnectionId = playerBuffer.ConnectionId,
+                                Ping = GetPingForClient(playerBuffer.ConnectionId)
+                            });
+                            Debug.Log($"Added player: {playerBuffer.PlayerName} from {world.Name}");
+                        }
+                    }
+                }
+                entities.Dispose();
+            }
+            else
+            {
+                Debug.Log($"No LobbyPlayerBuffer found in {world.Name}");
+            }
+        }
+
+        Debug.Log($"=== GetLobbyPlayersForClient END: {players.Count} players ===");
+        return players;
+    }
+
+    private int GetPingForClient(ulong connectionId)
+    {
+        var clientWorld = GetClientWorld();
+        if (clientWorld == null) return 0;
+
+        var em = clientWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
+
+        if (query.IsEmptyIgnoreFilter) return 0;
+
+        using var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
+        foreach (var player in players)
+        {
+            if (player.ConnectionId == connectionId)
+                return player.Ping;
+        }
+        return 0;
+    }
+
     public bool IsConnectedToServer()
     {
         var clientWorld = GetClientWorld();
@@ -842,5 +893,4 @@ public class LobbyManager : MonoBehaviour
             LobbyDiscovery.Instance.OnLobbyClosed -= OnLobbyClosed;
         }
     }
-
 }

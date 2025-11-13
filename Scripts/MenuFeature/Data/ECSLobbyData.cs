@@ -101,3 +101,16 @@ public struct LobbyPlayerInfo
     public ulong ConnectionId;
     public int Ping;
 }
+
+public struct LobbyPlayersRequest : IComponentData { }
+
+public struct LobbyPlayersResponse : IComponentData
+{
+    public Entity LobbyEntity;
+}
+
+// Маркер для синхронизированных данных клиента
+public struct SyncedLobbyData : IComponentData 
+{
+    public bool IsInitialized;
+}

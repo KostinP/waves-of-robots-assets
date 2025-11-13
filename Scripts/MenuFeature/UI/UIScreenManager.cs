@@ -9,9 +9,9 @@ using Unity.Collections;
 public class UIScreenManager
 {
     public const string MenuScreenName = "menu_screen";
-    public const string SettingsScreenName = "settings_screen";
     public const string LobbyListScreenName = "lobby_list_screen";
     public const string LobbySettingsScreenName = "lobby_settings_screen";
+    public const string SettingsScreenName = "settings_screen";
     private Button _btnRefreshLobbyList;
 
     private readonly VisualElement _root;
@@ -20,6 +20,7 @@ public class UIScreenManager
 
     // UI Elements
     private Button _btnShowLobbyList;
+    private Button _btnOpenSettings;
     private Button _btnCreateLobby;
     private Button _btnDisbandLobby;
     private Button _btnStartGame;
@@ -64,6 +65,9 @@ public class UIScreenManager
         _btnShowLobbyList = menuScreen?.Q<Button>("btnShowLobbyList");
         Debug.Log($"_btnShowLobbyList found: {_btnShowLobbyList != null}");
 
+        _btnOpenSettings = menuScreen?.Q<Button>("btnSettings");
+        Debug.Log($"_btnOpenSettings found: {_btnOpenSettings != null}");
+
         var lobbyListScreen = _root.Q<VisualElement>(LobbyListScreenName);
         _btnCreateLobby = lobbyListScreen?.Q<Button>("btnCreateLobby");
         _btnRefreshLobbyList = lobbyListScreen?.Q<Button>("btnRefreshLobbyList");
@@ -87,6 +91,11 @@ public class UIScreenManager
             _btnShowLobbyList.clicked += () => {
                 _controller.ShowScreen(LobbyListScreenName);
                 RefreshLobbyList();
+            };
+
+        if (_btnOpenSettings != null)
+            _btnOpenSettings.clicked += () => {
+                _controller.ShowScreen(SettingsScreenName);
             };
 
         if (_btnCreateLobby != null)
@@ -142,6 +151,9 @@ public class UIScreenManager
 
     public void ShowScreen(string screenName)
     {
+        // Если запрашивают настройки - игнорируем, т.к. это обрабатывается в MainMenuController
+        if (screenName == SettingsScreenName) return;
+
         Debug.Log($"ShowScreen called: {screenName}");
 
         var screens = _root.Query<VisualElement>(className: "screen").ToList();
@@ -155,17 +167,12 @@ public class UIScreenManager
 
         if (screenName == LobbyListScreenName)
         {
-            Debug.Log("On lobby list screen, refreshing list...");
             RefreshLobbyList();
-
-            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ПОКАЗЕ ЭКРАНА
             if (LobbyDiscovery.Instance != null)
             {
                 LobbyDiscovery.Instance.ForceDiscovery();
             }
         }
-
-        Debug.Log($"Showing screen: {screenName}");
     }
 
     public void RefreshLobbyList()

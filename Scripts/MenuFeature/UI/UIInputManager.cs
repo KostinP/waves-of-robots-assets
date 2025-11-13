@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using System.Collections;
 
 public class UIInputManager
 {
@@ -38,14 +39,19 @@ public class UIInputManager
             Debug.LogWarning("InputActionAsset is not assigned!");
             return;
         }
+
+        _inputActions.Enable(); // ← ДОБАВЬТЕ ЭТУ СТРОЧКУ!
+
         _uiActionMap = _inputActions.FindActionMap("UI");
         if (_uiActionMap == null)
         {
             Debug.LogError("UI Action Map not found!");
             return;
         }
+
         SetupInputActions();
         SubscribeToInputEvents();
+        Enable();
     }
 
     private void SetupInputActions()
@@ -108,6 +114,19 @@ public class UIInputManager
     {
         _inputActions?.Disable();
         _uiActionMap?.Enable();
+
+        // Авто-фокус на первую кнопку
+        //StartCoroutine(AutoFocusFirstElement());
+    }
+
+    private IEnumerator AutoFocusFirstElement()
+    {
+        yield return new WaitForEndOfFrame();
+        var elements = GetInteractiveElements();
+        if (elements.Count > 0)
+        {
+            SetFocusToElement(elements[0]);
+        }
     }
 
     public void Disable() => _uiActionMap?.Disable();
@@ -115,7 +134,16 @@ public class UIInputManager
     private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed || _isTextFieldFocused) return;
-        HandleEscapeKey();
+
+        // Если в настройках - ESC закрывает настройки
+        if (_controller.GetCurrentScreen() == "settings_screen")
+        {
+            _controller.HideSettingsScreen();
+        }
+        else
+        {
+            HandleEscapeKey();
+        }
     }
 
     private void OnNavigatePerformed(InputAction.CallbackContext ctx)
@@ -142,11 +170,16 @@ public class UIInputManager
     private void OnOpenSettingsPerformed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed || _isTextFieldFocused) return;
-        string current = _screenManager.GetCurrentScreen();
-        if (current != UIScreenManager.SettingsScreenName)
+
+        if (_controller.GetCurrentScreen() != "settings_screen")
+        {
             _controller.ShowScreen(UIScreenManager.SettingsScreenName);
+        }
         else
-            _screenManager.ReturnToMainMenu();
+        {
+            // Если уже в настройках - возвращаем в главное меню
+            _controller.HideSettingsScreen();
+        }
     }
 
     private void OnOpenStatisticsPerformed(InputAction.CallbackContext ctx)
@@ -173,10 +206,44 @@ public class UIInputManager
     private List<VisualElement> GetInteractiveElements()
     {
         var list = new List<VisualElement>();
-        list.AddRange(_root.Query<Button>().Where(b => b.enabledSelf && b.visible && b.focusable && b.resolvedStyle.display == DisplayStyle.Flex).ToList());
-        list.AddRange(_root.Query<TextField>().Where(t => t.enabledSelf && t.visible && t.focusable && t.resolvedStyle.display == DisplayStyle.Flex).ToList());
-        list.AddRange(_root.Query<RadioButton>().Where(r => r.enabledSelf && r.visible && r.focusable && r.resolvedStyle.display == DisplayStyle.Flex).ToList());
+
+        // Получаем только видимые и активные элементы текущего экрана
+        var currentScreen = _screenManager.GetCurrentScreen();
+        var screenElement = _root.Q<VisualElement>(currentScreen);
+
+        if (screenElement != null)
+        {
+            list.AddRange(screenElement.Query<Button>()
+                .Where(b => b.enabledSelf && b.resolvedStyle.display == DisplayStyle.Flex && b.visible).ToList());
+
+            list.AddRange(screenElement.Query<TextField>()
+                .Where(t => t.enabledSelf && t.resolvedStyle.display == DisplayStyle.Flex && t.visible).ToList());
+
+            list.AddRange(screenElement.Query<RadioButton>()
+                .Where(r => r.enabledSelf && r.resolvedStyle.display == DisplayStyle.Flex && r.visible).ToList());
+        }
+
+        Debug.Log($"Found {list.Count} interactive elements on screen: {currentScreen}");
         return list;
+    }
+
+    public void DebugInputState()
+    {
+        Debug.Log($"=== UIInputManager State ===");
+        Debug.Log($"InputActions: {_inputActions != null}");
+        Debug.Log($"UIActionMap: {_uiActionMap != null}");
+        Debug.Log($"UIActionMap enabled: {_uiActionMap?.enabled}");
+        Debug.Log($"OpenSettings action: {_openSettingsAction != null}");
+        Debug.Log($"OpenSettings enabled: {_openSettingsAction?.enabled}");
+        Debug.Log($"Current screen: {_screenManager?.GetCurrentScreen()}");
+
+        var elements = GetInteractiveElements();
+        Debug.Log($"Interactive elements: {elements.Count}");
+        foreach (var element in elements)
+        {
+            Debug.Log($" - {element.name} ({element.GetType().Name})");
+        }
+        Debug.Log($"=============================");
     }
 
     private void SetFocusToElement(VisualElement el)
@@ -213,7 +280,7 @@ public class UIInputManager
         {
             case "btnSingle": OnSinglePlayer(); break;
             case "btnCreateLobby": OnCreateLobby(); break;
-            case "btnStatistics": OnStatistics(); break;
+            case "btnSettings": OnSettings(); break;
             case "btnQuit": OnQuit(); break;
             default: SimulateButtonClick(btn); break;
         }
@@ -244,7 +311,11 @@ public class UIInputManager
         _controller.ShowScreen(UIScreenManager.LobbyListScreenName);
     }
 
-    private void OnStatistics() => Debug.Log("Statistics");
+    private void OnSettings()
+    {
+        _controller.ShowScreen(UIScreenManager.SettingsScreenName);
+    }
+
     private void OnQuit() => Debug.Log("Quit");
 
     public void SwitchToPlayerInput()

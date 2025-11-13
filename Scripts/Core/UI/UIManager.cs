@@ -35,15 +35,48 @@ public class UIManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "MainMenuScene")
+        Debug.Log($"UIManager: Scene loaded: {scene.name}");
+
+        if (scene.name == "MainMenuScene" || scene.name == "MainMenu")
         {
-            _mainMenuController = FindObjectOfType<MainMenuController>();
+            InitializeMainMenuUI();
         }
-        else if (scene.name == "GameCoreScene")
+        else if (scene.name == "GameCoreScene" || scene.name == "Game")
         {
-            // HUD и Pause загружаются в SceneUIController
+            InitializeGameUI();
         }
     }
+
+    private void InitializeMainMenuUI()
+    {
+        _mainMenuController = FindObjectOfType<MainMenuController>();
+        if (_mainMenuController == null)
+        {
+            Debug.LogWarning("MainMenuController not found in scene, creating new one");
+            // Создаем через префаб или оставляем поиск в следующем кадре
+            StartCoroutine(FindMainMenuControllerDelayed());
+        }
+    }
+
+    private void InitializeGameUI()
+    {
+        _hudController = FindObjectOfType<HUDController>();
+        _pauseController = FindObjectOfType<PauseMenuController>();
+        
+        // Если контроллеры не найдены, они будут созданы SceneUIController
+    }
+
+    private IEnumerator FindMainMenuControllerDelayed()
+    {
+        yield return new WaitForEndOfFrame();
+        _mainMenuController = FindObjectOfType<MainMenuController>();
+        if (_mainMenuController == null)
+        {
+            Debug.LogError("MainMenuController still not found after delay");
+        }
+    }
+
+    // === СОХРАНЯЕМ ВСЮ СУЩЕСТВУЮЩУЮ ФУНКЦИОНАЛЬНОСТЬ ===
 
     public void SetHUDController(HUDController controller) => _hudController = controller;
     public void SetPauseController(PauseMenuController controller) => _pauseController = controller;
@@ -89,17 +122,14 @@ public class UIManager : MonoBehaviour
     {
         try
         {
-            // Останавливаем все сетевые активности
             var lobbyManager = FindObjectOfType<LobbyManager>();
             if (lobbyManager != null)
             {
-                // ФИКС: Используем DisbandLobby вместо прямого вызова
                 lobbyManager.DisbandLobby();
             }
             else
             {
                 Debug.LogWarning("LobbyManager not found, proceeding without disband");
-                // Если менеджера нет, просто загружаем меню
                 LoadMainMenuDirectly();
             }
         }
@@ -118,7 +148,11 @@ public class UIManager : MonoBehaviour
 
     private void LoadMainMenuDirectly()
     {
-        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
+        if (Application.CanStreamedLevelBeLoaded("MainMenuScene"))
+        {
+            SceneManager.LoadScene("MainMenuScene");
+        }
+        else if (Application.CanStreamedLevelBeLoaded("MainMenu"))
         {
             SceneManager.LoadScene("MainMenu");
         }
@@ -145,14 +179,12 @@ public class UIManager : MonoBehaviour
 
         try
         {
-            // Используем _mainMenuController
             if (_mainMenuController != null)
             {
                 _mainMenuController.ReturnToLobbyList();
             }
             else
             {
-                // Если контроллер не найден, пытаемся найти его
                 _mainMenuController = FindObjectOfType<MainMenuController>();
                 _mainMenuController?.ReturnToLobbyList();
             }
@@ -168,11 +200,20 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         OnLobbyListUpdated();
 
-        // Принудительный запрос discovery
         if (LobbyDiscovery.Instance != null)
         {
             LobbyDiscovery.Instance.ForceDiscovery();
         }
+    }
+
+    public void ShowPauseMenu()
+    {
+        _pauseController?.ShowMenu();
+    }
+
+    public void HidePauseMenu()
+    {
+        _pauseController?.HideMenu();
     }
 
     private void OnDestroy()

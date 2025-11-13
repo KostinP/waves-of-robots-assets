@@ -28,17 +28,31 @@ public class UISettingsManager
     private List<Resolution> _resolutions;
     private string[] _qualityNames;
 
-    public UISettingsManager(VisualElement root, UIDocument uiDocument, MainMenuController controller)
+    public UISettingsManager(VisualElement settingsRoot, UIDocument uiDocument, MainMenuController controller)
     {
-        _root = root;
+        _root = settingsRoot;
         _uiDocument = uiDocument;
         _controller = controller;
+
+        if (_root == null)
+        {
+            Debug.LogError("UISettingsManager: settingsRoot is null!");
+            return;
+        }
+
         InitializeWithDelay();
     }
 
     private void InitializeWithDelay()
     {
-        _uiDocument.StartCoroutine(InitializeCoroutine());
+        if (_uiDocument != null)
+        {
+            _uiDocument.StartCoroutine(InitializeCoroutine());
+        }
+        else
+        {
+            Debug.LogError("UISettingsManager: _uiDocument is null!");
+        }
     }
 
     private IEnumerator InitializeCoroutine()
@@ -49,49 +63,99 @@ public class UISettingsManager
 
     private void Initialize()
     {
+        if (_root == null)
+        {
+            Debug.LogError("UISettingsManager: Cannot initialize - _root is null");
+            return;
+        }
+
         FindUIElements();
         SetupData();
         SetupEventHandlers();
         LoadCurrentSettings();
-        Debug.Log("UISettingsManager initialized");
+        Debug.Log("UISettingsManager initialized successfully");
     }
 
     private void FindUIElements()
     {
-        var settingsScreen = _root.Q<VisualElement>(UIScreenManager.SettingsScreenName);
-        if (settingsScreen == null)
+        if (_root == null)
         {
-            Debug.LogError($"[UISettingsManager] Экран '{UIScreenManager.SettingsScreenName}' не найден в UIDocument!");
+            Debug.LogError("UISettingsManager: _root is null in FindUIElements");
             return;
         }
 
-        _playerNameField = settingsScreen.Q<TextField>("playerNameField");
-        if (_playerNameField == null) Debug.LogWarning("[UISettingsManager] playerNameField не найден!");
-
-        _musicSlider = settingsScreen.Q<Slider>("musicSlider");
-        _musicValue = settingsScreen.Q<Label>("musicVolumeLabel");
-        _soundSlider = settingsScreen.Q<Slider>("soundVolumeSlider");
-        _soundValue = settingsScreen.Q<Label>("soundVolumeLabel");
-        _resolutionDropdown = settingsScreen.Q<DropdownField>("resolutionDropdown");
-        _qualityDropdown = settingsScreen.Q<DropdownField>("qualityDropdown");
-        _btnRussian = settingsScreen.Q<Button>("russianButton");
-        _btnEnglish = settingsScreen.Q<Button>("englishButton");
-        _btnSaveSettings = settingsScreen.Q<Button>("btnSave");
-        _btnCancelSettings = settingsScreen.Q<Button>("cancelBtn");
-
-        var rightPanel = settingsScreen.Q<VisualElement>("right-panel");
-        if (rightPanel != null)
+        try
         {
-            _weaponRadioGroup = rightPanel.Query<RadioButtonGroup>().First();
-            if (_weaponRadioGroup == null)
-                Debug.LogWarning("[UISettingsManager] RadioButtonGroup не найден в right-panel!");
+            Debug.Log($"[UISettingsManager] Searching for UI elements in root: {_root.name}");
+
+            _playerNameField = _root.Q<TextField>("playerNameField");
+            if (_playerNameField == null)
+            {
+                Debug.LogError("[UISettingsManager] playerNameField не найден! Проверьте имя в UXML.");
+                // Выведем все TextField для отладки
+                var allTextFields = _root.Query<TextField>().ToList();
+                Debug.Log($"[UISettingsManager] Найдено TextField: {allTextFields.Count}");
+                foreach (var field in allTextFields)
+                {
+                    Debug.Log($"[UISettingsManager] TextField: {field.name}");
+                }
+            }
+            else
+            {
+                Debug.Log("[UISettingsManager] playerNameField найден успешно");
+            }
+
+            // Остальные элементы...
+            _musicSlider = _root.Q<Slider>("musicSlider");
+            Debug.Log($"[UISettingsManager] musicSlider: {_musicSlider != null}");
+
+            _musicValue = _root.Q<Label>("musicVolumeLabel");
+            Debug.Log($"[UISettingsManager] musicVolumeLabel: {_musicValue != null}");
+
+            _soundSlider = _root.Q<Slider>("soundVolumeSlider");
+            Debug.Log($"[UISettingsManager] soundVolumeSlider: {_soundSlider != null}");
+
+            _soundValue = _root.Q<Label>("soundVolumeLabel");
+            Debug.Log($"[UISettingsManager] soundVolumeLabel: {_soundValue != null}");
+
+            _resolutionDropdown = _root.Q<DropdownField>("resolutionDropdown");
+            Debug.Log($"[UISettingsManager] resolutionDropdown: {_resolutionDropdown != null}");
+
+            _qualityDropdown = _root.Q<DropdownField>("qualityDropdown");
+            Debug.Log($"[UISettingsManager] qualityDropdown: {_qualityDropdown != null}");
+
+            _btnRussian = _root.Q<Button>("russianButton");
+            Debug.Log($"[UISettingsManager] russianButton: {_btnRussian != null}");
+
+            _btnEnglish = _root.Q<Button>("englishButton");
+            Debug.Log($"[UISettingsManager] englishButton: {_btnEnglish != null}");
+
+            _btnSaveSettings = _root.Q<Button>("btnSave");
+            Debug.Log($"[UISettingsManager] btnSave: {_btnSaveSettings != null}");
+
+            _btnCancelSettings = _root.Q<Button>("cancelBtn");
+            Debug.Log($"[UISettingsManager] cancelBtn: {_btnCancelSettings != null}");
+
+            var rightPanel = _root.Q<VisualElement>("right-panel");
+            if (rightPanel != null)
+            {
+                _weaponRadioGroup = rightPanel.Query<RadioButtonGroup>().First();
+                if (_weaponRadioGroup == null)
+                    Debug.LogWarning("[UISettingsManager] RadioButtonGroup не найден в right-panel!");
+                else
+                    Debug.Log("[UISettingsManager] RadioButtonGroup найден");
+            }
+            else
+            {
+                Debug.LogError("[UISettingsManager] right-panel не найден!");
+            }
+
         }
-        else
+        catch (System.Exception e)
         {
-            Debug.LogWarning("[UISettingsManager] right-panel не найден в settings_screen!");
+            Debug.LogError($"[UISettingsManager] Error in FindUIElements: {e.Message}");
         }
     }
-
     private void SetupData()
     {
         if (_resolutionDropdown != null)
@@ -128,15 +192,17 @@ public class UISettingsManager
         if (_btnCancelSettings != null)
             _btnCancelSettings.clicked += OnCancelSettings;
 
-        _root.RegisterCallback<KeyDownEvent>(OnKeyDown);
+        if (_root != null)
+            _root.RegisterCallback<KeyDownEvent>(OnKeyDown);
     }
 
-    private void LoadCurrentSettings()
+    public void LoadCurrentSettings()
     {
         if (!SettingsManager.IsReady())
         {
             Debug.LogWarning("[UISettingsManager] SettingsManager не готов. Повторная попытка через 0.1с...");
-            _uiDocument.StartCoroutine(RetryLoadSettings());
+            if (_uiDocument != null)
+                _uiDocument.StartCoroutine(RetryLoadSettings());
             return;
         }
 
@@ -206,7 +272,6 @@ public class UISettingsManager
     }
 
     #region Event Handlers
-
     private void OnMusicVolumeChanged(ChangeEvent<float> evt)
     {
         UpdateMusicValue(evt.newValue);
@@ -246,40 +311,39 @@ public class UISettingsManager
 
         var settings = CreateSettingsFromUI();
         SettingsManager.Instance.SaveSettings(settings);
-
-        _uiDocument.StartCoroutine(DelayedReturn());
+        if (_uiDocument != null)
+            _uiDocument.StartCoroutine(DelayedReturn());
     }
 
     private IEnumerator DelayedReturn()
     {
         yield return new WaitForSeconds(0.1f);
         LocalizationManager.Instance?.UpdateAllUIElements();
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
+        SettingsFeature.Instance?.HideSettingsScreen();
     }
 
     private void OnCancelSettings()
     {
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
+        SettingsFeature.Instance?.HideSettingsScreen();
     }
 
     private void OnKeyDown(KeyDownEvent evt)
     {
         if (evt.keyCode == KeyCode.Escape)
         {
-            _controller.ShowScreen(UIScreenManager.MenuScreenName);
+            SettingsFeature.Instance?.HideSettingsScreen();
             evt.StopPropagation();
         }
     }
-
     #endregion
 
     #region Emergency & Helpers
-
     private void CreateEmergencySettingsManager()
     {
         var obj = new GameObject("TempSettingsManager");
         var mgr = obj.AddComponent<SettingsManager>();
-        _uiDocument.StartCoroutine(SaveWithTempManager(mgr));
+        if (_uiDocument != null)
+            _uiDocument.StartCoroutine(SaveWithTempManager(mgr));
     }
 
     private IEnumerator SaveWithTempManager(SettingsManager mgr)
@@ -288,7 +352,7 @@ public class UISettingsManager
         var settings = CreateSettingsFromUI();
         SettingsManager.Instance.SaveSettings(settings);
         Object.Destroy(mgr.gameObject);
-        _controller.ShowScreen(UIScreenManager.MenuScreenName);
+        SettingsFeature.Instance?.HideSettingsScreen();
     }
 
     private GameSettings CreateSettingsFromUI()
@@ -306,12 +370,12 @@ public class UISettingsManager
                 : SystemLanguage.English
         };
     }
-
     #endregion
 
     public void Cleanup()
     {
-        _root.UnregisterCallback<KeyDownEvent>(OnKeyDown);
+        if (_root != null)
+            _root.UnregisterCallback<KeyDownEvent>(OnKeyDown);
 
         if (_btnRussian != null)
             _btnRussian.clicked -= () => OnLanguageChanged(SystemLanguage.Russian);

@@ -1,13 +1,10 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     private static GameManager _instance;
-
-    [Header("Manager Prefabs")]
-    public GameObject settingsManagerPrefab;
-    public GameObject localizationManagerPrefab;
-    public GameObject uiManagerPrefab;
+    public static GameManager Instance => _instance;
 
     private void Awake()
     {
@@ -20,29 +17,29 @@ public class GameManager : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(gameObject);
         InitializeManagers();
+
+        // Загружаем главное меню
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void InitializeManagers()
     {
-        CreateIfMissing<SettingsManager>(settingsManagerPrefab);
-        CreateIfMissing<LocalizationManager>(localizationManagerPrefab);
-        CreateIfMissing<UIManager>(uiManagerPrefab);
+        // Создаем только отсутствующие менеджеры
+        CreateIfMissing<LocalizationManager>();
+        CreateIfMissing<UIManager>();
+        CreateIfMissing<SettingsManager>();
+        CreateIfMissing<LobbyManager>(); // Добавляем LobbyManager
     }
 
-    private void CreateIfMissing<T>(GameObject prefab) where T : MonoBehaviour
+    private void CreateIfMissing<T>() where T : MonoBehaviour
     {
         if (FindObjectOfType<T>() != null) return;
 
-        GameObject go;
-        if (prefab != null)
-        {
-            go = Instantiate(prefab);
-        }
-        else
-        {
-            go = new GameObject(typeof(T).Name);
-            go.AddComponent<T>();
-        }
+        GameObject go = new GameObject(typeof(T).Name);
+        go.AddComponent<T>();
         DontDestroyOnLoad(go);
     }
+
+    public void LoadMainMenu() => SceneManager.LoadScene("MainMenu");
+    public void LoadGame() => SceneManager.LoadScene("Game");
 }

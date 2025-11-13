@@ -7,7 +7,7 @@
             <ui:VisualElement name="menu_screen" class="screen" style="display: flex;">
                 <ui:VisualElement class="logo" style="background-image: resource(&apos;logo&apos;);" />
                 <ui:Button name="btnShowLobbyList" text="#create_lobby" class="menu-button" />
-                <ui:Button name="btnStatistics" text="#statistics" class="menu-button" />
+                <ui:Button name="btnSettings" text="#settings" class="menu-button" />
                 <ui:Button name="btnQuit" text="#quit" class="menu-button" />
             </ui:VisualElement>
             <ui:VisualElement name="lobby_list_screen" class="screen hidden" style="display: none;">
@@ -48,7 +48,7 @@
                                     <ui:VisualElement class="radio-item">
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
                                         <ui:VisualElement class="password-wrapper">
-                                            <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" value="" />
+                                            <ui:TextField name="lobbyPassword" placeholder-text="#enter_password" class="password-input transparent-bg" />
                                             <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" style="background-image: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=8228938214290033325&amp;guid=293df427e8bd642319bd547283dd7192&amp;type=3#console.warnicon&quot;);" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
@@ -143,7 +143,7 @@
                         <ui:VisualElement class="panel-content" style="justify-content: flex-start;">
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_name_label" class="section-label" />
-                                <ui:TextField name="lobbyNameField" value="" class="text-input transparent-bg" />
+                                <ui:TextField name="lobbyNameField" class="text-input transparent-bg" />
                             </ui:VisualElement>
                             <ui:VisualElement class="form-section">
                                 <ui:Label text="#lobby_type_label" class="section-label" />
@@ -154,7 +154,7 @@
                                     <ui:VisualElement class="radio-item">
                                         <ui:RadioButton name="radioClosed" text="#closed" value="false" />
                                         <ui:VisualElement class="password-wrapper">
-                                            <ui:TextField name="lobbyPasswordField" value="" class="password-input transparent-bg" />
+                                            <ui:TextField name="lobbyPasswordField" class="password-input transparent-bg" />
                                             <ui:Button name="togglePasswordVisibility" class="password-toggle-btn" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
@@ -204,122 +204,6 @@
                                 <ui:Button name="btnStartGame" text="#start_game" class="right-panel-button start-game-btn" />
                             </ui:VisualElement>
                             <ui:Button name="btnDisbandLobby" text="#disband_lobby" class="right-panel-button disband-btn" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement name="shortcuts_bar" class="shortcuts-bar">
-                    <ui:VisualElement class="shortcut-item">
-                        <ui:VisualElement class="shortcut-key">
-                            <ui:Label text="Esc" class="shortcut-key-text" />
-                        </ui:VisualElement>
-                        <ui:Label text="#close" class="shortcut-action" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="shortcut-item">
-                        <ui:VisualElement class="shortcut-key">
-                            <ui:Label text="Z" class="shortcut-key-text" />
-                        </ui:VisualElement>
-                        <ui:Label text="#settings" class="shortcut-action" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="shortcut-item">
-                        <ui:VisualElement class="shortcut-key">
-                            <ui:Label text="X" class="shortcut-key-text" />
-                        </ui:VisualElement>
-                        <ui:Label text="#statistics" class="shortcut-action" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="settings_screen" class="screen hidden" style="display: none;">
-                <ui:Label text="#network_game" name="title" class="network-title" />
-                <ui:VisualElement name="panels_container" class="panels-container">
-                    <ui:VisualElement name="left_panel" class="panel left-panel">
-                        <ui:VisualElement class="panel-header">
-                            <ui:Label text="#join_lobby" class="panel-header-text panel-header-text-left" />
-                        </ui:VisualElement>
-                        <ui:VisualElement class="panel-content">
-                            <ui:VisualElement class="lobby-list-header">
-                                <ui:Label text="#lobby_name" class="lobby-list-header-text lobby-list-header-text-1" style="width: 200px;" />
-                                <ui:Label text="#player_count" class="lobby-list-header-text lobby-list-header-text-2" style="width: 80px; -unity-text-align: middle-center;" />
-                                <ui:Label text="#type" class="lobby-list-header-text lobby-list-header-text-3" style="width: 120px; -unity-text-align: middle-center;" />
-                                <ui:Label class="lobby-list-header-text lobby-list-header-text-4" />
-                            </ui:VisualElement>
-                            <ui:ScrollView name="lobbyListScroll" class="lobby-list-scroll" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="right-panel" class="panel right-panel">
-                        <ui:VisualElement class="panel-header">
-                            <ui:Label text="#create_lobby" class="panel-header-text panel-header-text-right" />
-                        </ui:VisualElement>
-                        <ui:VisualElement class="panel-content" style="justify-content: flex-start;">
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#current_player_name" class="section-label" />
-                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
-                                    <ui:Button text="#random_name" name="RandomNameButton" class="random-button" />
-                                    <ui:TextField name="createLobbyName" placeholder-text="#enter_name" class="text-input transparent-bg" style="flex-grow: 1;" />
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#default_arm" class="section-label" />
-                                <ui:RadioButtonGroup>
-                                    <ui:RadioButton label="#common_gun1" class="custom-radio-button" />
-                                    <ui:RadioButton label="#common_gun2" class="custom-radio-button" />
-                                    <ui:RadioButton label="#common_gun3" class="custom-radio-button" />
-                                    <ui:RadioButton label="#common_gun4" class="custom-radio-button" />
-                                </ui:RadioButtonGroup>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#music_volume" class="section-label" />
-                                <ui:VisualElement class="slider-container">
-                                    <ui:Label text="0" class="slider-label" />
-                                    <ui:Slider name="musicSlider" low-value="0" high-value="100" value="5" class="slider" />
-                                    <ui:Label text="100" class="slider-label" />
-                                    <ui:Label name="musicVolumeLabel" text="5" class="slider-value" />
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#sound_volume" class="section-label" />
-                                <ui:VisualElement class="slider-container">
-                                    <ui:Label text="0" class="slider-label" />
-                                    <ui:Slider name="soundVolumeSlider" low-value="0" high-value="100" value="5" class="slider" />
-                                    <ui:Label text="100" class="slider-label" />
-                                    <ui:Label name="soundVolumeLabel" text="5" class="slider-value" />
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#default_difficulty" class="section-label" />
-                                <ui:VisualElement class="character-grid">
-                                    <ui:VisualElement name="charVacuum" class="character-card">
-                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;robot-vacuum-cleaner&apos;);" />
-                                        <ui:Label text="#robot_vacuum" class="character-name" />
-                                    </ui:VisualElement>
-                                    <ui:VisualElement name="charToaster" class="character-card selected">
-                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;combat-toaster&apos;);" />
-                                        <ui:Label text="#combat_toaster" class="character-name" />
-                                    </ui:VisualElement>
-                                    <ui:VisualElement name="charGPT" class="character-card">
-                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;GPT-chat-coffee&apos;);" />
-                                        <ui:Label text="#gpt_coffee" class="character-name" />
-                                    </ui:VisualElement>
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#screen_resolution" class="section-label" />
-                                <ui:DropdownField name="resolutionDropdown" class="custom-dropfield" style="flex-grow: 1;" />
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#screen_quality" class="section-label" />
-                                <ui:DropdownField name="qualityDropdown" class="custom-dropfield" style="flex-grow: 1;" />
-                            </ui:VisualElement>
-                            <ui:VisualElement class="form-section">
-                                <ui:Label text="#language" class="section-label" />
-                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
-                                    <ui:Button text="Русский" name="russianButton" class="random-button" />
-                                    <ui:Button text="English" name="englishButton" class="random-button" />
-                                </ui:VisualElement>
-                            </ui:VisualElement>
-                            <ui:VisualElement style="flex-grow: 1;">
-                                <ui:Button text="#save_button" name="btnSave" class="random-button" />
-                                <ui:Button text="#cancel_button" name="cancelBtn" class="random-button" />
-                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

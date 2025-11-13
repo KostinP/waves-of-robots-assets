@@ -30,6 +30,18 @@ public class PauseMenuController : MonoBehaviour
         AudioListener.pause = _paused;
     }
 
+    public void ShowMenu()
+    {
+        // ваша логика показа меню паузы
+        gameObject.SetActive(true);
+    }
+
+    public void HideMenu()
+    {
+        // ваша логика скрытия меню паузы
+        gameObject.SetActive(false);
+    }
+
     void Resume() => TogglePause();
 
     void LeaveGame()

@@ -1,0 +1,105 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/CommonStyles.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#CommonStyles" />
+    <Style src="project://database/Assets/UI/MainMenuStyles.uss?fileID=7433441132597879392&amp;guid=c7f65d3fa004e444083d6493388b3fb6&amp;type=3#MainMenuStyles" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="background" class="background" />
+        <ui:VisualElement name="layout" class="layout">
+            <ui:VisualElement name="settings_screen" class="screen">
+                <ui:Label text="#settings" name="title" class="network-title" />
+                <ui:VisualElement name="settings_container" class="settings-container">
+                    <ui:VisualElement name="settings_panel" class="panel settings-panel">
+                        <ui:VisualElement class="panel-header">
+                            <ui:Label text="#game_settings" class="panel-header-text" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="panel-content" style="justify-content: flex-start;">
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#current_player_name" class="section-label" />
+                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+                                    <ui:Button text="#random_name" name="RandomNameButton" class="random-button" />
+                                    <ui:TextField name="playerNameField" placeholder-text="#enter_name" class="text-input transparent-bg" style="flex-grow: 1;" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#default_arm" class="section-label" />
+                                <ui:RadioButtonGroup name="weaponRadioGroup">
+                                    <ui:RadioButton label="#common_gun1" value="0" class="custom-radio-button" />
+                                    <ui:RadioButton label="#common_gun2" value="1" class="custom-radio-button" />
+                                    <ui:RadioButton label="#common_gun3" value="2" class="custom-radio-button" />
+                                    <ui:RadioButton label="#common_gun4" value="3" class="custom-radio-button" />
+                                </ui:RadioButtonGroup>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#music_volume" class="section-label" />
+                                <ui:VisualElement class="slider-container">
+                                    <ui:Label text="0" class="slider-label" />
+                                    <ui:Slider name="musicSlider" low-value="0" high-value="100" value="5" class="slider" />
+                                    <ui:Label text="100" class="slider-label" />
+                                    <ui:Label name="musicVolumeLabel" text="5" class="slider-value" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#sound_volume" class="section-label" />
+                                <ui:VisualElement class="slider-container">
+                                    <ui:Label text="0" class="slider-label" />
+                                    <ui:Slider name="soundVolumeSlider" low-value="0" high-value="100" value="5" class="slider" />
+                                    <ui:Label text="100" class="slider-label" />
+                                    <ui:Label name="soundVolumeLabel" text="5" class="slider-value" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#default_difficulty" class="section-label" />
+                                <ui:VisualElement class="character-grid">
+                                    <ui:VisualElement name="charVacuum" class="character-card">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;robot-vacuum-cleaner&apos;);" />
+                                        <ui:Label text="#robot_vacuum" class="character-name" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="charToaster" class="character-card selected">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;combat-toaster&apos;);" />
+                                        <ui:Label text="#combat_toaster" class="character-name" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="charGPT" class="character-card">
+                                        <ui:VisualElement class="character-image" style="background-image: resource(&apos;GPT-chat-coffee&apos;);" />
+                                        <ui:Label text="#gpt_coffee" class="character-name" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#screen_resolution" class="section-label" />
+                                <ui:DropdownField name="resolutionDropdown" class="custom-dropfield" style="flex-grow: 1;" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#screen_quality" class="section-label" />
+                                <ui:DropdownField name="qualityDropdown" class="custom-dropfield" style="flex-grow: 1;" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section">
+                                <ui:Label text="#language" class="section-label" />
+                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+                                    <ui:Button text="Русский" name="russianButton" class="random-button" />
+                                    <ui:Button text="English" name="englishButton" class="random-button" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="form-section buttons-section">
+                                <ui:Button text="#save_button" name="btnSave" class="save-button" />
+                                <ui:Button text="#cancel_button" name="cancelBtn" class="cancel-button" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="shortcuts_bar" class="shortcuts-bar">
+                    <ui:VisualElement class="shortcut-item">
+                        <ui:VisualElement class="shortcut-key">
+                            <ui:Label text="Esc" class="shortcut-key-text" />
+                        </ui:VisualElement>
+                        <ui:Label text="#close" class="shortcut-action" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="shortcut-item">
+                        <ui:VisualElement class="shortcut-key">
+                            <ui:Label text="Z" class="shortcut-key-text" />
+                        </ui:VisualElement>
+                        <ui:Label text="#settings" class="shortcut-action" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

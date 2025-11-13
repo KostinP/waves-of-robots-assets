@@ -116,6 +116,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public string GetCurrentScreen()
+    {
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        return mainMenuController?.GetCurrentScreen() ?? "unknown";
+    }
+
     private void LoadMainMenuDirectly()
     {
         if (Application.CanStreamedLevelBeLoaded("MainMenu"))

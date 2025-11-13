@@ -125,20 +125,29 @@ public class MainMenuController : MonoBehaviour
 
     public void HandleLobbyClosed(string lobbyId)
     {
-        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}");
-        StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}, current screen: {GetCurrentScreen()}");
+
+        // ФИКС: Только если мы находимся в настройках лобби, возвращаемся
+        if (GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
+        {
+            Debug.Log("We were in the closed lobby, returning to lobby list");
+            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        }
+        else
+        {
+            Debug.Log($"Not returning to lobby list because we're on screen: {GetCurrentScreen()}");
+        }
     }
 
     private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
     {
         yield return new WaitForSeconds(0.5f);
+        ReturnToLobbyList();
+    }
 
-        // Если мы находимся в настройках лобби, возвращаемся к списку
-        if (_screenManager.GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
-        {
-            Debug.Log("We were in the closed lobby, returning to lobby list");
-            ReturnToLobbyList();
-        }
+    public string GetCurrentScreen()
+    {
+        return _screenManager?.GetCurrentScreen() ?? "unknown";
     }
 
     public void ShowLobbyListAfterDisband()

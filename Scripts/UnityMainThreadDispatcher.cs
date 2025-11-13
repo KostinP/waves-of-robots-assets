@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class UnityMainThreadDispatcher : MonoBehaviour
@@ -48,9 +49,17 @@ public class UnityMainThreadDispatcher : MonoBehaviour
     {
         if (action == null) return;
 
-        lock (_lockObject)
+        // ФИКС: Проверяем, находимся ли мы уже в главном потоке
+        if (Thread.CurrentThread.ManagedThreadId == 1) // Главный поток Unity обычно имеет ID = 1
         {
-            _actions.Enqueue(action);
+            action?.Invoke();
+        }
+        else
+        {
+            lock (_lockObject)
+            {
+                _actions.Enqueue(action);
+            }
         }
     }
 

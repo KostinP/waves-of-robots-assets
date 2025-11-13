@@ -61,43 +61,47 @@ public class LobbyDiscovery : MonoBehaviour
             yield return new WaitForSeconds(_cleanupInterval);
 
             // ФИКС: Вся логика в главном потоке
-            lock (DiscoveredLobbies)
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
             {
-                Debug.Log($"CleanupExpiredLobbies: Starting cleanup, current lobbies: {DiscoveredLobbies.Count}");
-
-                var currentTime = Time.time; // Используем Time.time вместо DateTime
-                var lobbiesToRemove = new List<string>();
-
-                foreach (var lobbyId in _lobbyLastSeen.Keys)
+                lock (DiscoveredLobbies)
                 {
-                    var lastSeen = _lobbyLastSeen[lobbyId];
-                    var timeSinceLastSeen = currentTime - lastSeen;
-                    Debug.Log($"CleanupExpiredLobbies: Lobby {lobbyId} - last seen: {lastSeen}, time since: {timeSinceLastSeen}, timeout: {_lobbyTimeout}");
+                    Debug.Log($"CleanupExpiredLobbies: Starting cleanup, current lobbies: {DiscoveredLobbies.Count}");
 
-                    if (timeSinceLastSeen > _lobbyTimeout)
+                    var currentTime = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
+                    var lobbiesToRemove = new List<string>();
+
+                    foreach (var lobbyId in _lobbyLastSeen.Keys)
                     {
-                        lobbiesToRemove.Add(lobbyId);
-                        Debug.Log($"CleanupExpiredLobbies: Marking lobby {lobbyId} for removal (timeout)");
+                        var lastSeen = _lobbyLastSeen[lobbyId];
+                        var timeSinceLastSeen = currentTime - lastSeen;
+                        Debug.Log($"CleanupExpiredLobbies: Lobby {lobbyId} - last seen: {lastSeen}, time since: {timeSinceLastSeen}, timeout: {_lobbyTimeout}");
+
+                        if (timeSinceLastSeen > _lobbyTimeout)
+                        {
+                            lobbiesToRemove.Add(lobbyId);
+                            Debug.Log($"CleanupExpiredLobbies: Marking lobby {lobbyId} for removal (timeout)");
+                        }
                     }
-                }
 
-                foreach (var lobbyId in lobbiesToRemove)
-                {
-                    DiscoveredLobbies.RemoveAll(l => l.uniqueId == lobbyId);
-                    _lobbyLastSeen.Remove(lobbyId);
-                    Debug.Log($"CleanupExpiredLobbies: Removed expired lobby: {lobbyId}");
-                }
+                    foreach (var lobbyId in lobbiesToRemove)
+                    {
+                        DiscoveredLobbies.RemoveAll(l => l.uniqueId == lobbyId);
+                        _lobbyLastSeen.Remove(lobbyId);
+                        Debug.Log($"CleanupExpiredLobbies: Removed expired lobby: {lobbyId}");
+                    }
 
-                if (lobbiesToRemove.Count > 0)
-                {
-                    _needsLobbyUpdate = true;
-                    Debug.Log($"CleanupExpiredLobbies: Removed {lobbiesToRemove.Count} lobbies, scheduling UI update");
-                }
+                    if (lobbiesToRemove.Count > 0)
+                    {
+                        _needsLobbyUpdate = true;
+                        Debug.Log($"CleanupExpiredLobbies: Removed {lobbiesToRemove.Count} lobbies, scheduling UI update");
+                    }
 
-                Debug.Log($"CleanupExpiredLobbies: Cleanup completed, lobbies remaining: {DiscoveredLobbies.Count}");
-            }
+                    Debug.Log($"CleanupExpiredLobbies: Cleanup completed, lobbies remaining: {DiscoveredLobbies.Count}");
+                }
+            });
         }
     }
+
     private void Start() => StartCoroutine(StartDiscovery());
 
     private void Update()
@@ -201,10 +205,15 @@ public class LobbyDiscovery : MonoBehaviour
                     string closedLobbyId = msg.Substring(12);
                     Debug.Log($"Received lobby close: {closedLobbyId}");
 
-                    // Вызываем событие перед удалением
-                    OnLobbyClosed?.Invoke(closedLobbyId);
+                    // ФИКС: Используем UnityMainThreadDispatcher для вызова событий
+                    UnityMainThreadDispatcher.Instance.Enqueue(() =>
+                    {
+                        // Вызываем событие перед удалением
+                        OnLobbyClosed?.Invoke(closedLobbyId);
 
-                    RemoveLobbyById(closedLobbyId);
+                        // Удаляем лобби из списка
+                        RemoveLobbyById(closedLobbyId);
+                    });
                 }
                 else if (msg == "DISCOVER" && isHost)
                 {
@@ -225,6 +234,7 @@ public class LobbyDiscovery : MonoBehaviour
         }
     }
 
+
     private void RemoveLobbyById(string lobbyId)
     {
         bool wasRemoved = false;
@@ -233,17 +243,20 @@ public class LobbyDiscovery : MonoBehaviour
             int removed = DiscoveredLobbies.RemoveAll(l => l.uniqueId == lobbyId);
             if (removed > 0)
             {
-                _lobbyLastSeen.Remove(lobbyId); // УДАЛЯЕМ ИЗ ТРЕКЕРА ВРЕМЕНИ
+                _lobbyLastSeen.Remove(lobbyId);
                 wasRemoved = true;
                 Debug.Log($"Removed lobby from discovery: {lobbyId}");
             }
         }
 
-        // ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI ЕСЛИ ЛОББИ БЫЛО УДАЛЕНО
+        // ФИКС: Обновляем UI через главный поток
         if (wasRemoved)
         {
-            _needsLobbyUpdate = true;
-            Debug.Log($"Lobby {lobbyId} removed, scheduling UI update");
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                _needsLobbyUpdate = true;
+                Debug.Log($"Lobby {lobbyId} removed, scheduling UI update");
+            });
         }
     }
 
@@ -269,22 +282,17 @@ public class LobbyDiscovery : MonoBehaviour
                     Debug.Log($"Added new lobby. Total count: {DiscoveredLobbies.Count}");
                 }
 
-                // ФИКС: Сохраняем время через главный поток безопасно
-                if (this != null) // Проверяем, что объект еще существует
-                {
-                    // Используем корутину для безопасного доступа к Time.time
-                    StartCoroutine(SetLobbyLastSeenSafe(newLobby.uniqueId));
-                }
-
-                Debug.Log($"Current lobbies in list ({DiscoveredLobbies.Count}):");
-                foreach (var lobby in DiscoveredLobbies)
-                {
-                    Debug.Log($"  - {lobby.name} (ID: {lobby.uniqueId}, IP: {lobby.ip}:{lobby.port})");
-                }
+                // ФИКС: Используем DateTime для времени в фоновом потоке
+                _lobbyLastSeen[newLobby.uniqueId] = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
+                Debug.Log($"Set last seen for lobby {newLobby.uniqueId}");
             }
 
-            _needsLobbyUpdate = true;
-            Debug.Log($"UI update scheduled");
+            // Только обновление UI через главный поток
+            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            {
+                _needsLobbyUpdate = true;
+                Debug.Log($"UI update scheduled");
+            });
         }
         catch (Exception e)
         {
@@ -292,16 +300,6 @@ public class LobbyDiscovery : MonoBehaviour
         }
 
         Debug.Log($"=== UpdateLobbyList END ===");
-    }
-
-    private IEnumerator SetLobbyLastSeenSafe(string lobbyId)
-    {
-        yield return null; // Ждем следующий кадр в главном потоке
-        if (this != null) // Дополнительная проверка на существование объекта
-        {
-            _lobbyLastSeen[lobbyId] = Time.time;
-            Debug.Log($"Set last seen for lobby {lobbyId} to {Time.time}");
-        }
     }
 
     private IEnumerator SendDiscoveryRequest()

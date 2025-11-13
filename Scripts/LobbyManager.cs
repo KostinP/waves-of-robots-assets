@@ -9,6 +9,7 @@ using Unity.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System;
+using System.Threading;
 
 /// <summary>
 /// Управляет локальным лобби: создает серверный мир, запускает discovery broadcast через LobbyDiscovery,
@@ -30,6 +31,8 @@ public class LobbyManager : MonoBehaviour
         {
             _discovery = gameObject.AddComponent<LobbyDiscovery>();
         }
+
+        // ФИКС: Убедитесь, что подписка происходит в главном потоке
         _discovery.OnLobbiesUpdated += OnLobbiesUpdated;
 
         if (LobbyDiscovery.Instance != null)
@@ -42,52 +45,32 @@ public class LobbyManager : MonoBehaviour
     {
         Debug.Log($"LobbyManager: Lobby {lobbyId} was closed by host");
 
-        // ФИКС: Используем корутину для безопасной проверки в главном потоке
-        StartCoroutine(CheckAndHandleLobbyClose(lobbyId));
+        // ФИКС: Упрощенная и надежная логика определения нужно ли возвращаться к списку
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+        });
     }
 
-    private IEnumerator CheckAndHandleLobbyClose(string lobbyId)
-    {
-        yield return null; // Ждем главный поток
 
-        // Проверяем, находимся ли мы в клиентском режиме
+
+    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
+    {
+        yield return new WaitForSeconds(0.5f); // Даем время на синхронизацию
+
+        // Проверяем, находимся ли мы в клиентском режиме И в настройках лобби
         var clientWorld = GetClientWorld();
         bool isClient = clientWorld != null && clientWorld.IsCreated && clientWorld.IsClient();
-        bool isServer = GetServerWorld() != null;
+        bool isInLobbySettings = UIManager.Instance?.GetCurrentScreen() == "lobby_settings_screen";
 
-        // Получаем IP текущего подключения для проверки
-        string currentLobbyIp = PlayerPrefs.GetString("JoiningLobbyIP", "");
-        string currentLobbyId = ""; // Можно добавить сохранение ID лобби
+        Debug.Log($"HandleLobbyClosed: isClient={isClient}, isInLobbySettings={isInLobbySettings}, closedLobbyId={lobbyId}");
 
-        Debug.Log($"OnLobbyClosed: isClient={isClient}, isServer={isServer}, currentLobbyIp={currentLobbyIp}, closedLobbyId={lobbyId}");
-
-        // ФИКС: Упрощаем логику - если мы клиент (не хост), то выходим
-        if (isClient && !isServer)
+        // ФИКС: Возвращаемся только если мы клиент И находимся в настройках лобби
+        if (isClient && isInLobbySettings)
         {
-            Debug.Log("We are a client and host closed the lobby, returning to lobby list");
+            Debug.Log("We are a client in lobby settings and host closed the lobby, returning to lobby list");
 
             // Закрываем клиентское соединение
-            if (clientWorld != null && clientWorld.IsCreated)
-            {
-                try
-                {
-                    // Находим и закрываем соединение
-                    var em = clientWorld.EntityManager;
-                    var query = em.CreateEntityQuery(typeof(NetworkStreamConnection));
-                    if (!query.IsEmptyIgnoreFilter)
-                    {
-                        var connectionEntity = query.GetSingletonEntity();
-                        em.DestroyEntity(connectionEntity);
-                        Debug.Log("Destroyed client connection entity");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"Error closing client connection: {e.Message}");
-                }
-            }
-
-            // Уничтожаем клиентский мир
             ShutdownClientWorld();
 
             // Очищаем сохраненные данные о подключении
@@ -96,33 +79,22 @@ public class LobbyManager : MonoBehaviour
             PlayerPrefs.Save();
 
             // Возвращаемся к списку лобби
-            StartCoroutine(ReturnToLobbyListWithDelay());
-        }
-        else
-        {
-            Debug.Log($"OnLobbyClosed: Not affected - isClient={isClient}, isServer={isServer}");
-        }
-    }
-
-    private IEnumerator ReturnToLobbyListWithDelay()
-    {
-        yield return new WaitForSeconds(0.5f); // Даем время на очистку
-
-        // ФИКС: Используем правильный метод возврата
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.ReturnToLobbyList();
-        }
-        else
-        {
-            // Fallback
             var mainMenuController = FindObjectOfType<MainMenuController>();
             if (mainMenuController != null)
             {
                 mainMenuController.ReturnToLobbyList();
             }
+            else
+            {
+                UIManager.Instance?.ReturnToLobbyList();
+            }
+        }
+        else
+        {
+            Debug.Log($"HandleLobbyClosed: Not affected - isClient={isClient}, isInLobbySettings={isInLobbySettings}");
         }
     }
+
 
     private void ShutdownClientWorld()
     {

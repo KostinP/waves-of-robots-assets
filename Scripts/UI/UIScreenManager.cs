@@ -43,12 +43,17 @@ public class UIScreenManager
         }
     }
 
+    public string GetCurrentScreen() => _currentScreen;
+
     public void OnLobbyClosed(string lobbyId)
     {
         Debug.Log($"UIScreenManager: Lobby {lobbyId} closed, current screen: {_currentScreen}");
 
-        // ФИКС: Используем MainMenuController для обработки
-        _controller?.HandleLobbyClosed(lobbyId);
+        // ФИКС: Используем UnityMainThreadDispatcher для вызова в главном потоке
+        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+        {
+            _controller?.HandleLobbyClosed(lobbyId);
+        });
     }
 
     private void InitializeButtons()
@@ -287,7 +292,6 @@ public class UIScreenManager
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
-    public string GetCurrentScreen() => _currentScreen;
 
     public void UpdatePlayerList()
     {

@@ -99,6 +99,12 @@ public class UIManager : MonoBehaviour
         _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
     }
 
+    public void ShowLobbyListScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
+        OnLobbyListUpdated(); // Обновляем список лобби
+    }
+
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;

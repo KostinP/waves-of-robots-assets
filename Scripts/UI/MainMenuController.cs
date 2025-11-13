@@ -79,6 +79,13 @@ public class MainMenuController : MonoBehaviour
         Debug.Log("UI set to host mode - all controls enabled");
     }
 
+    public void ReturnToLobbyList()
+    {
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+        // ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ВОЗВРАТЕ
+        UIManager.Instance.OnLobbyListUpdated();
+    }
+
     private void SetupClientModeUI()
     {
         var lobbySettingsScreen = _root.Q<VisualElement>("lobby_settings_screen");

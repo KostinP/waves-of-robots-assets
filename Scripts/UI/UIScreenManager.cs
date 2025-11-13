@@ -72,6 +72,7 @@ public class UIScreenManager
             _btnStartGame.clicked += () => UIManager.Instance.StartGame();
     }
 
+
     private void OnLobbiesUpdated(List<LobbyInfo> lobbies)
     {
         if (_currentScreen == LobbyListScreenName)
@@ -180,7 +181,12 @@ public class UIScreenManager
 
     private void OnDisbandLobby()
     {
+        Debug.Log("UIScreenManager: Disbanding lobby...");
         UIManager.Instance.LobbyManager.DisbandLobby();
+
+        // ПОСЛЕ РОСПУСКА ЛОББИ АВТОМАТИЧЕСКИ ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ
+        ShowScreen(LobbyListScreenName);
+        RefreshLobbyList();
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);

@@ -294,10 +294,21 @@ public class LobbyManager : MonoBehaviour
         // УНИЧТОЖАЕМ МИРЫ NETCODE
         ShutdownAllNetCodeWorlds();
 
-        // ПЕРЕХОДИМ В ГЛАВНОЕ МЕНЮ
-        SceneManager.LoadScene("MainMenu");
+        // ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ ВМЕСТО ГЛАВНОГО МЕНЮ
+        var mainMenuController = FindObjectOfType<MainMenuController>();
+        if (mainMenuController != null)
+        {
+            mainMenuController.ShowScreen(UIScreenManager.LobbyListScreenName);
+            // ОБНОВЛЯЕМ СПИСОК ЛОББИ
+            UIManager.Instance.OnLobbyListUpdated();
+        }
+        else
+        {
+            // ЕСЛИ КОНТРОЛЛЕР НЕ НАЙДЕН, ПЕРЕЗАГРУЖАЕМ СЦЕНУ
+            SceneManager.LoadScene("MainMenuScene");
+        }
 
-        Debug.Log("Lobby disbanded successfully");
+        Debug.Log("Lobby disbanded successfully - returned to lobby list");
     }
 
     public void StartGame()

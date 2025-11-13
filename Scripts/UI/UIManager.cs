@@ -49,11 +49,16 @@ public class UIManager : MonoBehaviour
     // === События для UI ===
     public void OnPlayerJoined(int connectionId, string name)
     {
-        _mainMenuController?.UpdatePlayerList();
-        _hudController?.UpdatePlayerList();
+        OnPlayersUpdated();
     }
 
     public void OnPlayerLeft(int connectionId)
+    {
+        OnPlayersUpdated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnPlayersUpdated()
     {
         _mainMenuController?.UpdatePlayerList();
         _hudController?.UpdatePlayerList();
@@ -62,6 +67,18 @@ public class UIManager : MonoBehaviour
     public void OnLobbyListUpdated()
     {
         _mainMenuController?.OnLobbyListUpdated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnLobbyCreated()
+    {
+        _mainMenuController?.OnLobbyCreated();
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void OnJoinedAsClient()
+    {
+        _mainMenuController?.OnJoinedAsClient();
     }
 
     public void StartGame()
@@ -74,6 +91,12 @@ public class UIManager : MonoBehaviour
     {
         LobbyManager.DisbandLobby();
         SceneManager.LoadScene("ManagersScene");
+    }
+
+    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    public void ShowMainMenuScreen()
+    {
+        _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
     }
 
     private void OnDestroy()

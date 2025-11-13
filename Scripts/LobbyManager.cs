@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using System.Net;
 using System.Net.Sockets;
+using System;
 
 /// <summary>
 /// Управляет локальным лобби: создает серверный мир, запускает discovery broadcast через LobbyDiscovery,
@@ -35,16 +36,20 @@ public class LobbyManager : MonoBehaviour
     private World GetServerWorld()
     {
         foreach (var w in World.All)
+        {
             if (w.IsCreated && w.IsServer())
                 return w;
+        }
         return null;
     }
 
     private World GetClientWorld()
     {
         foreach (var w in World.All)
+        {
             if (w.IsCreated && w.IsClient())
                 return w;
+        }
         return null;
     }
 
@@ -105,12 +110,9 @@ public class LobbyManager : MonoBehaviour
 
         UIManager.Instance.OnLobbyListUpdated();
 
-        var mainMenuController = FindObjectOfType<MainMenuController>();
-        if (mainMenuController != null)
-        {
-            mainMenuController.ShowScreen("lobby_settings_screen");
-            mainMenuController.SetupHostModeUI();
-        }
+        // ДОБАВЬТЕ ЭТИ СТРОКИ:
+        UIManager.Instance.OnLobbyCreated();
+        UIManager.Instance.OnPlayersUpdated();
 
         Debug.Log($"Lobby created: {data.name}, broadcasting on port {_discovery.broadcastPort}");
     }
@@ -273,17 +275,29 @@ public class LobbyManager : MonoBehaviour
 
     public void DisbandLobby()
     {
+        Debug.Log("Disbanding lobby...");
+
         _discovery.StopHosting();
         _discovery.ClearLobbies();
-        ShutdownAllNetCodeWorlds();
 
+        // ОСТАНАВЛИВАЕМ КОРОУТИНЫ
         if (_lobbyMonitorCoroutine != null)
         {
             StopCoroutine(_lobbyMonitorCoroutine);
             _lobbyMonitorCoroutine = null;
         }
 
+        // ОЧИЩАЕМ ДАННЫЕ
+        _players.Clear();
+        _gameStarted = false;
+
+        // УНИЧТОЖАЕМ МИРЫ NETCODE
+        ShutdownAllNetCodeWorlds();
+
+        // ПЕРЕХОДИМ В ГЛАВНОЕ МЕНЮ
         SceneManager.LoadScene("MainMenu");
+
+        Debug.Log("Lobby disbanded successfully");
     }
 
     public void StartGame()
@@ -486,9 +500,26 @@ public class LobbyManager : MonoBehaviour
 
     private void ShutdownAllNetCodeWorlds()
     {
-        foreach (var world in World.All)
-            if (world.IsCreated && (world.IsServer() || world.IsClient()))
-                world.Dispose();
+        // СОЗДАЕМ КОПИЮ СПИСКА МИРОВ ДЛЯ БЕЗОПАСНОЙ ИТЕРАЦИИ
+        var worldsToDispose = new List<World>();
+        foreach (var w in World.All)
+        {
+            if (w.IsCreated && (w.IsServer() || w.IsClient() || w.IsThinClient()))
+                worldsToDispose.Add(w);
+        }
+
+        // ТЕПЕРЬ БЕЗОПАСНО УНИЧТОЖАЕМ МИРЫ
+        foreach (var w in worldsToDispose)
+        {
+            try
+            {
+                w.Dispose();
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Failed to dispose world {w.Name}: {e.Message}");
+            }
+        }
     }
 
     public bool IsConnectedToServer()

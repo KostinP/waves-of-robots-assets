@@ -37,12 +37,21 @@ public class MainMenuController : MonoBehaviour
     }
 
     public void ShowScreen(string screenName) => _screenManager.ShowScreen(screenName);
-    public void UpdatePlayerList() => _screenManager.UpdatePlayerList();
+
+    public void UpdatePlayerList()
+    {
+        Debug.Log("MainMenuController: UpdatePlayerList called");
+        _screenManager.UpdatePlayerList();
+    }
+
     public void OnLobbyCreated()
     {
+        Debug.Log("MainMenuController: OnLobbyCreated called");
         ShowScreen(UIScreenManager.LobbySettingsScreenName);
-        _lobbySettings.SyncAllSettings();  // Sync on create
+        _lobbySettings.SyncAllSettings();
+        UIManager.Instance.OnPlayersUpdated(); // Добавьте эту строку
     }
+
     public void OnLobbyListUpdated() => _screenManager.RefreshLobbyList();
 
     public void OnJoinedAsClient()

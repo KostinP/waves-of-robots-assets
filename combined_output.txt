@@ -2,7 +2,6 @@
 ==========================================
 
 Файл: ./Resources/Localization/ru.json
-------------------------------------------
 ﻿{
     "game_title": "waves of ROBOTS",
     "my_netcode_game": "Моя Сетевая Игра",
@@ -88,7 +87,6 @@
 }
 
 Файл: ./Resources/Localization/en.json
-------------------------------------------
 ﻿{
     "game_title": "waves of ROBOTS",
     "my_netcode_game": "My Netcode Game",
@@ -178,7 +176,6 @@
 ==========================================
 
 Файл: ./Scripts/UI/UILobbySetupManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -539,7 +536,6 @@ public class UILobbySetupManager
 }
 
 Файл: ./Scripts/UI/UICharacterSelectionManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -609,7 +605,6 @@ public class UICharacterSelectionManager
     }
 }
 Файл: ./Scripts/UI/UIInputManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -886,7 +881,6 @@ public class UIInputManager
     #endregion
 }
 Файл: ./Scripts/UI/PauseMenuController.cs
-------------------------------------------
 ﻿// Assets/Scripts/UI/PauseMenuController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -929,7 +923,6 @@ public class PauseMenuController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/StartupManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -951,7 +944,6 @@ public class StartupManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/SceneUIController.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -993,7 +985,6 @@ public class SceneUIController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/UIManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
@@ -1078,7 +1069,6 @@ public class UIManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/LocalizationManager.cs
-------------------------------------------
 // Assets/Scripts/UI/LocalizationManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -1395,7 +1385,6 @@ public class LocalizationManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/HUDController.cs
-------------------------------------------
 ﻿// Assets/Scripts/HUDController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -1456,7 +1445,6 @@ public class HUDController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/SettingsManager.cs
-------------------------------------------
 // Assets/Scripts/UI/SettingsManager.cs
 using UnityEngine;
 using System;
@@ -1632,7 +1620,6 @@ public class SettingsManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/UIScreenManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
@@ -1840,7 +1827,6 @@ public class UIScreenManager
     }
 }
 Файл: ./Scripts/UI/UISettingsManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections;
@@ -2170,7 +2156,6 @@ public class UISettingsManager
     }
 }
 Файл: ./Scripts/UI/UIResponsiveManager.cs
-------------------------------------------
 // Assets/Scripts/UI/UIResponsiveManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -2264,7 +2249,6 @@ public class UIResponsiveManager
     }
 }
 Файл: ./Scripts/UI/LobbySettingsManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -2412,7 +2396,6 @@ public class LobbySettingsManager
     #endregion
 }
 Файл: ./Scripts/UI/MainMenuController.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -2511,7 +2494,6 @@ public class MainMenuController : MonoBehaviour
     }
 }
 Файл: ./Scripts/InputSystem.cs
-------------------------------------------
 ﻿// Assets/Scripts/InputSystem.cs
 using Unity.Entities;
 using UnityEngine.InputSystem;
@@ -2535,7 +2517,6 @@ public partial struct InputSystem : ISystem
     }
 }
 Файл: ./Scripts/LobbySystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -2635,7 +2616,6 @@ public partial struct LobbySystem : ISystem
 }
 
 Файл: ./Scripts/PlayerPrefabBaker.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using UnityEngine;
 using Unity.Transforms;
@@ -2664,7 +2644,6 @@ public class PlayerPrefabBaker : Baker<PlayerPrefabAuthoring>
     }
 }
 Файл: ./Scripts/ConnectionSystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -2722,7 +2701,6 @@ public partial struct ConnectionSystem : ISystem
 }
 
 Файл: ./Scripts/GameSettings.cs
-------------------------------------------
 // Assets/Scripts/GameSettings.cs
 using UnityEngine;
 using System;
@@ -2745,7 +2723,6 @@ public class GameSettings
     public SystemLanguage language = SystemLanguage.Russian;
 }
 Файл: ./Scripts/LobbyDiscovery.cs
-------------------------------------------
 ﻿using UnityEngine;
 using System.Net;
 using System.Net.Sockets;
@@ -2954,7 +2931,6 @@ public class LobbyDiscovery : MonoBehaviour
     }
 }
 Файл: ./Scripts/PingSystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 
@@ -2998,7 +2974,6 @@ public partial struct PingSystem : ISystem
 }
 
 Файл: ./Scripts/JoinLobbySystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Collections;
@@ -3061,7 +3036,6 @@ public partial struct JoinLobbySystem : ISystem
 }
 
 Файл: ./Scripts/SpawnSystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Mathematics;
@@ -3110,7 +3084,6 @@ public partial struct SpawnSystem : ISystem
 }
 
 Файл: ./Scripts/SceneLoaderSystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.Scenes;
 using UnityEngine;
@@ -3166,7 +3139,6 @@ public partial struct SceneLoaderSystem : ISystem
     }
 }
 Файл: ./Scripts/MainThreadDispatcher.cs
-------------------------------------------
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -3230,7 +3202,6 @@ public class MainThreadDispatcher : MonoBehaviour
     }
 }
 Файл: ./Scripts/NavMeshMovementSystem.cs
-------------------------------------------
 ﻿// Assets/Scripts/NavMeshMovementSystem.cs
 using Unity.Entities;
 using Unity.NetCode;
@@ -3262,7 +3233,6 @@ public partial struct NavMeshMovementSystem : ISystem
     }
 }
 Файл: ./Scripts/LobbyManager.cs
-------------------------------------------
 ﻿using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
@@ -3767,7 +3737,6 @@ public class LobbyManager : MonoBehaviour
 }
 
 Файл: ./Scripts/ECSComponents.cs
-------------------------------------------
 ﻿// Assets/Scripts/ECSComponents.cs
 using Unity.Entities;
 using Unity.NetCode;
@@ -3878,7 +3847,6 @@ public struct JoinLobbyCommand : IRpcCommand
     public FixedString64Bytes Password;
 }
 Файл: ./Scripts/GameManager.cs
-------------------------------------------
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -3928,7 +3896,6 @@ public class GameManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/PlayerAuthoring.cs
-------------------------------------------
 ﻿using UnityEngine;
 using Unity.Entities;
 using Unity.NetCode;
@@ -3960,7 +3927,6 @@ public class PlayerBaker : Baker<PlayerAuthoring>
 }
 
 Файл: ./Scripts/PlayerSpawnManager.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
@@ -4021,7 +3987,6 @@ public class PlayerSpawnManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/PlayerMovementSystem.cs
-------------------------------------------
 ﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Mathematics;
@@ -4048,7 +4013,6 @@ public partial struct PlayerMovementSystem : ISystem
 ==========================================
 
 Файл: ./Scripts/UI/UILobbySetupManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -4409,7 +4373,6 @@ public class UILobbySetupManager
 }
 
 Файл: ./Scripts/UI/UICharacterSelectionManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -4479,7 +4442,6 @@ public class UICharacterSelectionManager
     }
 }
 Файл: ./Scripts/UI/UIInputManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
@@ -4756,7 +4718,6 @@ public class UIInputManager
     #endregion
 }
 Файл: ./Scripts/UI/PauseMenuController.cs
-------------------------------------------
 ﻿// Assets/Scripts/UI/PauseMenuController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -4799,7 +4760,6 @@ public class PauseMenuController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/StartupManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -4821,7 +4781,6 @@ public class StartupManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/SceneUIController.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -4863,7 +4822,6 @@ public class SceneUIController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/UIManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
@@ -4948,7 +4906,6 @@ public class UIManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/LocalizationManager.cs
-------------------------------------------
 // Assets/Scripts/UI/LocalizationManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -5265,7 +5222,6 @@ public class LocalizationManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/HUDController.cs
-------------------------------------------
 ﻿// Assets/Scripts/HUDController.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -5326,7 +5282,6 @@ public class HUDController : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/SettingsManager.cs
-------------------------------------------
 // Assets/Scripts/UI/SettingsManager.cs
 using UnityEngine;
 using System;
@@ -5502,7 +5457,6 @@ public class SettingsManager : MonoBehaviour
     }
 }
 Файл: ./Scripts/UI/UIScreenManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
@@ -5710,7 +5664,6 @@ public class UIScreenManager
     }
 }
 Файл: ./Scripts/UI/UISettingsManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections;
@@ -6040,7 +5993,6 @@ public class UISettingsManager
     }
 }
 Файл: ./Scripts/UI/UIResponsiveManager.cs
-------------------------------------------
 // Assets/Scripts/UI/UIResponsiveManager.cs
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -6134,7 +6086,6 @@ public class UIResponsiveManager
     }
 }
 Файл: ./Scripts/UI/LobbySettingsManager.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -6282,7 +6233,6 @@ public class LobbySettingsManager
     #endregion
 }
 Файл: ./Scripts/UI/MainMenuController.cs
-------------------------------------------
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -6384,7 +6334,6 @@ public class MainMenuController : MonoBehaviour
 ==========================================
 
 Файл: ./UI/MainMenuUI.uxml
-------------------------------------------
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/CommonStyles.uss?fileID=7433441132597879392&amp;guid=57b989746063a498cbd0477fa5efc62c&amp;type=3#CommonStyles" />
     <Style src="project://database/Assets/UI/MainMenuStyles.uss?fileID=7433441132597879392&amp;guid=c7f65d3fa004e444083d6493388b3fb6&amp;type=3#MainMenuStyles" />
@@ -6734,7 +6683,6 @@ public class MainMenuController : MonoBehaviour
     </ui:VisualElement>
 </ui:UXML>
 Файл: ./UI/templates/PanelTemplateUI.uxml
-------------------------------------------
 <?xml version="1.0" encoding="utf-8"?>
 <ui:UXML
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

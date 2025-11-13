@@ -6,35 +6,78 @@ using UnityEngine;
 public class UnityMainThreadDispatcher : MonoBehaviour
 {
     private static UnityMainThreadDispatcher _instance;
-    private readonly Queue<Action> _executionQueue = new Queue<Action>();
+    private readonly Queue<Action> _actions = new Queue<Action>();
+    private static readonly object _lockObject = new object();
 
-    public static UnityMainThreadDispatcher Instance()
+    public static UnityMainThreadDispatcher Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // ФИКС: Используем FindObjectOfType только в главном потоке
+                if (Application.isPlaying)
+                {
+                    _instance = FindObjectOfType<UnityMainThreadDispatcher>();
+                    if (_instance == null)
+                    {
+                        var obj = new GameObject("UnityMainThreadDispatcher");
+                        _instance = obj.AddComponent<UnityMainThreadDispatcher>();
+                        DontDestroyOnLoad(obj);
+                    }
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private void Awake()
     {
         if (_instance == null)
         {
-            var obj = new GameObject("MainThreadDispatcher");
-            _instance = obj.AddComponent<UnityMainThreadDispatcher>();
-            DontDestroyOnLoad(obj);
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        return _instance;
+        else if (_instance != this)
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void Enqueue(Action action)
     {
-        lock (_executionQueue)
+        if (action == null) return;
+
+        lock (_lockObject)
         {
-            _executionQueue.Enqueue(action);
+            _actions.Enqueue(action);
         }
     }
 
     private void Update()
     {
-        lock (_executionQueue)
+        lock (_lockObject)
         {
-            while (_executionQueue.Count > 0)
+            while (_actions.Count > 0)
             {
-                _executionQueue.Dequeue().Invoke();
+                var action = _actions.Dequeue();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error in main thread action: {e}");
+                }
             }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
         }
     }
 }

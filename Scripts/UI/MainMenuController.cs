@@ -104,9 +104,62 @@ public class MainMenuController : MonoBehaviour
 
     public void ReturnToLobbyList()
     {
+        Debug.Log("MainMenuController: Returning to lobby list");
         ShowScreen(UIScreenManager.LobbyListScreenName);
-        // ОБНОВЛЯЕМ СПИСОК ЛОББИ ПРИ ВОЗВРАТЕ
-        UIManager.Instance.OnLobbyListUpdated();
+
+        // Принудительно обновляем список лобби
+        StartCoroutine(DelayedLobbyRefresh2());
+    }
+
+    private IEnumerator DelayedLobbyRefresh2()
+    {
+        yield return new WaitForSeconds(0.5f);
+        UIManager.Instance?.OnLobbyListUpdated();
+        
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
+    public void HandleLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"MainMenuController: Handling lobby close for {lobbyId}");
+        StartCoroutine(HandleLobbyClosedCoroutine(lobbyId));
+    }
+
+    private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        // Если мы находимся в настройках лобби, возвращаемся к списку
+        if (_screenManager.GetCurrentScreen() == UIScreenManager.LobbySettingsScreenName)
+        {
+            Debug.Log("We were in the closed lobby, returning to lobby list");
+            ReturnToLobbyList();
+        }
+    }
+
+    public void ShowLobbyListAfterDisband()
+    {
+        StartCoroutine(ShowLobbyListAfterDisbandCoroutine());
+    }
+
+    private IEnumerator ShowLobbyListAfterDisbandCoroutine()
+    {
+        yield return new WaitForSeconds(1f); // Даем время на завершение сетевых операций
+
+        ShowScreen(UIScreenManager.LobbyListScreenName);
+
+        // Принудительно обновляем список лобби
+        UIManager.Instance?.OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
     }
 
     private void SetupClientModeUI()

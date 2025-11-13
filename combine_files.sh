@@ -32,7 +32,6 @@ for dir in "./Resources/Localization" "./Scripts" "./Scripts/UI" "./UI"; do
             if ! is_excluded "$filename"; then
                 echo "" >> "$output_file"
                 echo "Файл: $file" >> "$output_file"
-                echo "------------------------------------------" >> "$output_file"
                 cat "$file" >> "$output_file"
             fi
         done

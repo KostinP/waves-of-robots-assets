@@ -17,10 +17,10 @@ using System;
 public class LobbyManager : MonoBehaviour
 {
     private LobbyDiscovery _discovery;
-    private LobbyData _currentLobby;
+    private LobbyData? _currentLobby;
+    private LobbyInfo? _currentLobbyInfo;
     private Dictionary<ulong, PlayerData> _players = new();
     private bool _gameStarted = false;
-    private LobbyInfo _currentLobbyInfo;
     private Coroutine _lobbyMonitorCoroutine;
 
     private void Start()
@@ -31,7 +31,117 @@ public class LobbyManager : MonoBehaviour
             _discovery = gameObject.AddComponent<LobbyDiscovery>();
         }
         _discovery.OnLobbiesUpdated += OnLobbiesUpdated;
+
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
+        }
     }
+
+    private void OnLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"LobbyManager: Lobby {lobbyId} was closed by host");
+
+        // ФИКС: Используем корутину для безопасной проверки в главном потоке
+        StartCoroutine(CheckAndHandleLobbyClose(lobbyId));
+    }
+
+    private IEnumerator CheckAndHandleLobbyClose(string lobbyId)
+    {
+        yield return null; // Ждем главный поток
+
+        // Проверяем, находимся ли мы в клиентском режиме
+        var clientWorld = GetClientWorld();
+        bool isClient = clientWorld != null && clientWorld.IsCreated && clientWorld.IsClient();
+        bool isServer = GetServerWorld() != null;
+
+        // Получаем IP текущего подключения для проверки
+        string currentLobbyIp = PlayerPrefs.GetString("JoiningLobbyIP", "");
+        string currentLobbyId = ""; // Можно добавить сохранение ID лобби
+
+        Debug.Log($"OnLobbyClosed: isClient={isClient}, isServer={isServer}, currentLobbyIp={currentLobbyIp}, closedLobbyId={lobbyId}");
+
+        // ФИКС: Упрощаем логику - если мы клиент (не хост), то выходим
+        if (isClient && !isServer)
+        {
+            Debug.Log("We are a client and host closed the lobby, returning to lobby list");
+
+            // Закрываем клиентское соединение
+            if (clientWorld != null && clientWorld.IsCreated)
+            {
+                try
+                {
+                    // Находим и закрываем соединение
+                    var em = clientWorld.EntityManager;
+                    var query = em.CreateEntityQuery(typeof(NetworkStreamConnection));
+                    if (!query.IsEmptyIgnoreFilter)
+                    {
+                        var connectionEntity = query.GetSingletonEntity();
+                        em.DestroyEntity(connectionEntity);
+                        Debug.Log("Destroyed client connection entity");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Error closing client connection: {e.Message}");
+                }
+            }
+
+            // Уничтожаем клиентский мир
+            ShutdownClientWorld();
+
+            // Очищаем сохраненные данные о подключении
+            PlayerPrefs.DeleteKey("JoiningLobbyIP");
+            PlayerPrefs.DeleteKey("JoiningLobbyPort");
+            PlayerPrefs.Save();
+
+            // Возвращаемся к списку лобби
+            StartCoroutine(ReturnToLobbyListWithDelay());
+        }
+        else
+        {
+            Debug.Log($"OnLobbyClosed: Not affected - isClient={isClient}, isServer={isServer}");
+        }
+    }
+
+    private IEnumerator ReturnToLobbyListWithDelay()
+    {
+        yield return new WaitForSeconds(0.5f); // Даем время на очистку
+
+        // ФИКС: Используем правильный метод возврата
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.ReturnToLobbyList();
+        }
+        else
+        {
+            // Fallback
+            var mainMenuController = FindObjectOfType<MainMenuController>();
+            if (mainMenuController != null)
+            {
+                mainMenuController.ReturnToLobbyList();
+            }
+        }
+    }
+
+    private void ShutdownClientWorld()
+    {
+        var clientWorld = GetClientWorld();
+        if (clientWorld != null && clientWorld.IsCreated)
+        {
+            try
+            {
+                clientWorld.Dispose();
+                Debug.Log("Client world disposed");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Error disposing client world: {e.Message}");
+            }
+        }
+    }
+
+
 
     private World GetServerWorld()
     {
@@ -93,24 +203,22 @@ public class LobbyManager : MonoBehaviour
 
         _currentLobbyInfo = new LobbyInfo
         {
-            name = _currentLobby.name,
+            name = data.name,
             currentPlayers = 1,
-            maxPlayers = _currentLobby.maxPlayers,
-            isOpen = _currentLobby.isOpen,
-            password = _currentLobby.password,
+            maxPlayers = data.maxPlayers,
+            isOpen = data.isOpen,
+            password = data.password,
             ip = GetLocalIPAddress(),
             port = _discovery.gamePort,
             uniqueId = _discovery.UniqueID
         };
 
-        _discovery.StartHosting(_currentLobbyInfo);
+        _discovery.StartHosting(_currentLobbyInfo.Value);
 
         if (_lobbyMonitorCoroutine != null) StopCoroutine(_lobbyMonitorCoroutine);
         _lobbyMonitorCoroutine = StartCoroutine(LobbyBroadcastAndMonitorLoop());
 
         UIManager.Instance.OnLobbyListUpdated();
-
-        // ДОБАВЬТЕ ЭТИ СТРОКИ:
         UIManager.Instance.OnLobbyCreated();
         UIManager.Instance.OnPlayersUpdated();
 
@@ -119,17 +227,22 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator LobbyBroadcastAndMonitorLoop()
     {
+        // Проверяем, что лобби существует
+        if (!_currentLobbyInfo.HasValue) yield break;
+
         // Периодически обновляем поле currentPlayers и шлём broadcast
         while (!_gameStarted)
         {
             int count = GetPlayerCount();
-            _currentLobbyInfo.currentPlayers = Mathf.Max(1, count); // >=1 (хост)
+            var currentInfo = _currentLobbyInfo.Value;
+            currentInfo.currentPlayers = Mathf.Max(1, count); // >=1 (хост)
             // Если стали меньше max — оставляем isOpen как есть (обычно true), если достигли — закрываем
-            if (_currentLobbyInfo.currentPlayers >= _currentLobbyInfo.maxPlayers)
+            if (currentInfo.currentPlayers >= currentInfo.maxPlayers)
             {
                 // Пометим как закрытое — чтобы клиенты не пытались зайти
-                _currentLobbyInfo.isOpen = false;
-                _discovery.BroadcastLobby(_currentLobbyInfo); // одноразовое обновление со статусом закрыто
+                currentInfo.isOpen = false;
+                _currentLobbyInfo = currentInfo;
+                _discovery.BroadcastLobby(currentInfo); // одноразовое обновление со статусом закрыто
                 Debug.Log("Lobby full — broadcasting hide/closed and starting game.");
                 // Небольшая задержка, чтобы клиенты успели получить сообщение
                 yield return new WaitForSeconds(0.5f);
@@ -139,8 +252,12 @@ public class LobbyManager : MonoBehaviour
             else
             {
                 // Обычная регулярная рассылка актуального состояния (имя/кол-во/порт)
-                _currentLobbyInfo.isOpen = _currentLobby.isOpen;
-                _discovery.BroadcastLobby(_currentLobbyInfo);
+                if (_currentLobby.HasValue)
+                {
+                    currentInfo.isOpen = _currentLobby.Value.isOpen;
+                }
+                _currentLobbyInfo = currentInfo;
+                _discovery.BroadcastLobby(currentInfo);
             }
 
             yield return new WaitForSeconds(1.0f);
@@ -285,38 +402,84 @@ public class LobbyManager : MonoBehaviour
         UIManager.Instance.OnPlayerLeft((int)connectionId);
     }
 
+    private bool _isDisbanding = false; // Добавляем флаг
+
     public void DisbandLobby()
     {
-        Debug.Log("Disbanding lobby...");
-
-        // ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ О ЗАКРЫТИИ
-        _discovery.StopHostingAndNotify();
-        _discovery.ClearLobbies();
-
-        // ОСТАНАВЛИВАЕМ КОРОУТИНЫ
-        if (_lobbyMonitorCoroutine != null)
+        if (_isDisbanding)
         {
-            StopCoroutine(_lobbyMonitorCoroutine);
-            _lobbyMonitorCoroutine = null;
+            Debug.LogWarning("LobbyManager: DisbandLobby already in progress, ignoring duplicate call");
+            return;
         }
 
-        // ОЧИЩАЕМ ДАННЫЕ
-        _players.Clear();
-        _gameStarted = false;
+        _isDisbanding = true;
+        Debug.Log("LobbyManager: Starting lobby disband process...");
 
-        // УНИЧТОЖАЕМ МИРЫ NETCODE
-        ShutdownAllNetCodeWorlds();
-
-        // ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ
-        var mainMenuController = FindObjectOfType<MainMenuController>();
-        if (mainMenuController != null)
+        try
         {
-            mainMenuController.ShowScreen(UIScreenManager.LobbyListScreenName);
-            // ОБНОВЛЯЕМ СПИСОК ЛОББИ
-            UIManager.Instance.OnLobbyListUpdated();
-        }
+            // Останавливаем корутины
+            if (_lobbyMonitorCoroutine != null)
+            {
+                Debug.Log("Stopping lobby monitor coroutine...");
+                StopCoroutine(_lobbyMonitorCoroutine);
+                _lobbyMonitorCoroutine = null;
+            }
 
-        Debug.Log("Lobby disbanded successfully - returned to lobby list");
+            // ФИКС: Сначала уведомляем о закрытии
+            if (LobbyDiscovery.Instance != null)
+            {
+                Debug.Log("Sending lobby close notification...");
+                LobbyDiscovery.Instance.StopHostingAndNotify();
+            }
+
+            // Очищаем данные лобби
+            Debug.Log("Clearing lobby data...");
+            _players.Clear();
+            _gameStarted = false;
+            _currentLobby = null;
+            _currentLobbyInfo = null;
+
+            // Уничтожаем NetCode миры
+            Debug.Log("Shutting down NetCode worlds...");
+            ShutdownAllNetCodeWorlds();
+
+            // Останавливаем хостинг в discovery
+            if (_discovery != null)
+            {
+                Debug.Log("Stopping discovery hosting...");
+                _discovery.StopHosting();
+            }
+
+            // Возвращаем в главное меню
+            Debug.Log("Returning to main menu...");
+            StartCoroutine(ReturnToMainMenuWithDelay());
+
+            Debug.Log("Lobby disbanded successfully");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error during lobby disband: {e.Message}\n{e.StackTrace}");
+            // Все равно пытаемся вернуться в главное меню
+            StartCoroutine(ReturnToMainMenuWithDelay());
+        }
+        finally
+        {
+            _isDisbanding = false;
+        }
+    }
+
+    private IEnumerator ReturnToMainMenuWithDelay()
+    {
+        yield return new WaitForSeconds(0.5f); // Даем время на очистку сетевых соединений
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.LeaveGame();
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     public void StartGame()
@@ -556,4 +719,13 @@ public class LobbyManager : MonoBehaviour
         var query = clientWorld.EntityManager.CreateEntityQuery(typeof(NetworkStreamConnection));
         return !query.IsEmptyIgnoreFilter;
     }
+
+    private void OnDestroy()
+    {
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.OnLobbyClosed -= OnLobbyClosed;
+        }
+    }
+
 }

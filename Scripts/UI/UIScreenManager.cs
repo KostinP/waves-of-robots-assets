@@ -26,6 +26,8 @@ public class UIScreenManager
     private ScrollView _lobbyListScroll;
     private ScrollView _playersScroll;
 
+    private bool _isProcessingDisband = false;
+
     public UIScreenManager(VisualElement root, MainMenuController controller)
     {
         _root = root;
@@ -37,7 +39,16 @@ public class UIScreenManager
         if (LobbyDiscovery.Instance != null)
         {
             LobbyDiscovery.Instance.OnLobbiesUpdated += OnLobbiesUpdated;
+            LobbyDiscovery.Instance.OnLobbyClosed += OnLobbyClosed;
         }
+    }
+
+    public void OnLobbyClosed(string lobbyId)
+    {
+        Debug.Log($"UIScreenManager: Lobby {lobbyId} closed, current screen: {_currentScreen}");
+
+        // ФИКС: Используем MainMenuController для обработки
+        _controller?.HandleLobbyClosed(lobbyId);
     }
 
     private void InitializeButtons()
@@ -153,40 +164,40 @@ public class UIScreenManager
     }
 
     public void RefreshLobbyList()
-{
-    Debug.Log($"RefreshLobbyList called, current screen: {_currentScreen}, _lobbyListScroll is null: {_lobbyListScroll == null}");
-
-    if (_lobbyListScroll != null)
     {
-        _lobbyListScroll.Clear();
-        Debug.Log("Cleared lobby list scroll");
+        Debug.Log($"RefreshLobbyList called, current screen: {_currentScreen}, _lobbyListScroll is null: {_lobbyListScroll == null}");
 
-        // Получаем lobbies напрямую из LobbyDiscovery
-        var lobbies = LobbyDiscovery.Instance?.GetDiscoveredLobbies() ?? new List<LobbyInfo>();
-        Debug.Log($"RefreshLobbyList: Got {lobbies.Count} lobbies from LobbyDiscovery");
-
-        if (lobbies.Count == 0)
+        if (_lobbyListScroll != null)
         {
-            var noLobbies = new Label("No lobbies found. Waiting for discovery...");
-            noLobbies.AddToClassList("no-lobbies-label");
-            _lobbyListScroll.Add(noLobbies);
-            Debug.Log("Added 'no lobbies' message");
+            _lobbyListScroll.Clear();
+            Debug.Log("Cleared lobby list scroll");
+
+            // Получаем lobbies напрямую из LobbyDiscovery
+            var lobbies = LobbyDiscovery.Instance?.GetDiscoveredLobbies() ?? new List<LobbyInfo>();
+            Debug.Log($"RefreshLobbyList: Got {lobbies.Count} lobbies from LobbyDiscovery");
+
+            if (lobbies.Count == 0)
+            {
+                var noLobbies = new Label("No lobbies found. Waiting for discovery...");
+                noLobbies.AddToClassList("no-lobbies-label");
+                _lobbyListScroll.Add(noLobbies);
+                Debug.Log("Added 'no lobbies' message");
+            }
+            else
+            {
+                foreach (var lobby in lobbies)
+                {
+                    Debug.Log($"RefreshLobbyList: Adding lobby to UI: {lobby.name}");
+                    CreateLobbyItem(_lobbyListScroll, lobby);
+                }
+                Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
+            }
         }
         else
         {
-            foreach (var lobby in lobbies)
-            {
-                Debug.Log($"RefreshLobbyList: Adding lobby to UI: {lobby.name}");
-                CreateLobbyItem(_lobbyListScroll, lobby);
-            }
-            Debug.Log($"Refreshed lobby list with {lobbies.Count} lobbies");
+            Debug.LogError("_lobbyListScroll is null - cannot refresh lobby list");
         }
     }
-    else
-    {
-        Debug.LogError("_lobbyListScroll is null - cannot refresh lobby list");
-    }
-}
 
     private VisualElement CreateLobbyItem(ScrollView scroll, LobbyInfo info)
     {
@@ -245,14 +256,34 @@ public class UIScreenManager
         UIManager.Instance.LobbyManager.CreateLobby(lobbyData, playerData);
     }
 
-    private void OnDisbandLobby()
+    public void OnDisbandLobby()
     {
         Debug.Log("UIScreenManager: Disbanding lobby...");
-        UIManager.Instance.LobbyManager.DisbandLobby();
 
-        // ПОСЛЕ РОСПУСКА ЛОББИ АВТОМАТИЧЕСКИ ВОЗВРАЩАЕМСЯ К СПИСКУ ЛОББИ
-        ShowScreen(LobbyListScreenName);
-        RefreshLobbyList();
+        // ФИКС: Добавляем проверку чтобы предотвратить множественные вызовы
+        if (_isProcessingDisband)
+        {
+            Debug.LogWarning("UIScreenManager: Disband already in progress, ignoring");
+            return;
+        }
+
+        _isProcessingDisband = true;
+
+        try
+        {
+            var lobbyManager = UIManager.Instance?.LobbyManager;
+            if (lobbyManager != null)
+            {
+                lobbyManager.DisbandLobby();
+            }
+
+            // ФИКС: Используем MainMenuController для вызова корутины
+            _controller?.ShowLobbyListAfterDisband();
+        }
+        finally
+        {
+            _isProcessingDisband = false;
+        }
     }
 
     public void ReturnToMainMenu() => ShowScreen(MenuScreenName);
@@ -264,15 +295,6 @@ public class UIScreenManager
         {
             _playersScroll.Clear();
             UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
-        }
-    }
-
-    public IEnumerator SetInitialFocus(List<VisualElement> interactiveElements)
-    {
-        yield return null;
-        if (interactiveElements.Count > 0)
-        {
-            interactiveElements[0].Focus();
         }
     }
 }

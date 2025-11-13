@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.NetCode;
 using UnityEngine.InputSystem;
+using System;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -89,11 +91,43 @@ public class UIManager : MonoBehaviour
 
     public void LeaveGame()
     {
-        LobbyManager.DisbandLobby();
-        SceneManager.LoadScene("ManagersScene");
+        Debug.Log("UIManager: Leaving game...");
+
+        try
+        {
+            // Останавливаем все сетевые активности
+            var lobbyManager = FindObjectOfType<LobbyManager>();
+            if (lobbyManager != null)
+            {
+                // ФИКС: Используем DisbandLobby вместо прямого вызова
+                lobbyManager.DisbandLobby();
+            }
+            else
+            {
+                Debug.LogWarning("LobbyManager not found, proceeding without disband");
+                // Если менеджера нет, просто загружаем меню
+                LoadMainMenuDirectly();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error leaving game: {e.Message}");
+            LoadMainMenuDirectly();
+        }
     }
 
-    // ДОБАВЬТЕ ЭТОТ МЕТОД
+    private void LoadMainMenuDirectly()
+    {
+        if (Application.CanStreamedLevelBeLoaded("MainMenu"))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            SceneManager.LoadScene(0); // Первая сцена
+        }
+    }
+
     public void ShowMainMenuScreen()
     {
         _mainMenuController?.ShowScreen(UIScreenManager.MenuScreenName);
@@ -102,8 +136,45 @@ public class UIManager : MonoBehaviour
     public void ShowLobbyListScreen()
     {
         _mainMenuController?.ShowScreen(UIScreenManager.LobbyListScreenName);
-        OnLobbyListUpdated(); // Обновляем список лобби
+        OnLobbyListUpdated();
     }
+
+    public void ReturnToLobbyList()
+    {
+        Debug.Log("UIManager: Returning to lobby list");
+
+        try
+        {
+            // Используем _mainMenuController
+            if (_mainMenuController != null)
+            {
+                _mainMenuController.ReturnToLobbyList();
+            }
+            else
+            {
+                // Если контроллер не найден, пытаемся найти его
+                _mainMenuController = FindObjectOfType<MainMenuController>();
+                _mainMenuController?.ReturnToLobbyList();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error in ReturnToLobbyList: {e.Message}");
+        }
+    }
+
+    private IEnumerator DelayedLobbyUpdate()
+    {
+        yield return new WaitForSeconds(0.5f);
+        OnLobbyListUpdated();
+
+        // Принудительный запрос discovery
+        if (LobbyDiscovery.Instance != null)
+        {
+            LobbyDiscovery.Instance.ForceDiscovery();
+        }
+    }
+
 
     private void OnDestroy()
     {

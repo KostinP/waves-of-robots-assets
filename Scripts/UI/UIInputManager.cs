@@ -246,7 +246,6 @@ public class UIInputManager
 
     private void OnStatistics() => Debug.Log("Statistics");
     private void OnQuit() => Debug.Log("Quit");
-    #endregion
 
     public void SwitchToPlayerInput()
     {

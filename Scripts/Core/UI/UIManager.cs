@@ -4,6 +4,9 @@ using Unity.NetCode;
 using UnityEngine.InputSystem;
 using System;
 using System.Collections;
+using Unity.Collections;
+using Unity.Entities;
+using UnityEngine.UIElements;
 
 public class UIManager : MonoBehaviour
 {
@@ -53,7 +56,6 @@ public class UIManager : MonoBehaviour
         if (_mainMenuController == null)
         {
             Debug.LogWarning("MainMenuController not found in scene, creating new one");
-            // Создаем через префаб или оставляем поиск в следующем кадре
             StartCoroutine(FindMainMenuControllerDelayed());
         }
     }
@@ -62,7 +64,7 @@ public class UIManager : MonoBehaviour
     {
         _hudController = FindObjectOfType<HUDController>();
         _pauseController = FindObjectOfType<PauseMenuController>();
-        
+
         // Если контроллеры не найдены, они будут созданы SceneUIController
     }
 
@@ -76,7 +78,40 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // === СОХРАНЯЕМ ВСЮ СУЩЕСТВУЮЩУЮ ФУНКЦИОНАЛЬНОСТЬ ===
+    // === НОВЫЕ МЕТОДЫ ДЛЯ ЛОББИ ===
+
+    // Публичный метод для получения ConnectionId локального игрока
+    public ulong GetLocalPlayerConnectionId()
+    {
+        var clientWorld = GetClientWorld();
+        if (clientWorld == null) return 0;
+
+        var em = clientWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>());
+
+        if (query.IsEmptyIgnoreFilter) return 0;
+
+        using var entities = query.ToEntityArray(Allocator.Temp);
+        if (entities.Length > 0)
+        {
+            return (ulong)em.GetComponentData<NetworkId>(entities[0]).Value;
+        }
+
+        return 0;
+    }
+
+    // Метод для получения клиентского мира
+    private World GetClientWorld()
+    {
+        foreach (var w in World.All)
+        {
+            if (w.IsCreated && w.IsClient())
+                return w;
+        }
+        return null;
+    }
+
+    // === СУЩЕСТВУЮЩАЯ ФУНКЦИОНАЛЬНОСТЬ ===
 
     public void SetHUDController(HUDController controller) => _hudController = controller;
     public void SetPauseController(PauseMenuController controller) => _pauseController = controller;

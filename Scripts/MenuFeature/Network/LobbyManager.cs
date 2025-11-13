@@ -23,6 +23,7 @@ public class LobbyManager : MonoBehaviour
     private Dictionary<ulong, PlayerData> _players = new();
     private bool _gameStarted = false;
     private Coroutine _lobbyMonitorCoroutine;
+    private Coroutine _playerListUpdateCoroutine;
 
     private void Start()
     {
@@ -52,7 +53,56 @@ public class LobbyManager : MonoBehaviour
         });
     }
 
+    public ulong GetHostConnectionId()
+    {
+        // Хост всегда имеет ConnectionId = 0
+        return 0;
+    }
 
+    // Метод для проверки, является ли игрок хостом
+    public bool IsHost(ulong connectionId)
+    {
+        return connectionId == GetHostConnectionId();
+    }
+
+    // Метод для получения всех игроков в лобби
+    public List<LobbyPlayerInfo> GetLobbyPlayers()
+    {
+        var players = new List<LobbyPlayerInfo>();
+        var serverWorld = GetServerWorld();
+
+        if (serverWorld == null)
+        {
+            // Если мы клиент, пытаемся получить данные из клиентского мира
+            var clientWorld = GetClientWorld();
+            if (clientWorld == null) return players;
+
+            // Здесь можно добавить логику для получения игроков на клиенте
+            // через RPC или синхронизацию
+            return players;
+        }
+
+        var em = serverWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+
+        if (query.IsEmptyIgnoreFilter) return players;
+
+        var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
+
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            var playerBuffer = buffer[i];
+            players.Add(new LobbyPlayerInfo
+            {
+                Name = playerBuffer.PlayerName.ToString(),
+                Weapon = playerBuffer.Weapon.ToString(),
+                ConnectionId = playerBuffer.ConnectionId,
+                Ping = GetPing(playerBuffer.ConnectionId)
+            });
+        }
+
+        return players;
+    }
 
     private IEnumerator HandleLobbyClosedCoroutine(string lobbyId)
     {
@@ -170,6 +220,7 @@ public class LobbyManager : MonoBehaviour
         buffer.Add(new LobbyPlayerBuffer
         {
             PlayerName = new FixedString128Bytes(hostData.name),
+            Weapon = new FixedString64Bytes(hostData.selectedCharacter ?? "Default"),
             ConnectionId = 0
         });
 
@@ -186,6 +237,9 @@ public class LobbyManager : MonoBehaviour
         };
 
         _discovery.StartHosting(_currentLobbyInfo.Value);
+
+        // 🔹 ЗАПУСКАЕМ МОНИТОРИНГ ИГРОКОВ
+        StartLobbyMonitoring();
 
         if (_lobbyMonitorCoroutine != null) StopCoroutine(_lobbyMonitorCoroutine);
         _lobbyMonitorCoroutine = StartCoroutine(LobbyBroadcastAndMonitorLoop());
@@ -281,6 +335,7 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
+    // Обновите метод JoinLobby
     public void JoinLobby(LobbyInfo lobbyInfo, string playerName, string password = "")
     {
         Debug.Log($"Joining lobby: {lobbyInfo.name} at {lobbyInfo.ip}:{lobbyInfo.port}");
@@ -289,6 +344,9 @@ public class LobbyManager : MonoBehaviour
         PlayerPrefs.SetInt("JoiningLobbyPort", lobbyInfo.port);
         PlayerPrefs.SetString("JoiningPlayerName", playerName);
         PlayerPrefs.Save();
+
+        // 🔹 ЗАПУСКАЕМ МОНИТОРИНГ ИГРОКОВ ДЛЯ КЛИЕНТА
+        StartLobbyMonitoring();
 
         var mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
@@ -316,6 +374,7 @@ public class LobbyManager : MonoBehaviour
 
         UIManager.Instance.OnLobbyListUpdated();
     }
+
 
     private string GetWeaponNameFromIndex(int index)
     {
@@ -521,38 +580,6 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public List<LobbyInfo> GetDiscoveredLobbies()
-    {
-        if (_discovery != null)
-        {
-            var lobbies = _discovery.GetDiscoveredLobbies();
-            Debug.Log($"GetDiscoveredLobbies: returning {lobbies.Count} lobbies");
-            foreach (var lobby in lobbies)
-            {
-                Debug.Log($" - {lobby.name} ({lobby.ip}:{lobby.port}), Open: {lobby.isOpen}");
-            }
-            return lobbies;
-        }
-        Debug.LogWarning("GetDiscoveredLobbies: _discovery is null");
-        return new List<LobbyInfo>();
-    }
-
-    public void PopulatePlayerList(ScrollView scroll)
-    {
-        scroll.Clear();
-        var serverWorld = GetServerWorld();
-        if (serverWorld == null) return;
-        var em = serverWorld.EntityManager;
-        var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
-        if (query.IsEmptyIgnoreFilter) return;
-        var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
-        for (int i = 0; i < buffer.Length; i++)
-        {
-            var p = buffer[i];
-            CreatePlayerItem(scroll, p.ConnectionId, p.PlayerName.ToString());
-        }
-    }
-
     private VisualElement CreateLobbyItem(ScrollView scroll, LobbyInfo info)
     {
         var item = new VisualElement();
@@ -589,6 +616,118 @@ public class LobbyManager : MonoBehaviour
 
         scroll.Add(item);
         return item;
+    }
+
+    public List<LobbyInfo> GetDiscoveredLobbies()
+    {
+        if (_discovery != null)
+        {
+            var lobbies = _discovery.GetDiscoveredLobbies();
+            Debug.Log($"GetDiscoveredLobbies: returning {lobbies.Count} lobbies");
+            foreach (var lobby in lobbies)
+            {
+                Debug.Log($" - {lobby.name} ({lobby.ip}:{lobby.port}), Open: {lobby.isOpen}");
+            }
+            return lobbies;
+        }
+        Debug.LogWarning("GetDiscoveredLobbies: _discovery is null");
+        return new List<LobbyInfo>();
+    }
+
+    public void StartLobbyMonitoring()
+    {
+        if (_playerListUpdateCoroutine != null)
+            StopCoroutine(_playerListUpdateCoroutine);
+
+        _playerListUpdateCoroutine = StartCoroutine(PlayerListUpdateLoop());
+    }
+
+    private IEnumerator PlayerListUpdateLoop()
+    {
+        while (!_gameStarted)
+        {
+            yield return new WaitForSeconds(1f);
+
+            // Обновляем UI списка игроков
+            UIManager.Instance?.OnPlayersUpdated();
+
+            // Обновляем информацию о лобби для broadcast
+            UpdateLobbyInfoForBroadcast();
+        }
+    }
+
+    private void UpdateLobbyInfoForBroadcast()
+    {
+        if (!_currentLobbyInfo.HasValue || !_discovery.isHost) return;
+
+        var currentInfo = _currentLobbyInfo.Value;
+        currentInfo.currentPlayers = GetPlayerCount();
+
+        _currentLobbyInfo = currentInfo;
+        _discovery.BroadcastLobby(currentInfo);
+    }
+
+    public void StopLobbyMonitoring()
+    {
+        if (_playerListUpdateCoroutine != null)
+        {
+            StopCoroutine(_playerListUpdateCoroutine);
+            _playerListUpdateCoroutine = null;
+        }
+    }
+
+
+    public void PopulatePlayerList(ScrollView scroll, ulong localPlayerConnectionId = 0)
+    {
+        scroll.Clear();
+        var serverWorld = GetServerWorld();
+        if (serverWorld == null) return;
+
+        var em = serverWorld.EntityManager;
+        var query = em.CreateEntityQuery(ComponentType.ReadOnly<LobbyPlayerBuffer>());
+        if (query.IsEmptyIgnoreFilter) return;
+
+        var buffer = em.GetBuffer<LobbyPlayerBuffer>(query.GetSingletonEntity());
+
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            var player = buffer[i];
+            CreatePlayerItem(scroll, player, localPlayerConnectionId);
+        }
+    }
+
+    private void CreatePlayerItem(ScrollView scroll, LobbyPlayerBuffer player, ulong localPlayerConnectionId)
+    {
+        var item = new VisualElement();
+        item.AddToClassList("player-item");
+
+        var nameLabel = new Label(player.PlayerName.ToString());
+        nameLabel.AddToClassList("player-name");
+
+        var weaponLabel = new Label(player.Weapon.ToString());
+        weaponLabel.AddToClassList("player-weapon");
+
+        var pingLabel = new Label($"{GetPing(player.ConnectionId)} ms");
+        pingLabel.AddToClassList("player-ping");
+
+        item.Add(nameLabel);
+        item.Add(weaponLabel);
+        item.Add(pingLabel);
+
+        // Добавляем кнопку "Выгнать" только если:
+        // 1. Локальный игрок - хост (ConnectionId = 0)
+        // 2. Игрок не является самим собой
+        if (localPlayerConnectionId == 0 && player.ConnectionId != localPlayerConnectionId)
+        {
+            var kickBtn = new Button(() => KickPlayer(player.ConnectionId))
+            {
+                text = "Kick"
+            };
+            kickBtn.AddToClassList("kick-button");
+            item.Add(kickBtn);
+        }
+
+        scroll.Add(item);
     }
 
     public void ShowPasswordPrompt(LobbyInfo lobbyInfo)
@@ -639,19 +778,23 @@ public class LobbyManager : MonoBehaviour
         return item;
     }
 
-    string GetPing(ulong id)
+    private int GetPing(ulong id)
     {
         var serverWorld = GetServerWorld();
-        if (serverWorld == null) return "0";
+        if (serverWorld == null) return 0;
+
         var em = serverWorld.EntityManager;
         var query = em.CreateEntityQuery(ComponentType.ReadOnly<PlayerComponent>());
-        using var players = query.ToComponentDataArray<PlayerComponent>(Unity.Collections.Allocator.Temp);
+
+        if (query.IsEmptyIgnoreFilter) return 0;
+
+        using var players = query.ToComponentDataArray<PlayerComponent>(Allocator.Temp);
         foreach (var player in players)
         {
             if (player.ConnectionId == id)
-                return player.Ping.ToString();
+                return player.Ping;
         }
-        return "0";
+        return 0;
     }
 
     private void OnLobbiesUpdated(List<LobbyInfo> lobbies)

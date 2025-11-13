@@ -10,6 +10,7 @@ using System;
 public struct PlayerComponent : IComponentData
 {
     [GhostField] public FixedString128Bytes Name;
+    [GhostField] public FixedString64Bytes Weapon;
     [GhostField] public ulong ConnectionId;
     [GhostField] public int Ping;
 }
@@ -30,6 +31,7 @@ public struct LobbyDataComponent : IComponentData
 public struct LobbyPlayerBuffer : IBufferElementData
 {
     public FixedString128Bytes PlayerName;
+    public FixedString64Bytes Weapon;
     public ulong ConnectionId;
 }
 
@@ -89,4 +91,13 @@ public struct PlayerData
 {
     public FixedString128Bytes name;
     public string selectedCharacter; // "Vacuum", "Toaster", "GPT"
+}
+
+// Структура для информации об игроке в лобби
+public struct LobbyPlayerInfo
+{
+    public string Name;
+    public string Weapon;
+    public ulong ConnectionId;
+    public int Ping;
 }

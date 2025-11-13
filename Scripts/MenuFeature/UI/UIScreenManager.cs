@@ -305,7 +305,55 @@ public class UIScreenManager
         if (_playersScroll != null)
         {
             _playersScroll.Clear();
-            UIManager.Instance.LobbyManager.PopulatePlayerList(_playersScroll);
+
+            // Получаем ConnectionId локального игрока через UIManager
+            var localConnectionId = UIManager.Instance?.GetLocalPlayerConnectionId() ?? 0;
+
+            // 🔹 ИСПРАВЛЕНИЕ: Используем правильный метод
+            if (UIManager.Instance?.LobbyManager != null)
+            {
+                var players = UIManager.Instance.LobbyManager.GetLobbyPlayers();
+                foreach (var player in players)
+                {
+                    CreatePlayerListItem(_playersScroll, player, localConnectionId);
+                }
+            }
         }
+    }
+
+    private void CreatePlayerListItem(ScrollView scroll, LobbyPlayerInfo player, ulong localPlayerConnectionId)
+    {
+        var item = new VisualElement();
+        item.AddToClassList("player-item");
+
+        var nameLabel = new Label(player.Name);
+        nameLabel.AddToClassList("player-name");
+
+        var weaponLabel = new Label(player.Weapon);
+        weaponLabel.AddToClassList("player-weapon");
+
+        var pingLabel = new Label($"{player.Ping} ms");
+        pingLabel.AddToClassList("player-ping");
+
+        item.Add(nameLabel);
+        item.Add(weaponLabel);
+        item.Add(pingLabel);
+
+        // Добавляем кнопку "Выгнать" только если:
+        // 1. Локальный игрок - хост (ConnectionId = 0)
+        // 2. Игрок не является самим собой
+        if (localPlayerConnectionId == 0 && player.ConnectionId != localPlayerConnectionId)
+        {
+            var kickBtn = new Button(() => {
+                UIManager.Instance?.LobbyManager?.KickPlayer(player.ConnectionId);
+            })
+            {
+                text = "Kick"
+            };
+            kickBtn.AddToClassList("kick-button");
+            item.Add(kickBtn);
+        }
+
+        scroll.Add(item);
     }
 }

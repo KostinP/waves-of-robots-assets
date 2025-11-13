@@ -28,7 +28,7 @@ public class LobbyDiscovery : MonoBehaviour
 
     private string uniqueId;
     private bool isInitialized = false;
-    private bool isHost = false;
+    public bool isHost = false;
     private LobbyInfo currentLobbyInfo;
     private bool _needsLobbyUpdate = false;
 
@@ -282,13 +282,13 @@ public class LobbyDiscovery : MonoBehaviour
                     Debug.Log($"Added new lobby. Total count: {DiscoveredLobbies.Count}");
                 }
 
-                // ФИКС: Используем DateTime для времени в фоновом потоке
+                // 🔹 ИСПРАВЛЕНИЕ: Используем DateTime в фоновом потоке
                 _lobbyLastSeen[newLobby.uniqueId] = (float)DateTime.Now.Subtract(DateTime.Today).TotalSeconds;
                 Debug.Log($"Set last seen for lobby {newLobby.uniqueId}");
             }
 
-            // Только обновление UI через главный поток
-            UnityMainThreadDispatcher.Instance.Enqueue(() =>
+            // 🔹 ИСПРАВЛЕНИЕ: Безопасный вызов в главном потоке
+            UnityMainThreadDispatcher.Instance?.Enqueue(() =>
             {
                 _needsLobbyUpdate = true;
                 Debug.Log($"UI update scheduled");

@@ -3,28 +3,28 @@ using Unity.NetCode;
 using Unity.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Серверная система управления лобби (приём Join/Kick).
-/// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct LobbySystem : ISystem
 {
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<LobbyDataComponent>();
-    }
-
     public void OnUpdate(ref SystemState state)
     {
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
         var em = state.EntityManager;
 
-        var lobbyEntity = SystemAPI.GetSingletonEntity<LobbyDataComponent>();
+        // 🔹 ИСПРАВЛЕНИЕ: Проверяем существование лобби перед обработкой
+        var lobbyQuery = SystemAPI.QueryBuilder().WithAll<LobbyDataComponent, LobbyPlayerBuffer>().Build();
+        if (lobbyQuery.IsEmpty)
+        {
+            ecb.Dispose();
+            return;
+        }
+
+        var lobbyEntity = lobbyQuery.GetSingletonEntity();
         var lobbyBuffer = em.GetBuffer<LobbyPlayerBuffer>(lobbyEntity);
         var lobbyData = em.GetComponentData<LobbyDataComponent>(lobbyEntity);
 
-        // 🔹 Обработка команд JoinLobbyCommand (если остались старые — удаляем)
+        // 🔹 Обработка команд JoinLobbyCommand
         foreach (var (joinCmd, req, entity) in SystemAPI
                      .Query<JoinLobbyCommand, ReceiveRpcCommandRequest>()
                      .WithEntityAccess())
@@ -38,14 +38,23 @@ public partial struct LobbySystem : ISystem
                 lobbyBuffer.Add(new LobbyPlayerBuffer
                 {
                     PlayerName = joinCmd.PlayerName,
+                    Weapon = joinCmd.Weapon,
                     ConnectionId = connId
                 });
 
-                UnityEngine.Debug.Log($"[Server] Added player {joinCmd.PlayerName} (Conn={connId})");
+                UnityEngine.Debug.Log($"[Server] Added player {joinCmd.PlayerName} with weapon {joinCmd.Weapon} (Conn={connId})");
 
                 // Создаём сущность для SpawnPlayerCommand
                 var spawn = ecb.CreateEntity();
-                ecb.AddComponent(spawn, new SpawnPlayerCommand { ConnectionId = connId });
+                ecb.AddComponent(spawn, new SpawnPlayerCommand
+                {
+                    ConnectionId = connId,
+                    PlayerName = joinCmd.PlayerName,
+                    Weapon = joinCmd.Weapon
+                });
+
+                // 🔹 ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI
+                UIManager.Instance?.OnPlayersUpdated();
             }
             else
             {
@@ -89,6 +98,9 @@ public partial struct LobbySystem : ISystem
             }
 
             ecb.DestroyEntity(entity);
+
+            // 🔹 ВЫЗЫВАЕМ ОБНОВЛЕНИЕ UI
+            UIManager.Instance?.OnPlayersUpdated();
         }
 
         ecb.Playback(em);

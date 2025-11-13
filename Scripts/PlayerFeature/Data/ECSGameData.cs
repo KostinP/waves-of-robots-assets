@@ -20,6 +20,8 @@ public struct StartGameCommand : IComponentData
 public struct SpawnPlayerCommand : IComponentData
 {
     public ulong ConnectionId;
+    public FixedString128Bytes PlayerName;
+    public FixedString64Bytes Weapon;
 }
 
 public struct PlayerPrefabComponent : IComponentData

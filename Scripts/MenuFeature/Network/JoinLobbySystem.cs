@@ -17,10 +17,10 @@ public partial struct JoinLobbySystem : ISystem
         var em = state.EntityManager;
 
         foreach (var (cmd, req, entity) in SystemAPI
-                     .Query<JoinLobbyCommand, ReceiveRpcCommandRequest>()
-                     .WithEntityAccess())
+                 .Query<JoinLobbyCommand, ReceiveRpcCommandRequest>()
+                 .WithEntityAccess())
         {
-            UnityEngine.Debug.Log($"[Server] JoinLobby RPC: {cmd.PlayerName}");
+            UnityEngine.Debug.Log($"[Server] JoinLobby RPC: {cmd.PlayerName} with weapon {cmd.Weapon}");
 
             var query = em.CreateEntityQuery(typeof(LobbyDataComponent), typeof(LobbyPlayerBuffer));
             if (query.IsEmptyIgnoreFilter)
@@ -41,10 +41,11 @@ public partial struct JoinLobbySystem : ISystem
                 buffer.Add(new LobbyPlayerBuffer
                 {
                     PlayerName = cmd.PlayerName,
+                    Weapon = cmd.Weapon,
                     ConnectionId = connId
                 });
 
-                UnityEngine.Debug.Log($"[Server] Added player {cmd.PlayerName} (Conn={connId})");
+                UnityEngine.Debug.Log($"[Server] Added player {cmd.PlayerName} (Conn={connId}) with weapon {cmd.Weapon}");
             }
             else
             {

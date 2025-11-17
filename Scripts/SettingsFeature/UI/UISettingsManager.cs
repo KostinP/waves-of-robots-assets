@@ -156,6 +156,7 @@ public class UISettingsManager
             Debug.LogError($"[UISettingsManager] Error in FindUIElements: {e.Message}");
         }
     }
+
     private void SetupData()
     {
         if (_resolutionDropdown != null)
@@ -302,6 +303,29 @@ public class UISettingsManager
 
     private void OnSaveSettings()
     {
+        SaveSettings();
+    }
+
+    private void OnCancelSettings()
+    {
+        CancelSettings();
+    }
+
+    private void OnKeyDown(KeyDownEvent evt)
+    {
+        if (evt.keyCode == KeyCode.Escape)
+        {
+            CancelSettings();
+            evt.StopPropagation();
+        }
+    }
+    #endregion
+
+    #region Public Methods for MainMenuController
+    public void SaveSettings()
+    {
+        Debug.Log("UISettingsManager: Saving settings...");
+        
         if (!SettingsManager.IsReady())
         {
             Debug.LogWarning("[UISettingsManager] SettingsManager не готов → создаём временный");
@@ -311,29 +335,23 @@ public class UISettingsManager
 
         var settings = CreateSettingsFromUI();
         SettingsManager.Instance.SaveSettings(settings);
+        
+        // Применяем настройки графики
+        ApplyGraphicsSettings(settings);
+        
         if (_uiDocument != null)
             _uiDocument.StartCoroutine(DelayedReturn());
     }
 
-    private IEnumerator DelayedReturn()
+    public void CancelSettings()
     {
-        yield return new WaitForSeconds(0.1f);
-        LocalizationManager.Instance?.UpdateAllUIElements();
-        SettingsFeature.Instance?.HideSettingsScreen();
-    }
-
-    private void OnCancelSettings()
-    {
-        SettingsFeature.Instance?.HideSettingsScreen();
-    }
-
-    private void OnKeyDown(KeyDownEvent evt)
-    {
-        if (evt.keyCode == KeyCode.Escape)
-        {
-            SettingsFeature.Instance?.HideSettingsScreen();
-            evt.StopPropagation();
-        }
+        Debug.Log("UISettingsManager: Cancelling settings changes");
+        
+        // Восстанавливаем оригинальные настройки
+        LoadCurrentSettings();
+        
+        // Уведомляем MainMenuController о закрытии
+        _controller?.HideSettingsScreen();
     }
     #endregion
 
@@ -351,8 +369,9 @@ public class UISettingsManager
         yield return new WaitUntil(() => SettingsManager.IsReady());
         var settings = CreateSettingsFromUI();
         SettingsManager.Instance.SaveSettings(settings);
+        ApplyGraphicsSettings(settings);
         Object.Destroy(mgr.gameObject);
-        SettingsFeature.Instance?.HideSettingsScreen();
+        _controller?.HideSettingsScreen();
     }
 
     private GameSettings CreateSettingsFromUI()
@@ -369,6 +388,41 @@ public class UISettingsManager
                 ? SystemLanguage.Russian
                 : SystemLanguage.English
         };
+    }
+
+    private void ApplyGraphicsSettings(GameSettings settings)
+    {
+        // Применяем разрешение
+        if (_resolutions != null && settings.resolutionIndex >= 0 && settings.resolutionIndex < _resolutions.Count)
+        {
+            var resolution = _resolutions[settings.resolutionIndex];
+            Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreenMode, resolution.refreshRate);
+            Debug.Log($"Applied resolution: {resolution.width}x{resolution.height}@{resolution.refreshRate}Hz");
+        }
+
+        // Применяем качество графики
+        if (settings.qualityLevel >= 0 && settings.qualityLevel < QualitySettings.names.Length)
+        {
+            QualitySettings.SetQualityLevel(settings.qualityLevel, true);
+            Debug.Log($"Applied quality level: {QualitySettings.names[settings.qualityLevel]}");
+        }
+
+        // Применяем звуковые настройки
+        ApplyAudioSettings(settings);
+    }
+
+    private void ApplyAudioSettings(GameSettings settings)
+    {
+        // Здесь можно добавить логику применения звуковых настроек
+        // Например, через AudioManager если он есть
+        Debug.Log($"Audio settings - Music: {settings.musicVolume}, Sound: {settings.soundVolume}");
+    }
+
+    private IEnumerator DelayedReturn()
+    {
+        yield return new WaitForSeconds(0.1f);
+        LocalizationManager.Instance?.UpdateAllUIElements();
+        _controller?.HideSettingsScreen();
     }
     #endregion
 

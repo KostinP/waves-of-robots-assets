@@ -166,6 +166,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   mainMenuUXML: {fileID: 9197481963319205126, guid: a762caf5c0ba441a7b16457876b7aa3b, type: 3}
   settingsMenuUXML: {fileID: 9197481963319205126, guid: 66219c03f569848478e1cd6dcba2d860, type: 3}
+  fallbackInputActions: {fileID: 0}
 --- !u!114 &974139193
 MonoBehaviour:
   m_ObjectHideFlags: 0

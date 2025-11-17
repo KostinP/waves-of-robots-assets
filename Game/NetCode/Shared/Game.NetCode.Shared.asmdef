@@ -1,0 +1,10 @@
+{
+  "name": "Game.NetCode.Shared",
+  "references": [
+    "Unity.NetCode",
+    "Unity.Entities",
+    "Game.ECS",
+    "Game.Shared"
+  ],
+  "allowUnsafeCode": true
+}

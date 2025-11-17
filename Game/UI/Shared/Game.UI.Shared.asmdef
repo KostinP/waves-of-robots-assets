@@ -1,0 +1,18 @@
+{
+  "name": "Game.UI.Shared",
+  "references": [
+    "UnityEngine.UIElementsModule",
+    "UnityEngine.CoreModule",
+    "UnityEngine.UIModule",
+    "UnityEngine.UI",
+    "UnityEngine.TextRenderingModule",
+    "Game.Settings",  
+    "Game.Shared"
+  ],
+  "optionalUnityReferences": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "autoReferenced": true
+}

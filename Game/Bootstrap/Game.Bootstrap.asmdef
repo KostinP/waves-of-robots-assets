@@ -1,0 +1,11 @@
+{
+  "name": "Game.Bootstrap",
+  "references": [
+    "Game.Client",
+    "Game.Server",
+    "Game.Shared"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false
+}

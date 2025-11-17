@@ -1,0 +1,7 @@
+{
+  "name": "Game.UI.Settings",
+  "references": [
+    "Game.UI.Shared",
+    "Game.Shared"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Game.Net.Shared",
+    "references": [
+        "Unity.Entities",
+        "Unity.NetCode"
+    ],
+    "autoReferenced": true
+}

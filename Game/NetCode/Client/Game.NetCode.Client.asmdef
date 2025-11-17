@@ -1,0 +1,9 @@
+{
+  "name": "Game.NetCode.Client",
+  "references": [
+    "Unity.NetCode",
+    "Unity.Entities",
+    "Game.NetCode.Shared"
+  ],
+  "allowUnsafeCode": true
+}

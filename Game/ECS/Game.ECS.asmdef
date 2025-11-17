@@ -1,0 +1,9 @@
+{
+  "name": "Game.ECS",
+  "references": [
+    "Unity.Entities",
+    "Unity.Mathematics",
+    "Unity.Transforms",
+    "Game.Shared"
+  ]
+}

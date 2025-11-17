@@ -1,0 +1,10 @@
+{
+    "name": "Game.ECS.Common",
+    "references": [
+        "Game.Net.Shared",
+        "Game.PlayerFeature",
+        "Unity.Entities",
+        "Unity.NetCode"
+    ],
+    "autoReferenced": true
+}

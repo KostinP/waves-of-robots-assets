@@ -1,0 +1,19 @@
+{
+  "name": "Game.UI.MainMenu",
+  "rootNamespace": "",
+  "references": [
+    "Game.UI.Shared",
+    "Game.UI.Runtime",
+    "Game.Client",
+    "Game.Shared"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Game.UI.Runtime",
+  "rootNamespace": "",
+  "references": [
+    "Game.Shared",
+    "Game.UI.Shared",
+    "Unity.InputSystem",
+    "UnityEngine.UIElementsModule"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

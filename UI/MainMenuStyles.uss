@@ -646,3 +646,13 @@ RadioButton .unity-radio-button__text {
     -unity-text-align: middle-center;
     padding: 20px;
 }
+
+/* Error state for wrong password */
+.error {
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+.error input {
+    color: #ff4444;
+}

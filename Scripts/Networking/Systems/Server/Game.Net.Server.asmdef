@@ -1,0 +1,9 @@
+{
+    "name": "Game.Net.Server",
+    "references": [
+        "Game.Net.Shared",
+        "Unity.Entities",
+        "Unity.NetCode"
+    ],
+    "autoReferenced": true
+}

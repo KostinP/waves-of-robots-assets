@@ -1,0 +1,9 @@
+{
+    "name": "Game.PlayerFeature",
+    "references": [
+        "Game.Net.Shared",
+        "Unity.Entities",
+        "Unity.NetCode"
+    ],
+    "autoReferenced": true
+}

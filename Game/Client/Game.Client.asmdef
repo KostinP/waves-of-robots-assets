@@ -1,0 +1,11 @@
+{
+  "name": "Game.Client",
+  "references": [
+    "Unity.Entities",
+    "Unity.NetCode",
+    "Game.Shared",
+    "Game.ECS",
+    "Game.NetCode.Client",
+    "Game.NetCode.Shared"
+  ]
+}

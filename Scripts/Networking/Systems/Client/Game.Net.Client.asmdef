@@ -1,9 +1,0 @@
-{
-    "name": "Game.Net.Client",
-    "references": [
-        "Game.Net.Shared",
-        "Unity.Entities",
-        "Unity.NetCode"
-    ],
-    "autoReferenced": true
-}
